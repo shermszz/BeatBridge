@@ -1,2 +1,2 @@
-print("wtf?")
+print("updated")
 
