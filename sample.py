@@ -1,2 +1,2 @@
-print("hello nigger")
+print("hello huawei")
 
