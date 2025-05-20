@@ -1,2 +1,2 @@
-print("updated")
+print("hello huawei")
 
