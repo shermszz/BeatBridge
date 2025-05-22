@@ -1,3 +1,4 @@
+/* Styling for the main layout / Home page */
 body {
             margin: 0;
             font-family: 'Montserrat', Arial, sans-serif;
@@ -64,4 +65,103 @@ body {
             .content { padding: 1rem; }
             header { flex-direction: column; align-items: flex-start; }
             nav { margin-top: 1rem; }
+        }
+
+        /* Styling for the About.html page */
+
+         .about-intro {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(120deg, #23234a, #1e1e2f);
+        }
+
+        .about-intro h1 {
+            font-size: 2.5rem;
+            color: #ff4f4f;
+        }
+
+        .about-intro p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: auto;
+            color: #ddd;
+        }
+
+        .mission-vision {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            background: #2a2a4d;
+            padding: 3rem 2rem;
+            gap: 2rem;
+        }
+
+        .mission, .vision {
+            flex: 1 1 300px;
+            padding: 1rem;
+        }
+
+        .mission h2, .vision h2 {
+            color: #ff4f4f;
+        }
+
+        .team {
+            padding: 4rem 2rem;
+            text-align: center;
+            background: #1e1e2f;
+        }
+
+        .team h2 {
+            color: #ff4f4f;
+        }
+
+        .team-members {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .member-card {
+            background: #2a2a4d;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 200px;
+            color: #fff;
+        }
+
+        .member-card img {
+            width: 100%;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+
+        .contact-cta {
+            background: #11112b;
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #ccc;
+        }
+
+        .contact-cta h2 {
+            color: #ff4f4f;
+        }
+
+        .cta-button {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 1.6rem;
+            font-size: 1rem;
+            background-color: #ff4f4f;
+            color: #fff;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background-color: #e03e3e;
         }
