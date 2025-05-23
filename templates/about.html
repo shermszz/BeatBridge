@@ -1,24 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="About BeatBridge - Your Music Connection" />
-    <meta name="keywords" content="music, team, mission, BeatBridge, drum learning" />
-    <meta name="author" content="Huang Jian Wei, Tan Shao Hng, Sherman" />
-    <title>About | BeatBridge</title>
-    <link href="../CSS/style.css" rel="stylesheet" />
-</head>
-<body>
-    <header>
-        <div class="logo">BeatBridge</div>
-        <nav>
-            <a href="home.html">Home</a>
-            <a href="upload.html">Upload</a>
-            <a href="about.html">About</a>
-            <a href="login.html">Login</a>
-        </nav>
-    </header>
+<!DOCTYPE html>
+{% extends "layout.html" %}
+
+{% block title %} Register {% endblock %}
+
+{% block main %}
 
     <section class="about-intro">
         <h1>About BeatBridge</h1>
@@ -40,12 +26,12 @@
         <h2>Meet the Team</h2>
         <div class="team-members">
             <div class="member-card">
-                <img src="../images/jianwei.jpg" alt="Huang Jian Wei" />
+                <img src="{{ url_for('static', filename='images/jianwei-pic.jpg') }}" alt="Huang Jian Wei" />
                 <h3>Huang Jian Wei</h3>
                 <p>UI/UX Lead & Frontend Developer</p>
             </div>
             <div class="member-card">
-                <img src="../images/sperms-pic.jpg" alt="Tan Shao Hng, Sherman" />
+                <img src="{{ url_for('static', filename='images/sperms-pic.jpg') }}" alt="Tan Shao Hng, Sherman" />
                 <h3>Tan Shao Hng, Sherman</h3>
                 <p>Backend Developer & DevOps</p>
             </div>
@@ -59,8 +45,4 @@
         <a href="mailto:beatbridge.team@gmail.com" class="cta-button">Contact Us</a>
     </section>
 
-    <footer>
-        &copy; 2025 BeatBridge. All Rights Reserved.
-    </footer>
-</body>
-</html>
+{% endblock %}
