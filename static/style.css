@@ -1,4 +1,4 @@
-/* Styling for the main layout / Home page */
+/* Styling for the main layout */
 body {
             margin: 0;
             font-family: 'Montserrat', Arial, sans-serif;
@@ -165,3 +165,103 @@ body {
         .cta-button:hover {
             background-color: #e03e3e;
         }
+        
+
+        /* Logo Circle Background */
+        .logo-circle-bg {
+            background: radial-gradient(circle at 60% 40%, #ffb347 0%, #ff6b6b 100%);
+            width: 220px;           /* Size */
+            height: 220px;
+            border-radius: 50%;     /* Circle */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem auto; /* Center and add some bottom space */
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15); /* Subtle shadow */
+          }
+          
+          .logo-img {
+            width: 140px;           /* Adjust logo size as needed */
+            height: auto;
+          }
+
+
+        /* Style for the form section for register and login */
+        .hero form {
+            background: rgba(30, 30, 40, 0.85); /* subtle dark overlay, optional */
+            padding: 2rem 2rem 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+            display: inline-block;
+        }
+        
+        /* Style for input fields */
+        .hero input[type="text"],
+        .hero input[type="password"] {
+            background-color: #231f2e;
+            color: #fff;
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            width: 250px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .hero input[type="text"]::placeholder,
+        .hero input[type="password"]::placeholder {
+            color: #ffd6d6;
+            opacity: 1;
+        }
+        
+        .hero input[type="text"]:focus,
+        .hero input[type="password"]:focus {
+            border-color: #ffb347;
+            outline: none;
+            box-shadow: 0 0 0 2px #ff6b6b44;
+        }
+        
+        /* Style for the register button */
+        .hero button[type="submit"] {
+            background: linear-gradient(90deg, #ff6b6b, #c0392b);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 8px rgba(255,107,107,0.15);
+        }
+        
+        .hero button[type="submit"]:hover,
+        .hero button[type="submit"]:focus {
+            background: linear-gradient(90deg, #ffb347, #ff6b6b);
+            box-shadow: 0 4px 16px rgba(255,179,71,0.15);
+        }
+        
+        /* Styling for register/login/home div Log in*/
+        .login-redirect p {
+            color: #fff; /* white for strong contrast */
+          }
+          
+          .login-btn {
+            display: inline-block;
+            padding: 0.6em 2em;
+            border: 2px solid #fff;
+            border-radius: 2em;
+            background: transparent;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+          }
+          
+          .login-btn:hover,
+          .login-btn:focus {
+            background: #fff;
+            color: #c0392b;
+          }
