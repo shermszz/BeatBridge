@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, session, redirect
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure application
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates') # "__name__" is the name of the current module, where the name could change dynamically
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -43,3 +44,4 @@ def login():
 if __name__ == "__main__":
     app.run(debug=True)
 
+ 
