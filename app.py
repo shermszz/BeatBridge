@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, session, redirect
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash  # For Hashing password
 import os
 
 # Configure application
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates') # "__name__" is the name of the current module, where the name could change dynamically
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -82,3 +83,4 @@ def login():
 if __name__ == "__main__":
     app.run(debug=True)
 
+ 
