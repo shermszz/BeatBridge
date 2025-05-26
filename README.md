@@ -146,14 +146,7 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     ```
     pip install flask flask-sqlalchemy psycopg2-binary python-dotenv
     ```
-
-2. **Initialize database in `app.py`:**
-    ```
-    with app.app_context():
-        db.create_all()  # Creates tables from SQLAlchemy models
-    ```
-
-3. **Run application:**
+2. **Run application:**
     ```
     flask run
     ```
