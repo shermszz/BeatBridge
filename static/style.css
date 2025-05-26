@@ -165,25 +165,6 @@ body {
         .cta-button:hover {
             background-color: #e03e3e;
         }
-        
-
-        /* Logo Circle Background */
-        .logo-circle-bg {
-            background: radial-gradient(circle at 60% 40%, #ffb347 0%, #ff6b6b 100%);
-            width: 220px;           /* Size */
-            height: 220px;
-            border-radius: 50%;     /* Circle */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem auto; /* Center and add some bottom space */
-            box-shadow: 0 4px 24px rgba(0,0,0,0.15); /* Subtle shadow */
-          }
-          
-          .logo-img {
-            width: 140px;           /* Adjust logo size as needed */
-            height: auto;
-          }
 
 
         /* Style for the form section for register and login */
@@ -242,7 +223,7 @@ body {
             box-shadow: 0 4px 16px rgba(255,179,71,0.15);
         }
         
-        /* Styling for register/login/home div Log in*/
+        /* Styling for register/login/home div Log in */
         .login-redirect p {
             color: #fff; /* white for strong contrast */
           }
@@ -265,3 +246,13 @@ body {
             background: #fff;
             color: #c0392b;
           }
+
+          /* Styling for Error messages */
+          .error-message {
+            color: #ff4d4f;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            font-size: 1em;
+            text-align: left;
+          }
+          

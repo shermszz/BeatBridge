@@ -9,15 +9,24 @@
     <section class="hero">
         <h1>Create your account!</h1>
     
-        <form action="/register" method="post">
+        <form action="/register" method="POST">
             <div class="mb-3">
                 <input autocomplete="off" autofocus class="form-control mx-auto w-auto inputdeco my-input" name="username" placeholder="Username" type="text">
+                {% if errors and errors.get('username') %}
+                    <div class="error-message">{{ errors['username'] }}</div>
+                {% endif %}
             </div>
             <div class="mb-3">
                 <input class= "form-control mx-auto w-auto inputdeco my-input" name="password" placeholder="Password" type="password">
+                {% if errors and errors.get('password') %}
+                    <div class="error-message">{{ errors['password'] }}</div>
+                {% endif %}
             </div>
             <div class="mb-3">
                 <input class="form-control mx-auto w-auto inputdeco my-input" name="confirmation" placeholder="Re-enter Password" type="password">
+                {% if errors and errors.get('confirmation') %}
+                    <div class="error-message">{{ errors['confirmation'] }}</div>
+                {% endif %}
             </div>
             <button class="btn btn-primary buttondeco" type="submit">Register</button>
             <hr style="margin-top:1.5rem; margin-bottom:1.5rem; border:none; border-top:1.5px solid #fff; opacity:0.3;">
