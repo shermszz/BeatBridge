@@ -57,7 +57,7 @@ def register():
         # If user did not enter same password
         if not password:
             errors['password'] = "Password is required to continue"
-        # Checking whether there is existing username already
+        # If user did not enter same password
         if password != confirmation:
             errors['confirmation'] = "Passwords do not match"
 
@@ -82,6 +82,39 @@ def register():
     # GET request: show the registration form
     else:
         return render_template('register.html')
+    
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    errors = {}
+
+    # POST request: Submitting user's input 
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # If user left username/password blank
+        if not username:
+            errors['username'] = "Please enter your username"
+        if not password:
+            errors['password'] = "Please enter your password"
+
+        # If got any errors, return webpage with error
+        if errors:
+            return render_template("login.html", errors=errors)
+        
+        # Look up user in the database, if invalid username and password, return error
+        user = User.query.filter_by(username=username).first()
+        if user is None or not check_password_hash(user.hash, password):
+            errors['general'] = "Invalid username or password"
+            return render_template("login.html", errors=errors)
+
+        # Successful login: store user id in session
+        session['user_id'] = user.id
+        return redirect('/')  # Return back to home.html
+        
+    # GET request: show the login form    
+    else:
+        return render_template('login.html')
 
 @app.route('/about')
 def about():
@@ -91,9 +124,6 @@ def about():
 def upload():
     return render_template('upload.html')
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
