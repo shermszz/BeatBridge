@@ -1,5 +1,4 @@
 # BridgeBeat
-Orbital Project
 
 # Flask PostgreSQL Starter Guide
 
@@ -36,8 +35,56 @@ Download from [PostgreSQL.org](https://www.postgresql.org/download/macosx/) and 
 
 ### Add PostgreSQL to PATH
 **macOS:**
-echo 'export PATH="/usr/local/opt/postgresql@16/bin:$PATH"' >> ~/.zshrc
+2. Set Up Environment Variables
+2.1 Find the psql Directory
+You need to locate where PostgreSQL 17 installed the psql tool.
+
+Open your terminal and run:
+
+text
+ls /Library/PostgreSQL/17/bin/psql
+If you see the file listed, then /Library/PostgreSQL/17/bin is the directory you need.
+
+If it’s not there, try:
+
+text
+find / -name psql 2>/dev/null
+Look for a path ending with /bin/psql. That directory (the part before /psql) is what you’ll use.
+
+2.2 Edit Your Shell Configuration File
+Since you’re on macOS and using zsh, you need to edit your ~/.zshrc file.
+
+In your terminal, type:
+
+text
+nano ~/.zshrc
+This opens your zsh configuration file in the Nano editor.
+
+2.3 Add PostgreSQL to Your PATH
+At the bottom of the file, add this line (replace the path if your psql is in a different directory):
+
+text
+export PATH="/Library/PostgreSQL/17/bin:$PATH"
+2.4 Save and Exit Nano
+Press Ctrl+O (the letter O, not zero) to save.
+
+Press Enter to confirm the filename.
+
+Press Ctrl+X to exit Nano.
+
+2.5 Reload Your Shell Configuration
+Back in your terminal, run:
+
+text
 source ~/.zshrc
+This reloads your configuration so the change takes effect immediately.
+
+2.6 Verify psql is Available
+Now, check if you can run psql:
+
+text
+psql --version
+You should see the PostgreSQL version printed.
 **Windows:**  
 1. Search "Environment Variables"
 2. Edit **System Variables** > **Path**
