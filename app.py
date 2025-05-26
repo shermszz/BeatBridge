@@ -18,6 +18,7 @@ Session(app)
 
 # ORM SQLAlchemy, defining database model
 class User(db.Model):
+    __tablename__ = 'users'  # Set table name
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     hash = db.Column(db.String(200), nullable=False)
@@ -45,7 +46,7 @@ def register():
     # Create dict of errors
     errors = {}
 
-    # Submitting user's input via POST
+    # POST request: Submitting user's input 
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -60,10 +61,25 @@ def register():
         if password != confirmation:
             errors['confirmation'] = "Passwords do not match"
 
-        return render_template("register.html", errors=errors)
+        if errors:
+            return render_template("register.html", errors=errors)
 
-        # Registering username and password in SQL users database
+        # Check if username already exists in the database
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            errors['username'] = "Username already exists"
+            return render_template("register.html", errors=errors)
 
+        # Registering username and hashed password in SQL users database
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, hash=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Redirect to login page after successful registration
+        return redirect("/login")
+    
+    # GET request: show the registration form
     else:
         return render_template('register.html')
 
