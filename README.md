@@ -72,7 +72,7 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     ```
     source ~/.zshrc
     ```
-    or
+    or for bash
     ```
     source ~/.bash_profile
     ```
@@ -158,7 +158,7 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 - **Role does not exist:**  
     Create user via psql:
     ```
-    CREATE USER myuser WITH PASSWORD 'your_password';
+    CREATE USER postgres WITH PASSWORD 'your_password';
     ```
 
 - **Password Authentication Failed:**  
