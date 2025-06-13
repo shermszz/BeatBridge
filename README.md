@@ -144,13 +144,13 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 
 1. **Install requirements:**
     ```
-    pip install flask flask-sqlalchemy psycopg2-binary python-dotenv
+    pip3 install flask flask-sqlalchemy psycopg2-binary python-dotenv
     ```
 2. **Run application:**
     ```
     flask run
     ```
-
+    User will then be prompt to enter PostgresSQL password
 ---
 
 ## 6. Troubleshooting
