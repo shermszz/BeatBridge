@@ -4,6 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash  # For Hashing password
 import os
 
+# Prompts user for password if not set as environment variable
+if 'DATABASE_PASSWORD' not in os.environ:
+    os.environ['DATABASE_PASSWORD'] = input("Enter your PostgreSQL password: ")
+
 # Configure application
 app = Flask(__name__, template_folder='templates') # "__name__" is the name of the current module, where the name could change dynamically
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
@@ -115,6 +119,14 @@ def login():
     # GET request: show the login form    
     else:
         return render_template('login.html')
+    
+@app.route("/logout")
+def logout():
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form (login.html)
+    return redirect("/")
 
 @app.route('/about')
 def about():

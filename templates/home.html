@@ -13,7 +13,12 @@
             <p>Discover, share, and connect through music. The bridge between artists and listeners.</p>
             <!-- You can add a call-to-action button here if needed -->
             <div class="login-redirect">
-                <a href="/register" class="login-btn">Let's get started</a>
+            <!-- Hard-coded-->
+                {% if session["user_id"] %}
+
+                {% else %}
+                    <a href="/register" class="login-btn">Let's get started</a>
+                {% endif %}
             </div>  
         </section>  
         <main class="content">
