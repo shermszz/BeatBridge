@@ -161,13 +161,6 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     CREATE USER postgres WITH PASSWORD 'your_password';
     ```
 
-- **Password Authentication Failed:**  
-    Update `pg_hba.conf` (location varies):
-    ```
-    # Change from 'peer' to 'md5'
-    local   all             all                                     md5
-    ```
-
 ---
 
 ## References
