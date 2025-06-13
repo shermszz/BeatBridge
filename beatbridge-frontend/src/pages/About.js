@@ -1,4 +1,6 @@
 import React from 'react';
+import author1 from '../styles/images/sperms-pic.jpg';
+import author2 from '../styles/images/jianwei-pic.jpg';
 
 const About = () => {
   return (
@@ -23,10 +25,12 @@ const About = () => {
         <h2>Meet the Team</h2>
         <div className="team-members">
           <div className="member-card">
+            <img src={author2} alt="Huang Jianwei" />
             <h3>Huang Jian Wei</h3>
             <p>UI/UX Lead & Frontend Developer</p>
           </div>
           <div className="member-card">
+            <img src={author1} alt="Tan Shao Hng, Sherman" />
             <h3>Tan Shao Hng, Sherman</h3>
             <p>Backend Developer & DevOps</p>
           </div>

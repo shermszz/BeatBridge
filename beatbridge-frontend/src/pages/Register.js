@@ -44,44 +44,71 @@ const Register = () => {
   };
 
   return (
-    <div className="hero">
-      <form onSubmit={handleSubmit}>
-        <h1>Create your account!</h1>
-        
+    <section className="hero">
+    <h1>Create your account!</h1>
+
+    <form onSubmit={handleSubmit}>
+      <div className="mb-3">
         <input
-          type="text"
+          autoComplete="off"
+          autoFocus
+          className="form-control mx-auto w-auto inputdeco my-input"
           name="username"
           placeholder="Username"
+          type="text"
           value={formData.username}
           onChange={handleChange}
         />
-        {errors.username && <div className="error-message">{errors.username}</div>}
-
+        {errors && errors.username && (
+          <div className="error-message">{errors.username}</div>
+        )}
+      </div>
+      <div className="mb-3">
         <input
-          type="password"
+          className="form-control mx-auto w-auto inputdeco my-input"
           name="password"
           placeholder="Password"
+          type="password"
           value={formData.password}
           onChange={handleChange}
         />
-        {errors.password && <div className="error-message">{errors.password}</div>}
-
+        {errors && errors.password && (
+          <div className="error-message">{errors.password}</div>
+        )}
+      </div>
+      <div className="mb-3">
         <input
-          type="password"
+          className="form-control mx-auto w-auto inputdeco my-input"
           name="confirmation"
-          placeholder="Confirm Password"
+          placeholder="Re-enter Password"
+          type="password"
           value={formData.confirmation}
           onChange={handleChange}
         />
-        {errors.confirmation && <div className="error-message">{errors.confirmation}</div>}
-
-        <button type="submit">Register</button>
-        
-        <div className="login-redirect">
-          <p>Already have an account? <a href="/login" className="login-btn">Log in</a></p>
-        </div>
-      </form>
-    </div>
+        {errors && errors.confirmation && (
+          <div className="error-message">{errors.confirmation}</div>
+        )}
+      </div>
+      <button className="btn btn-primary buttondeco" type="submit">
+        Register
+      </button>
+      <hr
+        style={{
+          marginTop: "1.5rem",
+          marginBottom: "1.5rem",
+          border: "none",
+          borderTop: "1.5px solid #fff",
+          opacity: "0.3",
+        }}
+      />
+      <div className="login-redirect">
+        <p>Already have an account?</p>
+        <a href="/login" className="login-btn">
+          Log in
+        </a>
+      </div>
+    </form>
+  </section>
   );
 };
 

@@ -44,36 +44,61 @@ const Login = () => {
   };
 
   return (
-    <div className="hero">
-      <form onSubmit={handleSubmit}>
-        <h1>Log in</h1>
-        
+    <section className="hero">
+    <h1>Log in</h1>
+
+    <form onSubmit={handleSubmit}>
+      <div className="mb-3">
         <input
-          type="text"
+          autoComplete="off"
+          autoFocus
+          className="form-control mx-auto w-auto inputdeco my-input"
           name="username"
           placeholder="Username"
+          type="text"
           value={formData.username}
           onChange={handleChange}
         />
-        {errors.username && <div className="error-message">{errors.username}</div>}
-
+        {errors && errors.username && (
+          <div className="error-message">{errors.username}</div>
+        )}
+      </div>
+      <div className="mb-3">
         <input
-          type="password"
+          className="form-control mx-auto w-auto inputdeco my-input"
           name="password"
           placeholder="Password"
+          type="password"
           value={formData.password}
           onChange={handleChange}
         />
-        {errors.password && <div className="error-message">{errors.password}</div>}
-        {errors.general && <div className="error-message">{errors.general}</div>}
-
-        <button type="submit">Log in</button>
-        
-        <div className="login-redirect">
-          <p>Don't have an account yet? <a href="/register" className="login-btn">Sign up</a></p>
-        </div>
-      </form>
-    </div>
+        {errors && errors.password && (
+          <div className="error-message">{errors.password}</div>
+        )}
+        {errors && errors.general && (
+          <div className="error-message">{errors.general}</div>
+        )}
+      </div>
+      <button className="btn btn-primary buttondeco" type="submit">
+        Log in
+      </button>
+      <hr
+        style={{
+          marginTop: "1.5rem",
+          marginBottom: "1.5rem",
+          border: "none",
+          borderTop: "1.5px solid #fff",
+          opacity: "0.3",
+        }}
+      />
+      <div className="login-redirect">
+        <p>Don't have an account yet?</p>
+        <a href="/register" className="login-btn">
+          Sign up
+        </a>
+      </div>
+    </form>
+  </section>
   );
 };
 

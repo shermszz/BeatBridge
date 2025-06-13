@@ -18,7 +18,7 @@ const Header = () => {
   return (
     <header>
       <div className="logo">
-        <Link to="/">BeatBridge</Link>
+        BeatBridge
       </div>
       <nav>
         <Link to="/">Home</Link>
