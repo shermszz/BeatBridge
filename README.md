@@ -150,7 +150,7 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     ```
     flask run
     ```
-    User will then be prompted to enter PostgresSQL password
+    User will then be prompt to enter PostgresSQL password
 ---
 
 ## 6. Troubleshooting
