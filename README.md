@@ -12,9 +12,10 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 2. [Set Up Environment Variables and PATH](#2-set-up-environment-variables-and-path)
 3. [Create Database & User](#3-create-database--user)
 4. [Useful PostgreSQL Commands](#4-useful-postgresql-commands)
-5. [Flask Setup](#5-flask-setup)
-6. [Troubleshooting](#6-troubleshooting)
-7. [References](#references)
+5. [Install Node.js and npm](#5-install-nodejs-and-npm)
+6. [Flask Setup](#6-flask-setup)
+7. [Troubleshooting](#7-troubleshooting)
+8. [References](#references)
 
 ---
 
@@ -139,8 +140,27 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 | `DROP DATABASE flask_db;`                 | Delete database               |
 
 ---
+## 5. Install Node.js and npm
 
-## 5. Flask Setup
+1. Download Node.js installer: [Node.js Official Site](https://nodejs.org/en)
+2. Run the installer:
+    - Accept the default options.   
+    - Ensure "npm" is selected for installation.
+3. Open up VS code again and navigate to the frontend directory:
+    ```
+    cd beatbridge-frontend
+    ```
+4. Install dependencies, run this command in the terminal:
+    ```
+    npm install
+    ```
+5. Start the development server:
+    ```
+    npm start
+    ```
+    - This will launch the React application at http://localhost:3000.
+    
+## 6. Flask Setup
 
 1. **Install requirements:**
     ```
@@ -153,7 +173,7 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     User will then be prompt to enter PostgresSQL password
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 - **Role does not exist:**  
     Create user via psql:
