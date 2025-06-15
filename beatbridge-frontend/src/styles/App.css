@@ -256,3 +256,20 @@ body {
             text-align: left;
           }
           
+          /* Styling for Let's get started*/
+          .get-started-btn {
+            margin-top: -10px;
+            margin-bottom: 20px;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background: #ff4f4f;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+          }
+          .get-started-btn:hover {
+            background: #e03e3e;
+          }
