@@ -63,7 +63,7 @@ const Header = () => {
         <Link to='/home'>Home</Link>
         {isLoggedIn ? (
           <>
-            <button onClick={handleLogout}>Logout</button>
+            <button className="dash-btn" onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>
