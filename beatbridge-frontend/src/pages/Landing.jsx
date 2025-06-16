@@ -10,7 +10,7 @@ const Landing = () => {
     <div className="hero">
       <h1>Welcome to BeatBridge</h1>
       <img src={logo} width="300" height="300" alt="BeatBridge logo" />
-      <p>Discover, share, and connect through music. The bridge between artists and listeners.</p>
+      <p style={{ marginTop: '-5px' }}>Discover, share, and connect through music. The bridge between artists and listeners.</p>
 
     </div>
   );
