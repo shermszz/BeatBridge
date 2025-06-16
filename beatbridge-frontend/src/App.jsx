@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
@@ -15,6 +15,9 @@ function App() {
     <Router>
       <Layout>
         <Routes>
+          {/* Default route redirects to the landing page */}
+          <Route path="/" element={<Navigate to="/landing" replace />} />
+
           {/* Landing page for new users */}
           <Route path="/landing" element={<Landing />} />
 
