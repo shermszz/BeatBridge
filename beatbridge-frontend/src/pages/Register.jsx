@@ -33,7 +33,9 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        navigate('/login');
+        //After successful registration, send user to the customisation page
+        //This is where we gather their user preferences
+        navigate('/customisation');
       } else {
         setErrors(data.errors || {});
       }

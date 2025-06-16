@@ -33,7 +33,8 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem('user_id', data.user_id);
-        navigate('/');
+        //Navigate to the main home page once logged in
+        navigate('/home');
       } else {
         setErrors(data.errors || {});
       }
