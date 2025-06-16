@@ -7,15 +7,11 @@ import logo from '../styles/images/Beatbridge.png';
 const Landing = () => {
   const navigate = useNavigate();
 
-//Component to handle navigation to registration page for new users
+//Navigate to registration page for new users
 const handleGettingStarted = () => {
     navigate('/register');
-}
+  }
 
-//Component to handle navigation to login page for existing users
-const handleLogin = () => {
-    navigate('/login');
-}
 
   return (
     <div className="hero">
@@ -24,11 +20,6 @@ const handleLogin = () => {
       <p>Discover, share, and connect through music. The bridge between artists and listeners.</p>
 
       {/* Buttons to navigate to login or registration */}
-      <div className="center-btn">
-        <button className="get-started-btn" onClick={handleLogin}>
-          Login
-        </button>
-      </div>
       <div className="center-btn">
         <button className="get-started-btn" onClick={handleGettingStarted}>
           Let's Get Started

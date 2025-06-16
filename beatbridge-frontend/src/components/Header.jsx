@@ -1,8 +1,10 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation} from 'react-router-dom';
+import profileIcon from '../styles/images/loginIcon.svg';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isLoggedIn = localStorage.getItem('user_id');
 
   const handleLogout = async () => {
@@ -15,13 +17,25 @@ const Header = () => {
     }
   };
 
+  const onLoginIconClick = () => {
+    navigate('/login');
+  }
+
+  const isLanding = location.pathname === '/landing';
+
   return (
-    <header>
+    <header className={isLanding ? 'landing-header' : ' '}>
       <div className="logo">
         BeatBridge
       </div>
+
+      {/* If user is on landing page and not logged in, show login icon */}
+      {isLanding && !isLoggedIn ? (
+        <img src={profileIcon} alt = "Login" 
+        className='login-icon' onClick={onLoginIconClick} />
+      ) : (
       <nav>
-        {/* Home link points to the landing page for logged-in users */}
+        {/* Otherwise, Home link points to the landing page for logged-in users */}
         <Link to='/landing'>Home</Link>
         <Link to="/about">About</Link>
         {isLoggedIn ? (
@@ -36,6 +50,7 @@ const Header = () => {
           </>
         )}
       </nav>
+      )}
     </header>
   );
 };

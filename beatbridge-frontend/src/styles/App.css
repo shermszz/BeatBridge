@@ -273,3 +273,19 @@ body {
           .get-started-btn:hover {
             background: #e03e3e;
           }
+
+          /* Landing page header */
+          .landing-header {
+            background: transparent;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .login-icon {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            color: #fff;
+          }
