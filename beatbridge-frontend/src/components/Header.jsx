@@ -21,8 +21,8 @@ const Header = () => {
         BeatBridge
       </div>
       <nav>
-        {/* Home link points to the main page for logged-in users */}
-        <Link to='/home'>Home</Link>
+        {/* Home link points to the landing page for logged-in users */}
+        <Link to='/landing'>Home</Link>
         <Link to="/about">About</Link>
         {isLoggedIn ? (
           <>
