@@ -27,7 +27,7 @@ function App() {
 
           {/* Page to gather user preferences after registration */}
           <Route path="/customisation" element={<Customisation />} />
-          
+
           <Route path="/upload" element={<Upload />} />
         </Routes>
       </Layout>

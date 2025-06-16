@@ -2,6 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../styles/images/Beatbridge.png';
 
+
+// Landing page displayed to all visitors
+const Landing = () => {
+  const navigate = useNavigate();
+
 //Component to handle navigation to registration page for new users
 const handleGettingStarted = () => {
     navigate('/register');
@@ -11,10 +16,6 @@ const handleGettingStarted = () => {
 const handleLogin = () => {
     navigate('/login');
 }
-
-// Landing page displayed to all visitors
-const Landing = () => {
-  const navigate = useNavigate();
 
   return (
     <div className="hero">
