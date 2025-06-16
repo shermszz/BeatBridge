@@ -21,6 +21,10 @@ const Header = () => {
     navigate('/login');
   }
 
+  const handleGetStarted = () => {
+    navigate('/register');
+  }
+
   const isLanding = location.pathname === '/landing';
 
   return (
@@ -29,10 +33,19 @@ const Header = () => {
         BeatBridge
       </div>
 
-      {/* If user is on landing page and not logged in, show login icon */}
+      {/* If user is on landing page and not logged in, show register button and login icon */}
       {isLanding && !isLoggedIn ? (
-        <img src={profileIcon} alt = "Login" 
-        className='login-icon' onClick={onLoginIconClick} />
+        <div className="landing-actions">
+          <button className="header-get-started-btn" onClick={handleGetStarted}>
+            Let's Get Started
+          </button>
+          <img
+            src={profileIcon}
+            alt="Login"
+            className="login-icon"
+            onClick={onLoginIconClick}
+          />
+        </div>
       ) : (
       <nav>
         {/* Otherwise, Home link points to the landing page for logged-in users */}
