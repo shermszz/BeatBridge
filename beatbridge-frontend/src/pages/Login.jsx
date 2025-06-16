@@ -18,28 +18,34 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
+    const newErrors = {};
 
+    // Client-side validation
+    if (!formData.username) newErrors.username = "Username required";
+    if (!formData.password) newErrors.password = "Password required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return; // Stop submission if errors exist
+    }
+
+    // Proceed with server request
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('user_id', data.user_id);
-        navigate('/');
+      if (!response.ok) {
+        setErrors(data.errors || { general: "Login failed. Please check your credentials." });
       } else {
-        setErrors(data.errors || {});
+        // Success: navigate to home or dashboard
+        navigate('/'); // or wherever you want to redirect after login
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      setErrors({ general: 'Login failed. Please try again.' });
+      setErrors({ general: "Network error. Try again later." });
     }
   };
 
@@ -59,9 +65,6 @@ const Login = () => {
           value={formData.username}
           onChange={handleChange}
         />
-        {errors && errors.username && (
-          <div className="error-message">{errors.username}</div>
-        )}
       </div>
       <div className="mb-3">
         <input
@@ -72,6 +75,9 @@ const Login = () => {
           value={formData.password}
           onChange={handleChange}
         />
+        {errors && errors.username && (
+          <div className="error-message">{errors.username}</div>
+        )}
         {errors && errors.password && (
           <div className="error-message">{errors.password}</div>
         )}

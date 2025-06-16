@@ -20,7 +20,7 @@ CORS(app,
 if 'DATABASE_PASSWORD' not in os.environ:
     os.environ['DATABASE_PASSWORD'] = input("Enter your PostgreSQL password: ")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:    os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -136,6 +136,7 @@ def get_user():
 def serve_react_app(path):
     # This would serve your built React app in production
     # For development, React runs on port 3000
+    # If see this message, means backend is running correctly
     return jsonify({"message": "React app should handle this route"}), 404
 
 if __name__ == "__main__":

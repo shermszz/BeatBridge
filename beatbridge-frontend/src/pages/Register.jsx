@@ -19,27 +19,36 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
-
+    const newErrors = {};
+  
+    // Client-side validation
+    if (!formData.username) newErrors.username = "Username required";
+    if (!formData.password) newErrors.password = "Password required";
+    if (formData.password !== formData.confirmation) {
+      newErrors.confirmation = "Passwords do not match";
+    }
+  
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return; // Stop submission if errors exist
+    }
+  
+    // Proceed with server request
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-
+      
       const data = await response.json();
-
-      if (response.ok) {
-        navigate('/login');
+      if (!response.ok) {
+        setErrors(data.errors || { general: "Registration failed" });
       } else {
-        setErrors(data.errors || {});
+        navigate('/login');
       }
     } catch (error) {
-      console.error('Registration failed:', error);
-      setErrors({ general: 'Registration failed. Please try again.' });
+      setErrors({ general: "Network error. Try again later." });
     }
   };
 
@@ -59,9 +68,6 @@ const Register = () => {
           value={formData.username}
           onChange={handleChange}
         />
-        {errors && errors.username && (
-          <div className="error-message">{errors.username}</div>
-        )}
       </div>
       <div className="mb-3">
         <input
@@ -72,9 +78,6 @@ const Register = () => {
           value={formData.password}
           onChange={handleChange}
         />
-        {errors && errors.password && (
-          <div className="error-message">{errors.password}</div>
-        )}
       </div>
       <div className="mb-3">
         <input
@@ -85,6 +88,12 @@ const Register = () => {
           value={formData.confirmation}
           onChange={handleChange}
         />
+        {errors && errors.username && (
+          <div className="error-message">{errors.username}</div>
+        )}
+        {errors && errors.password && (
+          <div className="error-message">{errors.password}</div>
+        )}
         {errors && errors.confirmation && (
           <div className="error-message">{errors.confirmation}</div>
         )}
