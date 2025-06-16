@@ -348,23 +348,29 @@ footer {
 }
 
 .dashboard-buttons {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.18rem;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
 }
 
 .dash-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 20px;
+    padding: 0.18rem 0.7rem;
+    border: 1px solid #ffb3b3;
+    border-radius: 14px;
     background: #ff4f4f;
     color: #fff;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 500;
+    font-size: 0.89rem;
+    margin-left: 0.18rem;
+    box-shadow: 0 1px 4px rgba(255,79,79,0.07);
+    transition: background 0.2s, border 0.2s, box-shadow 0.2s;
 }
 
-.dash-btn:hover {
+.dash-btn:hover, .dash-btn:focus {
     background: #e03e3e;
+    border: 1px solid #ff4f4f;
+    box-shadow: 0 2px 8px rgba(255,79,79,0.13);
 }

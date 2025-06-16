@@ -59,12 +59,15 @@ const Header = () => {
         </nav>
       ) : (
       <nav>
-        {/* Otherwise, Home link points to the landing page for logged-in users */}
-        <Link to='/home'>Home</Link>
         {isLoggedIn ? (
-          <>
+          <div className="dashboard-buttons">
+            <Link to="/home" className="dash-btn">Home</Link>
+            <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>
+            <Link to="/rhythm-trainer" className="dash-btn">Rhythm Trainer</Link>
+            <Link to="/jam-session" className="dash-btn">Jam Session</Link>
+            <Link to="/profile" className="dash-btn">Profile</Link>
             <button className="dash-btn" onClick={handleLogout}>Logout</button>
-          </>
+          </div>
         ) : (
           <>
             <Link to="/login">Login</Link>

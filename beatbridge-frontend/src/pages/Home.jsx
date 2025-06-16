@@ -13,14 +13,6 @@ const Home = () => {
 
   return (
     <div className="hero home-page">
-      {isLoggedIn && (
-        <div className="dashboard-buttons">
-          <button className="dash-btn">Song Recommendation</button>
-          <button className="dash-btn">Rhythm Trainer</button>
-          <button className="dash-btn">Jam Session</button>
-          <button className="dash-btn">Profile</button>
-        </div>
-      )}
       <h1>Welcome to BeatBridge</h1>
       <img src={logo} width="300" height="300" alt="BeatBridge logo" />
       {!isLoggedIn && (
