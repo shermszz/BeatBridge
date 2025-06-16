@@ -1,8 +1,9 @@
-from flask import Flask, request, session, jsonify
+from flask import Flask, request, session, jsonify, make_response
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 import os
 
 # Configure application
@@ -10,26 +11,24 @@ app = Flask(__name__)
 
 # Enable CORS for React frontend
 CORS(app,
-     origins=["http://localhost:3000"],
+     resources={r"/*": {"origins": "http://localhost:3000"}},
      supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE"]
+     allow_headers=["Content-Type", "Authorization", "Accept"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 
 # Database configuration
 if 'DATABASE_PASSWORD' not in os.environ:
     os.environ['DATABASE_PASSWORD'] = input("Enter your PostgreSQL password: ")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Configure session
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SECRET_KEY"] = "your-secret-key-here"  # Add a secret key
+app.config["SECRET_KEY"] = "your-secret-key-here"
 Session(app)
 
 # Database model
@@ -44,18 +43,32 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def index():
+    return jsonify({"message": "Backend server is running"}), 200
+
+@app.before_request
+def before_request_func():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+
 @app.after_request
 def after_request(response):
-    """Ensure responses aren't cached"""
+    """Ensure responses aren't cached and CORS headers are set"""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
-# API Routes
 @app.route('/api/register', methods=["POST"])
 def register():
-    session.clear()
     data = request.get_json()
     
     username = data.get("username")
@@ -141,14 +154,5 @@ def get_user():
 
     return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
 
-# Serve React app (for production)
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react_app(path):
-    # This would serve your built React app in production
-    # For development, React runs on port 3000
-    # If see this message, means backend is running correctly
-    return jsonify({"message": "React app should handle this route"}), 404
-
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')

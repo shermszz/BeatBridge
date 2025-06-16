@@ -37,10 +37,14 @@ const Register = () => {
   
     // Proceed with server request
     try {
-       const response = await fetch('/api/register', {
+      const response = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         credentials: 'include',
+        mode: 'cors',
         body: JSON.stringify(formData)
       });
       
@@ -51,7 +55,7 @@ const Register = () => {
         //This is where we gather their user preferences
         navigate('/customisation');
       } else {
-        navigate('/login');
+        setErrors(data.errors || { general: "Registration failed." });
       }
     } catch (error) {
       setErrors({ general: "Network error. Try again later." });

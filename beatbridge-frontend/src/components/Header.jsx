@@ -60,11 +60,9 @@ const Header = () => {
       ) : (
       <nav>
         {/* Otherwise, Home link points to the landing page for logged-in users */}
-        <Link to='/landing'>Home</Link>
-        <Link to="/about">About</Link>
+        <Link to='/home'>Home</Link>
         {isLoggedIn ? (
           <>
-            <Link to="/upload">Upload</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
         ) : (
