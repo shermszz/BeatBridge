@@ -27,6 +27,9 @@ const Header = () => {
 
   const isLanding = location.pathname === '/landing';
 
+  //To detect when the user is on login / register pages and conditionally render simplified navigation links
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
   return (
     <header className={isLanding ? 'landing-header' : ' '}>
       <div className="logo">
@@ -46,6 +49,11 @@ const Header = () => {
             onClick={onLoginIconClick}
           />
         </div>
+      ) : (!isLoggedIn && isAuthPage) ? ( //If not logged in and on the Login / Register pages, show only the Home button and Login link
+        <nav>
+          <Link to='/landing'>Home</Link>
+          <Link to='/login'>Login</Link>
+        </nav>
       ) : (
       <nav>
         {/* Otherwise, Home link points to the landing page for logged-in users */}
