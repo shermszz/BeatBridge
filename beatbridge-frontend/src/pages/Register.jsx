@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
     confirmation: ''
   });
@@ -23,6 +24,7 @@ const Register = () => {
   
     // Client-side validation
     if (!formData.username) newErrors.username = "Username required";
+    if (!formData.email) newErrors.email = "Email required";
     if (!formData.password) newErrors.password = "Password required";
     if (formData.password !== formData.confirmation) {
       newErrors.confirmation = "Passwords do not match";
@@ -35,9 +37,10 @@ const Register = () => {
   
     // Proceed with server request
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(formData)
       });
       
@@ -72,6 +75,16 @@ const Register = () => {
           onChange={handleChange}
         />
       </div>
+       <div className="mb-3">
+        <input
+          className="form-control mx-auto w-auto inputdeco my-input"
+          name="email"
+          placeholder="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+      </div>
       <div className="mb-3">
         <input
           className="form-control mx-auto w-auto inputdeco my-input"
@@ -93,6 +106,9 @@ const Register = () => {
         />
         {errors && errors.username && (
           <div className="error-message">{errors.username}</div>
+        )}
+        {errors && errors.email && (
+          <div className="error-message">{errors.email}</div>
         )}
         {errors && errors.password && (
           <div className="error-message">{errors.password}</div>

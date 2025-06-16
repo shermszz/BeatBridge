@@ -20,7 +20,9 @@ CORS(app,
 if 'DATABASE_PASSWORD' not in os.environ:
     os.environ['DATABASE_PASSWORD'] = input("Enter your PostgreSQL password: ")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:    os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -35,6 +37,7 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     hash = db.Column(db.String(200), nullable=False)
 
 # Create tables
@@ -56,6 +59,7 @@ def register():
     data = request.get_json()
     
     username = data.get("username")
+    email = data.get("email")
     password = data.get("password")
     confirmation = data.get("confirmation")
     
@@ -63,7 +67,10 @@ def register():
     
     if not username:
         errors['username'] = "Please provide a username"
-    
+
+    if not email:
+        errors['email'] = "Please provide an email address"
+
     if not password:
         errors['password'] = "Password is required to continue"
     
@@ -74,14 +81,18 @@ def register():
         return jsonify({"errors": errors}), 400
     
     # Check if username already exists
-    existing_user = User.query.filter_by(username=username).first()
-    if existing_user:
+    if User.query.filter_by(username=username).first():
         errors['username'] = "Username already exists"
+        return jsonify({"errors": errors}), 400
+    
+    # Check if email already exists
+    if User.query.filter_by(email=email).first():
+        errors['email'] = "Email already exists"
         return jsonify({"errors": errors}), 400
     
     # Create new user
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    new_user = User(username=username, hash=hashed_password)
+    new_user = User(username=username, email=email, hash=hashed_password)
     db.session.add(new_user)
     db.session.commit()
     
@@ -127,8 +138,8 @@ def get_user():
     user = User.query.get(session['user_id'])
     if not user:
         return jsonify({"error": "User not found"}), 404
-    
-    return jsonify({"id": user.id, "username": user.username}), 200
+
+    return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
 
 # Serve React app (for production)
 @app.route('/', defaults={'path': ''})

@@ -5,21 +5,31 @@ import logo from '../styles/images/Beatbridge.png';
 
 const Home = () => {
   const navigate = useNavigate();
+  const isLoggedIn = localStorage.getItem('user_id');
 
   const handleGetStarted = () => {
     navigate('/register');
   };
 
   return (
-    <div className="hero">
+    <div className="hero home-page">
+      {isLoggedIn && (
+        <div className="dashboard-buttons">
+          <button className="dash-btn">Song Recommendation</button>
+          <button className="dash-btn">Rhythm Trainer</button>
+          <button className="dash-btn">Jam Session</button>
+          <button className="dash-btn">Profile</button>
+        </div>
+      )}
       <h1>Welcome to BeatBridge</h1>
       <img src={logo} width="300" height="300" alt="BeatBridge logo" />
-      {/* Let's get started button */}
-      <div className="center-btn">
-        <button className="get-started-btn" onClick={handleGetStarted}>
-          Let's Get Started
-        </button>
-      </div>
+      {!isLoggedIn && (
+        <div className="center-btn">
+          <button className="get-started-btn" onClick={handleGetStarted}>
+            Let's Get Started
+          </button>
+        </div>
+      )}
       <p>Discover, share, and connect through music. The bridge between artists and listeners.</p>
     </div>
   );

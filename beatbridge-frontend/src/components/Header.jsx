@@ -9,7 +9,10 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST' });
+     await fetch('http://localhost:5000/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
       localStorage.removeItem('user_id');
       navigate('/');
     } catch (error) {

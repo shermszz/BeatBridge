@@ -31,9 +31,10 @@ const Login = () => {
 
     // Proceed with server request
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials:'include',
         body: JSON.stringify(formData),
       });
 
@@ -44,8 +45,7 @@ const Login = () => {
         //Navigate to the main home page once logged in
         navigate('/home');
       } else {
-        // Success: navigate to home or dashboard
-        navigate('/'); // or wherever you want to redirect after login
+        setErrors(data.errors || { general: 'Login failed' });
       }
     } catch (error) {
       setErrors({ general: "Network error. Try again later." });
