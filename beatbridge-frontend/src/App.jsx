@@ -16,7 +16,7 @@ function App() {
       <Layout>
         <Routes>
           {/* Landing page for new users */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/landing" element={<Landing />} />
 
           {/* Home page for logged-in users */}
           <Route path="/home" element={<Home />} />
@@ -27,7 +27,7 @@ function App() {
 
           {/* Page to gather user preferences after registration */}
           <Route path="/customisation" element={<Customisation />} />
-          
+
           <Route path="/upload" element={<Upload />} />
         </Routes>
       </Layout>
