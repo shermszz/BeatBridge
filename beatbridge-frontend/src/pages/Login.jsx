@@ -38,8 +38,11 @@ const Login = () => {
       });
 
       const data = await response.json();
-      if (!response.ok) {
-        setErrors(data.errors || { general: "Login failed. Please check your credentials." });
+
+      if (response.ok) {
+        localStorage.setItem('user_id', data.user_id);
+        //Navigate to the main home page once logged in
+        navigate('/home');
       } else {
         // Success: navigate to home or dashboard
         navigate('/'); // or wherever you want to redirect after login

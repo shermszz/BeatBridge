@@ -42,8 +42,11 @@ const Register = () => {
       });
       
       const data = await response.json();
-      if (!response.ok) {
-        setErrors(data.errors || { general: "Registration failed" });
+
+      if (response.ok) {
+        //After successful registration, send user to the customisation page
+        //This is where we gather their user preferences
+        navigate('/customisation');
       } else {
         navigate('/login');
       }
