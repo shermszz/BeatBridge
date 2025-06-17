@@ -7,6 +7,13 @@ const Customisation = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+// Error handling
+  const [validationErrors, setValidationErrors] = useState({
+    skill: '',
+    practice: '',
+    genres: ''
+  });
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   // store selections in component state 
   const [skill, setSkill] = useState('');
@@ -34,16 +41,52 @@ const Customisation = () => {
     );
   };
 
+  const validateForm = () => {
+    const errors = {
+      skill: '',
+      practice: '',
+      genres: ''
+    };
+
+    if (!skill) {
+      errors.skill = 'Please select your skill level';
+    }
+    if (!practice) {
+      errors.practice = 'Please select your practice frequency';
+    }
+    if (genres.length === 0) {
+      errors.genres = 'Please select at least one genre';
+    }
+
+    setValidationErrors(errors);
+    return Object.values(errors).every(error => error === '');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
     
+    // Clear any previous errors
+    setError('');
+    setValidationErrors({
+      skill: '',
+      practice: '',
+      genres: ''
+    });
+
+    // Run validation
+    const isValid = validateForm();
+
+    if (!isValid) {
+      return;
+    }
+
     // If form is not valid or already submitting, do nothing
     if (!isFormValid || isSubmitting) {
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
 
     try {
       // Send customization data to backend
@@ -60,14 +103,20 @@ const Customisation = () => {
         })
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         navigate('/home');
       } else if (response.status === 401) {
         // If unauthorized, redirect to login
         navigate('/login');
       } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to save customization');
+        // Handle validation errors from backend
+        if (data.errors) {
+          setValidationErrors(data.errors);
+        } else {
+          setError(data.error || 'Failed to save customization');
+        }
       }
     } catch (error) {
       setError('Network error. Please try again.');
@@ -103,7 +152,7 @@ const Customisation = () => {
         {/* Select drum skill level */}
         <div className="customisation-section">
           <h2>What's your current level?</h2>
-          <p className="section-subtitle">We'll get you on the right track</p>
+          <p className="section-subtitle">We'll get you on the right track.</p>
           <div className="options-grid">
             {skillOptions.map(({ value, description }) => (
               <button
@@ -141,8 +190,8 @@ const Customisation = () => {
 
         {/* Select favourite genres */}
         <div className="customisation-section">
-          <h2>Pick 1 or more you'd like to play</h2>
-          <p className="section-subtitle">You can choose more later</p>
+          <h2>Pick 1 or more genres you'd like to play</h2>
+          <p className="section-subtitle">You can choose more later.</p>
           <div className="genre-grid">
             {genreOptions.map((genre) => (
               <button
@@ -158,12 +207,25 @@ const Customisation = () => {
           </div>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {/* Error Messages Section - Only visible after submit attempt (Pressing Continue) */}
+        {hasAttemptedSubmit && (
+          <div className="error-messages">
+            {validationErrors.skill && (
+              <p className="error-text">{validationErrors.skill}</p>
+            )}
+            {validationErrors.practice && (
+              <p className="error-text">{validationErrors.practice}</p>
+            )}
+            {validationErrors.genres && (
+              <p className="error-text">{validationErrors.genres}</p>
+            )}
+            {error && <p className="error-text">{error}</p>}
+          </div>
+        )}
 
         <button 
           type="submit" 
           className={`continue-btn${!isFormValid ? ' disabled' : ''}${isSubmitting ? ' submitting' : ''}`}
-          disabled={!isFormValid || isSubmitting}
         >
           {isSubmitting ? 'Saving...' : 'Continue'}
         </button>

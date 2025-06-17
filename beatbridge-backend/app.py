@@ -229,11 +229,22 @@ def get_user():
 def save_customization():
     try:
         data = request.get_json()
+        errors = {}
         
-        # Validate required fields
-        required_fields = ["skill_level", "practice_frequency", "favorite_genres"]
-        if not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields"}), 400
+        # Validate skill level
+        if not data.get("skill_level"):
+            errors["skill"] = "Please select your skill level"
+        
+        # Validate practice frequency
+        if not data.get("practice_frequency"):
+            errors["practice"] = "Please select your practice frequency"
+        
+        # Validate favorite genres
+        if not data.get("favorite_genres") or len(data.get("favorite_genres", [])) == 0:
+            errors["genres"] = "Please select at least one genre"
+            
+        if errors:
+            return jsonify({"errors": errors}), 400
             
         # Get current user's ID from session
         user_id = session.get("user_id")

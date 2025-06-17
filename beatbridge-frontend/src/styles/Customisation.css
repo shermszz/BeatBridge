@@ -160,14 +160,18 @@
   transform: none;
 }
 
-.error-message {
-  color: #ff4f4f;
-  background: rgba(255, 79, 79, 0.1);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  text-align: center;
+.error-messages {
+  margin: 20px auto;
+  max-width: 80%;
+}
+
+.error-messages .error-text {
+  /* !important override any other styles */
+  color: #FF4646 !important;
+  font-size: 20px;
+  margin: 15px 0;
   font-weight: 500;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
