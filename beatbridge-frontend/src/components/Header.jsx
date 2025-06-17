@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation} from 'react-router-dom';
 import profileIcon from '../styles/images/loginIcon.svg';
+import defaultProfile from '../styles/images/loginIcon.svg';
+import logo from '../styles/images/Beatbridge.png';
+import '../styles/Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoggedIn = localStorage.getItem('user_id');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownTimeout = useRef();
+  const profilePic = localStorage.getItem('profile_pic') || defaultProfile;
+  const dropdownRef = useRef();
 
   const handleLogout = async () => {
     try {
@@ -33,10 +40,33 @@ const Header = () => {
   //To detect when the user is on login / register pages and conditionally render simplified navigation links
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
+  // Dropdown handlers with delay
+  const handleProfileMouseEnter = () => {
+    clearTimeout(dropdownTimeout.current);
+    setDropdownOpen(true);
+  };
+  const handleProfileMouseLeave = () => {
+    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
+  };
+  const handleDropdownMouseEnter = () => {
+    clearTimeout(dropdownTimeout.current);
+    setDropdownOpen(true);
+  };
+  const handleDropdownMouseLeave = () => {
+    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
+  };
+
   return (
     <header className={isLanding ? 'landing-header' : ' '}>
-      <div className="logo">
-        BeatBridge
+      <div
+        className="logo-group"
+        onClick={() => {
+          if (isLanding || isAuthPage) navigate('/landing');
+        }}
+        style={{ cursor: (isLanding || isAuthPage) ? 'pointer' : 'default' }}
+      >
+        <img src={logo} alt="BeatBridge logo" className="header-logo-img" />
+        <span className="logo">BeatBridge</span>
       </div>
 
       {/* If user is on landing page and not logged in, show register button and login icon */}
@@ -65,8 +95,29 @@ const Header = () => {
             <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>
             <Link to="/rhythm-trainer" className="dash-btn">Rhythm Trainer</Link>
             <Link to="/jam-session" className="dash-btn">Jam Session</Link>
-            <Link to="/profile" className="dash-btn">Profile</Link>
-            <button className="dash-btn" onClick={handleLogout}>Logout</button>
+            {/* Profile Icon Dropdown */}
+            <div
+              className="profile-dropdown-wrapper"
+              onMouseEnter={handleProfileMouseEnter}
+              onMouseLeave={handleProfileMouseLeave}
+              ref={dropdownRef}
+            >
+              <img
+                src={profilePic}
+                alt="Profile"
+                className="header-profile-icon"
+              />
+              {dropdownOpen && (
+                <div
+                  className="profile-dropdown-menu"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleDropdownMouseLeave}
+                >
+                  <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
+                  <button className="profile-dropdown-item" onClick={handleLogout}>Logout</button>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <>

@@ -1,0 +1,189 @@
+.skill-btn,
+.practice-btn,
+.genre-btn {
+  margin: 0.25rem;
+}
+.skill-btn.selected,
+.practice-btn.selected,
+.genre-btn.selected {
+  background: #e03e3e;
+}
+
+.customisation-section {
+  margin-bottom: 3rem;
+  text-align: left;
+  background: rgba(30, 30, 40, 0.85);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.customisation-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: #ddd;
+  margin-bottom: 2rem;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.customisation-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.2rem;
+  background: #23234a;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.customisation-option:hover {
+  background: #2a2a4d;
+  border-color: #ff4f4f;
+}
+
+.customisation-option.selected {
+  background: #2a2a4d;
+  border-color: #ff4f4f;
+}
+
+.option-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.option-description {
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+.recommended-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #ff4f4f;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.genre-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #23234a;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+.genre-option:hover {
+  background: #2a2a4d;
+  border-color: #ff4f4f;
+}
+
+.genre-option.selected {
+  background: #2a2a4d;
+  border-color: #ff4f4f;
+}
+
+.checkmark {
+  color: #ff4f4f;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.continue-btn {
+  margin-top: 1rem;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  background: #ff4f4f;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
+  min-width: 200px;
+}
+
+.continue-btn:hover:not(.disabled):not(.submitting) {
+  background: #e03e3e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 79, 79, 0.2);
+}
+
+.continue-btn.disabled {
+  background: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.continue-btn.submitting {
+  background: #666;
+  cursor: wait;
+  opacity: 0.9;
+  transform: none;
+}
+
+.error-message {
+  color: #ff4f4f;
+  background: rgba(255, 79, 79, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .customisation-section {
+    padding: 1.5rem;
+  }
+
+  .customisation-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .genre-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+} 

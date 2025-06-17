@@ -5,6 +5,9 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 import os
+from flask_login import LoginManager, login_required, current_user, login_user, logout_user
+from datetime import datetime
+from tempfile import mkdtemp
 
 # Configure application
 app = Flask(__name__)
@@ -26,10 +29,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Configure session
+app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SECRET_KEY"] = "your-secret-key-here"
+app.config["SECRET_KEY"] = "your-secret-key"
 Session(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # Database model
 class User(db.Model):
@@ -38,10 +47,40 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     hash = db.Column(db.String(200), nullable=False)
+    customization = db.relationship('UserCustomization', backref='user', uselist=False)
+
+    def get_id(self):
+        return str(self.id)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+class UserCustomization(db.Model):
+    __tablename__ = 'user_customizations'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False)
+    skill_level = db.Column(db.String(50), nullable=False)
+    practice_frequency = db.Column(db.String(50), nullable=False)
+    favorite_genres = db.Column(db.String(500), nullable=False)  # Store as comma-separated string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # Create tables
 with app.app_context():
     db.create_all()
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 @app.route('/')
 def index():
@@ -111,37 +150,49 @@ def register():
     
     return jsonify({"message": "Registration successful"}), 201
 
-@app.route('/api/login', methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
-    
-    errors = {}
-    
-    if not username:
-        errors['username'] = "Please enter your username"
-    
-    if not password:
-        errors['password'] = "Please enter your password"
-    
-    if errors:
-        return jsonify({"errors": errors}), 400
-    
-    # Verify user credentials
-    user = User.query.filter_by(username=username).first()
-    if user is None or not check_password_hash(user.hash, password):
-        errors['general'] = "Invalid username or password"
-        return jsonify({"errors": errors}), 401
-    
-    # Store user session
-    session['user_id'] = user.id
-    return jsonify({"message": "Login successful", "user_id": user.id}), 200
+    try:
+        # Get form information
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
+
+        # Ensure username was submitted
+        if not username:
+            return jsonify({"errors": {"username": "Must provide username"}}), 400
+
+        # Ensure password was submitted
+        if not password:
+            return jsonify({"errors": {"password": "Must provide password"}}), 400
+
+        # Query database for username
+        user = User.query.filter_by(username=username).first()
+
+        # Ensure username exists and password is correct
+        if user is None or not check_password_hash(user.hash, password):
+            return jsonify({"errors": {"general": "Invalid username and/or password"}}), 401
+
+        # Remember which user has logged in
+        login_user(user)
+        session["user_id"] = user.id
+
+        return jsonify({"user_id": user.id}), 200
+
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        return jsonify({"errors": {"general": "An error occurred during login"}}), 500
 
 @app.route("/api/logout", methods=["POST"])
+@login_required
 def logout():
-    session.clear()
-    return jsonify({"message": "Logout successful"}), 200
+    try:
+        logout_user()
+        session.clear()
+        return jsonify({"message": "Logged out successfully"}), 200
+    except Exception as e:
+        print(f"Logout error: {str(e)}")
+        return jsonify({"error": "An error occurred during logout"}), 500
 
 @app.route('/api/user', methods=["GET"])
 def get_user():
@@ -153,6 +204,45 @@ def get_user():
         return jsonify({"error": "User not found"}), 404
 
     return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
+
+@app.route("/api/save-customization", methods=["POST"])
+@login_required
+def save_customization():
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ["skill_level", "practice_frequency", "favorite_genres"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+            
+        # Get current user's ID from session
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+        
+        # Update or create customization
+        customization = UserCustomization.query.filter_by(user_id=user_id).first()
+        if customization:
+            customization.skill_level = data["skill_level"]
+            customization.practice_frequency = data["practice_frequency"]
+            customization.favorite_genres = ','.join(data["favorite_genres"])
+        else:
+            customization = UserCustomization(
+                user_id=user_id,
+                skill_level=data["skill_level"],
+                practice_frequency=data["practice_frequency"],
+                favorite_genres=','.join(data["favorite_genres"])
+            )
+            db.session.add(customization)
+        
+        db.session.commit()
+        return jsonify({"message": "Customization saved successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving customization: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')

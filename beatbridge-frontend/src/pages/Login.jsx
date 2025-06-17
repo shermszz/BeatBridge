@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Login.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -91,15 +92,7 @@ const Login = () => {
       <button className="btn btn-primary buttondeco" type="submit">
         Log in
       </button>
-      <hr
-        style={{
-          marginTop: "1.5rem",
-          marginBottom: "1.5rem",
-          border: "none",
-          borderTop: "1.5px solid #fff",
-          opacity: "0.3",
-        }}
-      />
+      <hr className="login-divider" />
       <div className="login-redirect">
         <p>Don't have an account yet?</p>
         <a href="/register" className="login-btn">
