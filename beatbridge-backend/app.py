@@ -224,6 +224,28 @@ def get_user():
 
     return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
 
+@app.route("/api/get-customization", methods=["GET"])
+@login_required
+def get_customization():
+    try:
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+        
+        customization = UserCustomization.query.filter_by(user_id=user_id).first()
+        if not customization:
+            return jsonify({"error": "No customization found"}), 404
+        
+        return jsonify({
+            "skill_level": customization.skill_level,
+            "practice_frequency": customization.practice_frequency,
+            "favorite_genres": customization.favorite_genres
+        }), 200
+        
+    except Exception as e:
+        print(f"Error fetching customization: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.route("/api/save-customization", methods=["POST"])
 @login_required
 def save_customization():
