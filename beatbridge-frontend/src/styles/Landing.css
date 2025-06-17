@@ -6,12 +6,16 @@
   padding: 3rem 2rem;
   background: transparent;
   margin-bottom: 2rem;
+  gap: 2rem;
+  min-height: 400px;
 }
 .home-section:nth-child(even) {
   background: #23234a;
 }
 .home-content {
   flex: 1;
+  padding: 2rem;
+  min-width: 400px;
   margin-left: 2rem;
   color: #fff;
   font-family: 'Montserrat', Arial, sans-serif;
@@ -35,6 +39,8 @@
 }
 .home-img {
   padding: 1rem;
+  max-width: 600px;
+  min-width: 500px;
 }
 .home-img img {
   max-width: 100%;
@@ -180,9 +186,10 @@
   background: #11112b;
   color: #fff;
   text-align: center;
-  padding: 3rem 2rem;
+  padding: 4rem 2rem;
   border-radius: 18px;
   margin-top: 2rem;
+  min-height: auto;
 }
 
 /* FAQ Section */
@@ -255,11 +262,18 @@
 .home-content-center {
   text-align: center;
   width: 100%;
+  min-width: 100%;
+  padding: 0;
+}
+
+.home-content-center h2 {
+  margin-bottom: 2rem;
 }
 
 .feature-image {
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   transition: transform 0.3s ease;
@@ -267,4 +281,35 @@
 
 .feature-image:hover {
   transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+  .home-section {
+    flex-direction: column;
+    padding: 2rem 1rem;
+    min-height: auto;
+  }
+
+  .home-img {
+    width: 100%;
+    max-width: 100%;
+    min-width: auto;
+  }
+
+  .home-content {
+    min-width: auto;
+    padding: 1rem;
+  }
+
+  .feature-image {
+    height: 250px;
+  }
+
+  .home-section.home-cta {
+    padding: 3rem 1.5rem;
+  }
+
+  .home-content.home-content-center h2 {
+    margin-bottom: 1.5rem;
+  }
 } 

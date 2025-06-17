@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Landing.css';
 import mainHeroImg from '../styles/images/landingMainIcon.jpg';
 import withoutDrumKitImage from '../styles/images/WithoutDrumKitImage.png';
+import songRecommendationImage from '../styles/images/SongRecommendationImage.jpg';
+import rhythmTrainerImage from '../styles/images/RhythmTrainerImage.jpg';
+import jamSessionImage from '../styles/images/JamSessionImage.jpg';
 
 //Can add more images into this page later on 
 
@@ -54,7 +57,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Feature 1 */}
+      {/* Benefits of BeatBridge features*/}
       <section className="home-section home-feature">
         <div className="home-img">
           <img src={withoutDrumKitImage} alt="Learn drums without a drumkit" className="feature-image" />
@@ -65,27 +68,37 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Zig-zag Features */}
+      {/* Song Recommendation Feature */}
       <section className="home-section home-feature home-zigzag">
         <div className="home-content">
           <h2>Song Recommendation</h2>
           <p>Get personalized song recommendations to match your skill level and musical taste. Practice with real music and accelerate your drumming journey.</p>
         </div>
-        <div className="home-img">{DRUM_PLACEHOLDER_WIDE}</div>
+        <div className="home-img">
+          <img src={songRecommendationImage} alt="Song recommendation feature" className="feature-image" />
+        </div>
       </section>
+
+      {/* Rhythm Trainer Feature */}
       <section className="home-section home-feature">
-        <div className="home-img">{DRUM_PLACEHOLDER_WIDE}</div>
+        <div className="home-img">
+          <img src={rhythmTrainerImage} alt="Rhythm trainer feature" className="feature-image" />
+        </div>
         <div className="home-content">
           <h2>Rhythm Trainer</h2>
           <p>Sharpen your timing and coordination with interactive rhythm trainers. Practice patterns, fills, and grooves with instant feedback.</p>
         </div>
       </section>
+
+      {/* Jam Session Feature */}
       <section className="home-section home-feature home-zigzag">
         <div className="home-content">
           <h2>Jam Session</h2>
           <p>Join virtual jam sessions, play along with backing tracks, and connect with other drummers. Experience the joy of making music together—no matter where you are.</p>
         </div>
-        <div className="home-img">{DRUM_PLACEHOLDER}</div>
+        <div className="home-img">
+          <img src={jamSessionImage} alt="Jam session feature" className="feature-image" />
+        </div>
       </section>
 
       {/* FAQ Section */}
