@@ -116,7 +116,9 @@ const Header = () => {
                         onMouseLeave={handleDropdownMouseLeave}
                       >
                         <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
-                        <button className="profile-dropdown-item" onClick={handleLogout}>Logout</button>
+                        <div className="profile-dropdown-item">
+                          <button onClick={handleLogout}>Logout</button>
+                        </div>
                       </div>
                     )}
                   </div>
