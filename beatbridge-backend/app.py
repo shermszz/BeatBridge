@@ -40,6 +40,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Custom unauthorized handler
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request.path.startswith('/api/'):
+        return jsonify({"error": "Unauthorized", "message": "Please log in"}), 401
+    return jsonify({"error": "Unauthorized"}), 401
+
 # Database model
 class User(db.Model):
     __tablename__ = 'users'
@@ -142,16 +149,28 @@ def register():
         errors['email'] = "Email already exists"
         return jsonify({"errors": errors}), 400
     
-    # Create new user
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    new_user = User(username=username, email=email, hash=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({"message": "Registration successful"}), 201
+    try:
+        # Create new user
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, email=email, hash=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Log the user in after registration
+        login_user(new_user)
+        session["user_id"] = new_user.id
+        
+        return jsonify({"message": "Registration successful", "user_id": new_user.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Registration error: {str(e)}")
+        return jsonify({"error": "An error occurred during registration"}), 500
 
-@app.route("/api/login", methods=["POST"])
+@app.route("/api/login", methods=["GET", "POST"])
 def login():
+    if request.method == "GET":
+        return jsonify({"message": "Please log in"}), 200
+        
     try:
         # Get form information
         data = request.get_json()

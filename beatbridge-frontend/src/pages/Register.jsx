@@ -52,11 +52,12 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        //After successful registration, send user to the customisation page
-        //This is where we gather their user preferences
+        // Store the user ID in localStorage
+        localStorage.setItem('user_id', data.user_id);
+        // Navigate to the customisation page after successful registration
         navigate('/customisation');
       } else {
-        setErrors(data.errors || { general: "Registration failed." });
+        setErrors(data.errors || { general: 'Registration failed' });
       }
     } catch (error) {
       setErrors({ general: "Network error. Try again later." });

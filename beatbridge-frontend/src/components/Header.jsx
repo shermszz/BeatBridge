@@ -36,8 +36,7 @@ const Header = () => {
   }
 
   const isLanding = location.pathname === '/landing';
-
-  //To detect when the user is on login / register pages and conditionally render simplified navigation links
+  const isCustomisation = location.pathname === '/customisation';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   // Dropdown handlers with delay
@@ -69,63 +68,68 @@ const Header = () => {
         <span className="logo">BeatBridge</span>
       </div>
 
-      {/* If user is on landing page and not logged in, show register button and login icon */}
-      {isLanding && !isLoggedIn ? (
-        <div className="landing-actions">
-          <button className="header-get-started-btn" onClick={handleGetStarted}>
-            Let's Get Started
-          </button>
-          <img
-            src={profileIcon}
-            alt="Login"
-            className="login-icon"
-            onClick={onLoginIconClick}
-          />
-        </div>
-      ) : (!isLoggedIn && isAuthPage) ? ( //If not logged in and on the Login / Register pages, show only the Home button and Login link
-        <nav>
-          <Link to='/landing'>Home</Link>
-          <Link to='/login'>Login</Link>
-        </nav>
-      ) : (
-      <nav>
-        {isLoggedIn ? (
-          <div className="dashboard-buttons">
-            <Link to="/home" className="dash-btn">Home</Link>
-            <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>
-            <Link to="/rhythm-trainer" className="dash-btn">Rhythm Trainer</Link>
-            <Link to="/jam-session" className="dash-btn">Jam Session</Link>
-            {/* Profile Icon Dropdown */}
-            <div
-              className="profile-dropdown-wrapper"
-              onMouseEnter={handleProfileMouseEnter}
-              onMouseLeave={handleProfileMouseLeave}
-              ref={dropdownRef}
-            >
+      {/* Show navigation only if not on customisation page */}
+      {!isCustomisation && (
+        <>
+          {/* If user is on landing page and not logged in, show register button and login icon */}
+          {isLanding && !isLoggedIn ? (
+            <div className="landing-actions">
+              <button className="header-get-started-btn" onClick={handleGetStarted}>
+                Let's Get Started
+              </button>
               <img
-                src={profilePic}
-                alt="Profile"
-                className="header-profile-icon"
+                src={profileIcon}
+                alt="Login"
+                className="login-icon"
+                onClick={onLoginIconClick}
               />
-              {dropdownOpen && (
-                <div
-                  className="profile-dropdown-menu"
-                  onMouseEnter={handleDropdownMouseEnter}
-                  onMouseLeave={handleDropdownMouseLeave}
-                >
-                  <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
-                  <button className="profile-dropdown-item" onClick={handleLogout}>Logout</button>
-                </div>
-              )}
             </div>
-          </div>
-        ) : (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
-          </>
-        )}
-      </nav>
+          ) : (!isLoggedIn && isAuthPage) ? (
+            <nav>
+              <Link to='/landing'>Home</Link>
+              <Link to='/login'>Login</Link>
+            </nav>
+          ) : (
+            <nav>
+              {isLoggedIn ? (
+                <div className="dashboard-buttons">
+                  <Link to="/home" className="dash-btn">Home</Link>
+                  <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>
+                  <Link to="/rhythm-trainer" className="dash-btn">Rhythm Trainer</Link>
+                  <Link to="/jam-session" className="dash-btn">Jam Session</Link>
+                  {/* Profile Icon Dropdown */}
+                  <div
+                    className="profile-dropdown-wrapper"
+                    onMouseEnter={handleProfileMouseEnter}
+                    onMouseLeave={handleProfileMouseLeave}
+                    ref={dropdownRef}
+                  >
+                    <img
+                      src={profilePic}
+                      alt="Profile"
+                      className="header-profile-icon"
+                    />
+                    {dropdownOpen && (
+                      <div
+                        className="profile-dropdown-menu"
+                        onMouseEnter={handleDropdownMouseEnter}
+                        onMouseLeave={handleDropdownMouseLeave}
+                      >
+                        <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
+                        <button className="profile-dropdown-item" onClick={handleLogout}>Logout</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Link to="/login">Login</Link>
+                  <Link to="/register">Register</Link>
+                </>
+              )}
+            </nav>
+          )}
+        </>
       )}
     </header>
   );

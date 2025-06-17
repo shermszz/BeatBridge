@@ -14,6 +14,14 @@ const Customisation = () => {
   const [genres, setGenres] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // Check if user is logged in
+  useEffect(() => {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
   // Check if all required fields are filled
   useEffect(() => {
     setIsFormValid(skill !== '' && practice !== '' && genres.length > 0);
@@ -54,6 +62,9 @@ const Customisation = () => {
 
       if (response.ok) {
         navigate('/home');
+      } else if (response.status === 401) {
+        // If unauthorized, redirect to login
+        navigate('/login');
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to save customization');
