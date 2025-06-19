@@ -296,5 +296,49 @@ def save_customization():
         print(f"Error saving customization: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
+# Update user profile
+@app.route('/api/update-user', methods=["POST"])
+@login_required
+def update_user():
+    # Get new password, email, and username from request if provided
+    data = request.get_json()
+    new_username = data.get("username")
+    new_email = data.get("email")
+    new_password = data.get("password")
+    user_id = session.get("user_id")
+    errors = {}
+
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Check if username is taken by another user
+    if new_username and new_username != user.username:
+        if User.query.filter(User.username == new_username, User.id != user_id).first():
+            errors["username"] = "Username already exists"
+    # Check if email is taken by another user
+    if new_email and new_email != user.email:
+        if User.query.filter(User.email == new_email, User.id != user_id).first():
+            errors["email"] = "Email already exists"
+
+    if errors:
+        return jsonify({"errors": errors}), 400
+
+    # Update username if changed and not taken
+    if new_username:
+        user.username = new_username
+    # Update email if changed and not taken
+    if new_email:
+        user.email = new_email
+    # If a new password is provided, hash and update it
+    if new_password:
+        user.hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+    # Update the user in the database with the new information
+    db.session.commit()
+    return jsonify({"message": "User updated successfully"}), 200
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')

@@ -432,4 +432,15 @@
   border-color: #e03e3e;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 79, 79, 0.3);
-} 
+}
+
+/* Error Message Styling */
+.profile-error {
+  color: #ff4f4f;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 1em;
+  text-align: left;
+  font-weight: 500;
+}
+

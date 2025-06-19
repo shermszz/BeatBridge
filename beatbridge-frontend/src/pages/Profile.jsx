@@ -9,11 +9,11 @@ const Profile = () => {
   const [form, setForm] = useState({
     username: '',
     email: '',
-    firstName: '',
-    lastName: '',
     password: '',
     confirmPassword: ''
   });
+  const [formErrors, setFormErrors] = useState({});
+  const [passwordError, setPasswordError] = useState('');
   const [customizations, setCustomizations] = useState({
     skill_level: '',
     practice_frequency: '',
@@ -86,11 +86,46 @@ const Profile = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormErrors({});
+    setPasswordError('');
+    // Password match validation
+    if (form.password !== form.confirmPassword) {
+      setPasswordError('Passwords do not match');
+      setIsSubmitting(false);
+      return;
+    }
     try {
-      // TODO: Save profile changes to backend
-      alert('Profile changes saved!');
+      // Prepare payload for update
+      const payload = {
+        username: form.username,
+        email: form.email
+      };
+      // Only include password if user entered one
+      if (form.password) {
+        payload.password = form.password;
+      }
+      // Send update request to backend
+      const response = await fetch('/api/update-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert('Profile changes saved!');
+        // Clear password fields after successful update
+        setForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
+      } else if (data.errors) {
+        setFormErrors(data.errors);
+      } else {
+        alert('Failed to save changes');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
+      alert('Error saving profile');
     } finally {
       setIsSubmitting(false);
     }
@@ -190,27 +225,20 @@ const Profile = () => {
             <div className="profile-row">
               <div className="profile-field">
                 <label>Username</label>
-                <input type="text" name="username" value={form.username} onChange={handleInputChange} disabled />
+                <input type="text" name="username" value={form.username} onChange={handleInputChange} />
+                {formErrors.username && <div className="profile-error">{formErrors.username}</div>}
               </div>
               <div className="profile-field">
                 <label>Email</label>
-                <input type="email" name="email" value={form.email} onChange={handleInputChange} disabled />
-              </div>
-            </div>
-            <div className="profile-row">
-              <div className="profile-field">
-                <label>First name</label>
-                <input type="text" name="firstName" value={form.firstName} onChange={handleInputChange} />
-              </div>
-              <div className="profile-field">
-                <label>Last name</label>
-                <input type="text" name="lastName" value={form.lastName} onChange={handleInputChange} />
+                <input type="email" name="email" value={form.email} onChange={handleInputChange} />
+                {formErrors.email && <div className="profile-error">{formErrors.email}</div>}
               </div>
             </div>
             <div className="profile-row">
               <div className="profile-field">
                 <label>Change password</label>
                 <input type="password" name="password" value={form.password} onChange={handleInputChange} />
+                {passwordError && <div className="profile-error">{passwordError}</div>}
               </div>
               <div className="profile-field">
                 <label>Confirm new password</label>
