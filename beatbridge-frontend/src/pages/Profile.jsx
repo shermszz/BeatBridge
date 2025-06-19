@@ -6,6 +6,7 @@ import '../styles/Profile.css';
 const Profile = () => {
   const navigate = useNavigate();
   const [profilePic, setProfilePic] = useState(defaultProfile);
+  const [selectedProfilePic, setSelectedProfilePic] = useState(null);
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -46,6 +47,14 @@ const Profile = () => {
           username: userData.username,
           email: userData.email
         }));
+        // Set profile picture if available
+        if (userData.profile_pic_url) {
+          setProfilePic(userData.profile_pic_url);
+          localStorage.setItem('profile_pic', userData.profile_pic_url);
+        } else {
+          setProfilePic(defaultProfile);
+          localStorage.setItem('profile_pic', defaultProfile);
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -77,6 +86,8 @@ const Profile = () => {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setSelectedProfilePic(file);
+      // Show preview immediately
       const reader = new FileReader();
       reader.onload = (ev) => setProfilePic(ev.target.result);
       reader.readAsDataURL(file);
@@ -95,16 +106,32 @@ const Profile = () => {
       return;
     }
     try {
-      // Prepare payload for update
+      // 1. Upload profile picture if selected
+      if (selectedProfilePic) {
+        const formData = new FormData();
+        formData.append('profile_pic', selectedProfilePic);
+        const response = await fetch('/api/upload-profile-pic', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        const data = await response.json();
+        if (response.ok && data.profile_pic_url) {
+          setProfilePic(data.profile_pic_url);
+          localStorage.setItem('profile_pic', data.profile_pic_url);
+          window.dispatchEvent(new Event('profilePicUpdated'));
+        } else {
+          alert(data.error || 'Failed to upload profile picture');
+        }
+      }
+      // 2. Save other profile changes (username, email, password)
       const payload = {
         username: form.username,
         email: form.email
       };
-      // Only include password if user entered one
       if (form.password) {
         payload.password = form.password;
       }
-      // Send update request to backend
       const response = await fetch('/api/update-user', {
         method: 'POST',
         headers: {
@@ -116,8 +143,8 @@ const Profile = () => {
       const data = await response.json();
       if (response.ok) {
         alert('Profile changes saved!');
-        // Clear password fields after successful update
         setForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
+        setSelectedProfilePic(null);
       } else if (data.errors) {
         setFormErrors(data.errors);
       } else {

@@ -1,4 +1,4 @@
-from flask import Flask, request, session, jsonify, make_response
+from flask import Flask, request, session, jsonify, make_response, send_from_directory
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -8,6 +8,7 @@ import os
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from datetime import datetime
 from tempfile import mkdtemp
+from werkzeug.utils import secure_filename
 
 # Configure application
 app = Flask(__name__)
@@ -54,6 +55,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     hash = db.Column(db.String(200), nullable=False)
+    profile_pic_url = db.Column(db.String(255))  # Profile picture URL
     customization = db.relationship('UserCustomization', backref='user', uselist=False)
 
     def get_id(self):
@@ -222,7 +224,12 @@ def get_user():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    return jsonify({"id": user.id, "username": user.username, "email": user.email}), 200
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "profile_pic_url": user.profile_pic_url  # Return profile picture URL
+    }), 200
 
 @app.route("/api/get-customization", methods=["GET"])
 @login_required
@@ -339,6 +346,40 @@ def update_user():
     # Update the user in the database with the new information
     db.session.commit()
     return jsonify({"message": "User updated successfully"}), 200
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads', 'profile_pics')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/upload-profile-pic', methods=['POST'])
+@login_required
+def upload_profile_pic():
+    if 'profile_pic' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['profile_pic']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        user_id = session.get('user_id')
+        ext = filename.rsplit('.', 1)[1].lower()
+        filename = f"user_{user_id}.{ext}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        user = User.query.get(user_id)
+        user.profile_pic_url = f"/uploads/profile_pics/{filename}"
+        db.session.commit()
+        return jsonify({'profile_pic_url': user.profile_pic_url}), 200
+    else:
+        return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/uploads/profile_pics/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')

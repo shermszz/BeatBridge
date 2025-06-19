@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation} from 'react-router-dom';
 import profileIcon from '../styles/images/loginIcon.svg';
 import defaultProfile from '../styles/images/loginIcon.svg';
@@ -11,8 +11,16 @@ const Header = () => {
   const isLoggedIn = localStorage.getItem('user_id');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownTimeout = useRef();
-  const profilePic = localStorage.getItem('profile_pic') || defaultProfile;
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profile_pic') || defaultProfile);
   const dropdownRef = useRef();
+
+  useEffect(() => {
+    const updateProfilePic = () => {
+      setProfilePic(localStorage.getItem('profile_pic') || defaultProfile);
+    };
+    window.addEventListener('profilePicUpdated', updateProfilePic);
+    return () => window.removeEventListener('profilePicUpdated', updateProfilePic);
+  }, []);
 
   const handleLogout = async () => {
     try {
