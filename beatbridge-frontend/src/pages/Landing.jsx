@@ -7,15 +7,6 @@ import songRecommendationImage from '../styles/images/SongRecommendationImage.jp
 import rhythmTrainerImage from '../styles/images/RhythmTrainerImage.jpg';
 import jamSessionImage from '../styles/images/JamSessionImage.jpg';
 
-//Can add more images into this page later on 
-
-const DRUM_PLACEHOLDER = (
-  <svg width="140" height="120" viewBox="0 0 140 120" fill="none"><rect width="140" height="120" rx="12" fill="#23234a"/><text x="50%" y="50%" textAnchor="middle" fill="#ff4f4f" fontSize="18" dy=".3em">Drums</text></svg>
-);
-const DRUM_PLACEHOLDER_WIDE = (
-  <svg width="180" height="100" viewBox="0 0 180 100" fill="none"><rect width="180" height="100" rx="12" fill="#23234a"/><text x="50%" y="50%" textAnchor="middle" fill="#ff4f4f" fontSize="18" dy=".3em">Drum Set</text></svg>
-);
-
 const FAQS = [
   {
     q: 'How long does it take to learn drums?',
