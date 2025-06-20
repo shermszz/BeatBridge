@@ -40,11 +40,13 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="landing-hero">
         <div className="landing-hero-overlay">
-          <h1><strong>Drum lessons that fit your life</strong></h1>
+          <h1><strong>Your Path to Drumming Starts Here</strong></h1>
           <p className="landing-hero-desc">
-            Learn the drums in a simpler, more convenient way—at your own pace. Use our rhythm trainers and song recommendations to accelerate your learning.
+            Master the drums on your terms - no kit required. 
+            Whether you're dreaming of playing in a band or just want to groove to your favorite songs, 
+            our innovative rhythm trainers and personalized song recommendations will take you from a complete beginner to a confident drummer.
           </p>
-          <button className="get-started-btn" onClick={handleGetStarted}>Let's get started</button>
+          <button className="get-started-btn" onClick={handleGetStarted}>Start Your Drumming Journey</button>
         </div>
       </section>
 
