@@ -43,6 +43,26 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem('user_id', data.user_id);
+        // Fetch user profile to get profile_pic
+        try {
+          const userResponse = await fetch('/api/user', { credentials: 'include' });
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData.profile_pic_url) {
+              localStorage.setItem('profile_pic', userData.profile_pic_url);
+            } else {
+              localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+            }
+            window.dispatchEvent(new Event('profilePicUpdated'));
+          } else {
+            // fallback to default if user fetch fails
+            localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+            window.dispatchEvent(new Event('profilePicUpdated'));
+          }
+        } catch (e) {
+          localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+          window.dispatchEvent(new Event('profilePicUpdated'));
+        }
         //Navigate to the main home page once logged in
         navigate('/home');
       } else {
