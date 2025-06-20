@@ -8,7 +8,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import EmailVerification from './pages/EmailVerification';
 import Customisation from './pages/Customisation';
-import Upload from './pages/Upload';
 import Profile from './pages/Profile';
 import './styles/App.css';
 
@@ -33,8 +32,6 @@ function App() {
 
           {/* Page to gather user preferences after registration */}
           <Route path="/customisation" element={<Customisation />} />
-
-          <Route path="/upload" element={<Upload />} />
 
           <Route path="/profile" element={<Profile />} />
         </Routes>

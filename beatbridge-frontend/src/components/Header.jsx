@@ -46,6 +46,7 @@ const Header = () => {
   const isLanding = location.pathname === '/landing';
   const isCustomisation = location.pathname === '/customisation';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isVerificationPage = location.pathname === '/verify-email';
 
   // Dropdown handlers with delay
   const handleProfileMouseEnter = () => {
@@ -64,13 +65,13 @@ const Header = () => {
   };
 
   return (
-    <header className={isLanding ? 'landing-header' : ' '}>
+    <header className={isLanding || isVerificationPage ? 'landing-header' : ' '}>
       <div
         className="logo-group"
         onClick={() => {
-          if (isLanding || isAuthPage) navigate('/landing');
+          if (isLanding || isAuthPage || isVerificationPage) navigate('/landing');
         }}
-        style={{ cursor: (isLanding || isAuthPage) ? 'pointer' : 'default' }}
+        style={{ cursor: (isLanding || isAuthPage || isVerificationPage) ? 'pointer' : 'default' }}
       >
         <img src={logo} alt="BeatBridge logo" className="header-logo-img" />
         <span className="logo">BeatBridge</span>
@@ -92,6 +93,11 @@ const Header = () => {
                 onClick={onLoginIconClick}
               />
             </div>
+          ) : isVerificationPage ? (
+            <nav>
+              <Link to='/landing'>Home</Link>
+              <Link to='/login'>Login</Link>
+            </nav>
           ) : (!isLoggedIn && isAuthPage) ? (
             <nav>
               <Link to='/landing'>Home</Link>
@@ -99,7 +105,7 @@ const Header = () => {
             </nav>
           ) : (
             <nav>
-              {isLoggedIn ? (
+              {isLoggedIn && !isVerificationPage ? (
                 <div className="dashboard-buttons">
                   <Link to="/home" className="dash-btn">Home</Link>
                   <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>

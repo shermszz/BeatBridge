@@ -24,6 +24,11 @@ load_dotenv()
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-jwt-secret-key')  # In production, use environment variable
 JWT_EXPIRATION_DELTA = timedelta(hours=24)  # Token expires in 24 hours
 
+# Google OAuth config
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
 # Configure application
 app = Flask(__name__)
 
@@ -36,10 +41,13 @@ CORS(app,
 )
 
 # Database configuration
-if 'DATABASE_PASSWORD' not in os.environ:
-    os.environ['DATABASE_PASSWORD'] = input("Enter your PostgreSQL password: ")
+DB_USER = os.environ.get('DB_USER', 'postgres')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_PORT = os.environ.get('DB_PORT', '5432')
+DB_NAME = os.environ.get('DB_NAME', 'flask_db')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{os.environ['DATABASE_PASSWORD']}@localhost/flask_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -47,7 +55,7 @@ db = SQLAlchemy(app)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-app.config["SECRET_KEY"] = "your-secret-key"
+app.config["SECRET_KEY"] = os.environ.get('SECRET_KEY', 'your-secret-key')  # Get from environment variable
 Session(app)
 
 # Configure Flask-Mail
@@ -60,6 +68,9 @@ app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 
 # Initialize Flask-Mail
 mail = Mail(app)
+
+# Initialize OAuth client
+client = WebApplicationClient(GOOGLE_CLIENT_ID) if GOOGLE_CLIENT_ID else None
 
 # Initialize Flask-Login
 login_manager = LoginManager()
