@@ -1,4 +1,4 @@
-from flask import Flask, request, session, jsonify, make_response, send_from_directory
+from flask import Flask, request, session, jsonify, make_response, send_from_directory, url_for, redirect
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -6,9 +6,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 import os
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
-from datetime import datetime
+from datetime import datetime, timedelta
 from tempfile import mkdtemp
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
+import jwt
+import random
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from oauthlib.oauth2 import WebApplicationClient
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Global configurations
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-jwt-secret-key')  # In production, use environment variable
+JWT_EXPIRATION_DELTA = timedelta(hours=24)  # Token expires in 24 hours
 
 # Configure application
 app = Flask(__name__)
@@ -36,6 +50,17 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SECRET_KEY"] = "your-secret-key"
 Session(app)
 
+# Configure Flask-Mail
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+
+# Initialize Flask-Mail
+mail = Mail(app)
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -57,6 +82,9 @@ class User(db.Model):
     hash = db.Column(db.String(200), nullable=False)
     profile_pic_url = db.Column(db.String(255))  # Profile picture URL
     customization = db.relationship('UserCustomization', backref='user', uselist=False)
+    is_verified = db.Column(db.Boolean, default=False)  # Track email verification status
+    verification_code = db.Column(db.String(6))  # Store temporary verification code
+    google_id = db.Column(db.String(100), unique=True)  # For Google OAuth users
 
     def get_id(self):
         return str(self.id)
@@ -72,6 +100,19 @@ class User(db.Model):
     @property
     def is_anonymous(self):
         return False
+
+    def generate_verification_code(self):
+        # Generates a random 6-digit code
+        self.verification_code = ''.join(random.choices('0123456789', k=6))
+        return self.verification_code
+
+    def generate_jwt_token(self):
+        # Generates a JWT token for the user
+        payload = {
+            'user_id': self.id,
+            'exp': datetime.utcnow() + JWT_EXPIRATION_DELTA
+        }
+        return jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
 
 class UserCustomization(db.Model):
     __tablename__ = 'user_customizations'
@@ -152,17 +193,47 @@ def register():
         return jsonify({"errors": errors}), 400
     
     try:
-        # Create new user
+        # Create new user (always unverified initially)
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, email=email, hash=hashed_password)
+        new_user = User(
+            username=username,
+            email=email,
+            hash=hashed_password,
+            is_verified=False  # Always start as unverified
+        )
         db.session.add(new_user)
         db.session.commit()
+        
+        verification_message = "Please check your email for verification code."
+        requires_verification = True
+        
+        # Try to send verification email
+        try:
+            if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
+                send_verification_email(new_user)
+            else:
+                # If email is not configured, auto-verify the user
+                new_user.is_verified = True
+                db.session.commit()
+                verification_message = "Email verification is not configured."
+                requires_verification = False
+        except Exception as e:
+            print(f"Email sending error: {str(e)}")
+            # If email sending fails, auto-verify the user
+            new_user.is_verified = True
+            db.session.commit()
+            verification_message = "Email verification is not available."
+            requires_verification = False
         
         # Log the user in after registration
         login_user(new_user)
         session["user_id"] = new_user.id
         
-        return jsonify({"message": "Registration successful", "user_id": new_user.id}), 201
+        return jsonify({
+            "message": f"Registration successful. {verification_message}",
+            "user_id": new_user.id,
+            "requires_verification": requires_verification
+        }), 201
     except Exception as e:
         db.session.rollback()
         print(f"Registration error: {str(e)}")
@@ -380,6 +451,132 @@ def upload_profile_pic():
 @app.route('/uploads/profile_pics/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/api/verify-email', methods=['POST'])
+def verify_email():
+    data = request.get_json()
+    verification_code = data.get('verification_code')
+    user_id = session.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.verification_code != verification_code:
+        return jsonify({"error": "Invalid verification code"}), 400
+
+    user.is_verified = True
+    user.verification_code = None
+    db.session.commit()
+
+    return jsonify({
+        "message": "Email verified successfully",
+        "token": user.generate_jwt_token()
+    }), 200
+
+def send_verification_email(user):
+    verification_code = user.generate_verification_code()
+    db.session.commit()
+    
+    msg = Message('Verify your BeatBridge account',
+                  sender=app.config['MAIL_USERNAME'],
+                  recipients=[user.email])
+    
+    msg.body = f'''Welcome to BeatBridge!
+    
+Your verification code is: {verification_code}
+
+Please enter this code to verify your email address.
+
+If you did not create a BeatBridge account, please ignore this email.
+'''
+    mail.send(msg)
+
+@app.route('/api/google-login')
+def google_login():
+    # Find out what URL to hit for Google login
+    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    # Use library to construct the request for Google login
+    request_uri = client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=request.base_url + "/callback",
+        scope=["openid", "email", "profile"],
+    )
+    return jsonify({"auth_url": request_uri})
+
+@app.route('/api/google-login/callback')
+def google_callback():
+    # Get authorization code Google sent back
+    code = request.args.get("code")
+    
+    # Find out what URL to hit to get tokens
+    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+
+    # Get tokens
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=code
+    )
+    token_response = google_requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+    ).json()
+
+    # Parse the tokens
+    id_token_jwt = token_response['id_token']
+    
+    # Verify the token
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            id_token_jwt, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        return jsonify({"error": "Invalid Google token"}), 401
+
+    google_id = idinfo['sub']
+    email = idinfo['email']
+    name = idinfo['name']
+    picture = idinfo.get('picture')
+
+    # Check if user exists
+    user = User.query.filter_by(google_id=google_id).first()
+    if not user:
+        # Create new user
+        user = User(
+            username=name,
+            email=email,
+            google_id=google_id,
+            profile_pic_url=picture,
+            is_verified=True,  # Google users are pre-verified
+            hash=generate_password_hash('google-oauth-user')  # Placeholder password
+        )
+        db.session.add(user)
+        db.session.commit()
+
+    # Log in the user
+    login_user(user)
+    session['user_id'] = user.id
+
+    return jsonify({
+        "message": "Google login successful",
+        "token": user.generate_jwt_token(),
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "profile_pic_url": user.profile_pic_url
+        }
+    }), 200
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')

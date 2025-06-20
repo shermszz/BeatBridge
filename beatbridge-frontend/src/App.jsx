@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import EmailVerification from './pages/EmailVerification';
 import Customisation from './pages/Customisation';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
@@ -28,6 +29,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<EmailVerification />} />
 
           {/* Page to gather user preferences after registration */}
           <Route path="/customisation" element={<Customisation />} />

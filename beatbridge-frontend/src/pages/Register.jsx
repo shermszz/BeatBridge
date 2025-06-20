@@ -54,8 +54,15 @@ const Register = () => {
       if (response.ok) {
         // Store the user ID in localStorage
         localStorage.setItem('user_id', data.user_id);
-        // Navigate to the customisation page after successful registration
-        navigate('/customisation');
+        
+        // Check if verification is required
+        if (data.requires_verification) {
+          // Navigate to verification page
+          navigate('/verify-email');
+        } else {
+          // Navigate directly to customisation if verification not required
+          navigate('/customisation');
+        }
       } else {
         setErrors(data.errors || { general: 'Registration failed' });
       }
@@ -66,75 +73,78 @@ const Register = () => {
 
   return (
     <section className="hero">
-    <h1>Create your account!</h1>
+      <h1>Create your account!</h1>
 
-    <form onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <input
-          autoComplete="off"
-          autoFocus
-          className="form-control mx-auto w-auto inputdeco my-input"
-          name="username"
-          placeholder="Username"
-          type="text"
-          value={formData.username}
-          onChange={handleChange}
-        />
-      </div>
-       <div className="mb-3">
-        <input
-          className="form-control mx-auto w-auto inputdeco my-input"
-          name="email"
-          placeholder="Email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-        />
-      </div>
-      <div className="mb-3">
-        <input
-          className="form-control mx-auto w-auto inputdeco my-input"
-          name="password"
-          placeholder="Password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-        />
-      </div>
-      <div className="mb-3">
-        <input
-          className="form-control mx-auto w-auto inputdeco my-input"
-          name="confirmation"
-          placeholder="Re-enter Password"
-          type="password"
-          value={formData.confirmation}
-          onChange={handleChange}
-        />
-        {errors && errors.username && (
-          <div className="error-message">{errors.username}</div>
-        )}
-        {errors && errors.email && (
-          <div className="error-message">{errors.email}</div>
-        )}
-        {errors && errors.password && (
-          <div className="error-message">{errors.password}</div>
-        )}
-        {errors && errors.confirmation && (
-          <div className="error-message">{errors.confirmation}</div>
-        )}
-      </div>
-      <button className="btn btn-primary buttondeco" type="submit">
-        Register
-      </button>
-      <hr className="register-divider" />
-      <div className="login-redirect">
-        <p>Already have an account?</p>
-        <a href="/login" className="login-btn">
-          Log in
-        </a>
-      </div>
-    </form>
-  </section>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <input
+            autoComplete="off"
+            autoFocus
+            className="form-control mx-auto w-auto inputdeco my-input"
+            name="username"
+            placeholder="Username"
+            type="text"
+            value={formData.username}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            className="form-control mx-auto w-auto inputdeco my-input"
+            name="email"
+            placeholder="Email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            className="form-control mx-auto w-auto inputdeco my-input"
+            name="password"
+            placeholder="Password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            className="form-control mx-auto w-auto inputdeco my-input"
+            name="confirmation"
+            placeholder="Re-enter Password"
+            type="password"
+            value={formData.confirmation}
+            onChange={handleChange}
+          />
+          {errors && errors.username && (
+            <div className="error-message">{errors.username}</div>
+          )}
+          {errors && errors.email && (
+            <div className="error-message">{errors.email}</div>
+          )}
+          {errors && errors.password && (
+            <div className="error-message">{errors.password}</div>
+          )}
+          {errors && errors.confirmation && (
+            <div className="error-message">{errors.confirmation}</div>
+          )}
+          {errors && errors.general && (
+            <div className="error-message">{errors.general}</div>
+          )}
+        </div>
+        <button className="btn btn-primary buttondeco" type="submit">
+          Register
+        </button>
+        <hr className="register-divider" />
+        <div className="login-redirect">
+          <p>Already have an account?</p>
+          <a href="/login" className="login-btn">
+            Log in
+          </a>
+        </div>
+      </form>
+    </section>
   );
 };
 
