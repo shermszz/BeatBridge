@@ -302,7 +302,7 @@ const Profile = () => {
                     <span key={genre} className="genre-tag">{genre}</span>
                   ))
                 ) : (
-                  <span style={{ color: '#888' }}>Not set</span>
+                  <span style={{ color: '#888' }}>Not set</span>  
                 )}
               </div>
             </div>
