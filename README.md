@@ -1,4 +1,4 @@
-# BridgeBeat
+# BeatBridge
 
 ## Flask PostgreSQL Starter Guide
 
