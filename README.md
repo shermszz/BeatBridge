@@ -19,6 +19,58 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 
 ---
 
+## Directory Structure
+
+```
+BridgeBeat/
+  beatbridge-backend/      # Flask backend (API, database, migrations)
+  beatbridge-frontend/     # React frontend (UI)
+  README.md                # Project documentation
+```
+- **beatbridge-backend/**: Contains all backend code, API, database models, and migration SQL files.
+- **beatbridge-frontend/**: Contains the React frontend source code and assets.
+- **migrations/**: SQL files for manual database schema changes.
+
+---
+
+## Frontend Setup
+
+1. **Install Node.js and npm** (if not already installed):
+   - Download from [Node.js Official Site](https://nodejs.org/en)
+
+2. **Install frontend dependencies:**
+   ```sh
+   cd beatbridge-frontend
+   npm install
+   ```
+
+3. **Start the frontend development server:**
+   ```sh
+   npm start
+   ```
+   - The React app will run at http://localhost:3000
+
+---
+
+## Running Backend and Frontend Together
+
+- Open **two terminal windows/tabs**:
+  1. In the first, start the backend:
+     ```sh
+     cd beatbridge-backend
+     flask run
+     # or
+     python3 app.py
+     ```
+  2. In the second, start the frontend:
+     ```sh
+     cd beatbridge-frontend
+     npm start
+     ```
+- The backend will be available at http://localhost:5000 and the frontend at http://localhost:3000.
+
+---
+
 ## 1. Install PostgreSQL
 
 ### macOS
@@ -100,9 +152,30 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 
 ### Set Database Password
 
-1. Create a `.env` file in your project root:
+1. Create a `.env` file in your project root with the following variables:
     ```
-    DATABASE_PASSWORD=your_secure_password
+    # Database
+    DB_USER=your_db_user
+    DB_PASSWORD=your_db_password
+    DB_HOST=localhost
+    DB_PORT=5432
+    DB_NAME=flask_db
+
+    # Flask secret keys
+    SECRET_KEY=your-secret-key
+    JWT_SECRET_KEY=your-jwt-secret-key
+
+    # Mail (for email verification)
+    MAIL_SERVER=smtp.gmail.com
+    MAIL_PORT=587
+    MAIL_USE_TLS=True
+    MAIL_USERNAME=your_email@gmail.com
+    MAIL_PASSWORD=your_email_password
+    MAIL_DEFAULT_SENDER=your_email@gmail.com
+
+    # Google OAuth (optional)
+    GOOGLE_CLIENT_ID=your_google_client_id
+    GOOGLE_CLIENT_SECRET=your_google_client_secret
     ```
 2. **Never commit `.env` to Git!**  
     Add `.env` to your `.gitignore`:
@@ -163,15 +236,27 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 ## 6. Flask Setup
 
 1. **Install requirements:**
-    ```
-    pip3 install flask flask-sqlalchemy psycopg2-binary python-dotenv
-    ```
+    - Recommended: install all dependencies from the provided requirements file:
+      ```
+      pip3 install -r beatbridge-backend/requirements.txt
+      ```
+    - Or, install individually:
+      ```
+      pip3 install flask flask-sqlalchemy psycopg2-binary python-dotenv flask-session flask-login flask-cors flask-mail werkzeug sqlalchemy
+      ```
 2. **Run application:**
-    ```
-    flask run
-    ```
-    User will then be prompt to enter PostgresSQL password
----
+    - Make sure your `.env` file is set up as above.
+    - Start the backend:
+      ```
+      cd beatbridge-backend
+      flask run
+      ```
+      Or, if you want to use the app.py directly:
+      ```
+      python3 app.py
+      ```
+    - The backend will run on http://localhost:5000.
+    - User will then be prompted to enter PostgreSQL password if not set in `.env`.
 
 ## 7. Troubleshooting
 
@@ -180,6 +265,26 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
     ```
     CREATE USER postgres WITH PASSWORD 'your_password';
     ```
+
+- **Port 5000 already in use on Mac:**
+    If you get an error about port 5000 being in use, and you are on macOS Monterey or later, try turning off AirPlay Receiver:
+    1. Go to **System Settings** > **General** > **AirDrop & Handoff**.
+    2. Turn off **AirPlay Receiver**.
+    3. Try running the Flask app again.
+
+- **Running migration SQL files:**
+    To apply database migrations (e.g., new tables or columns), run the SQL files in `beatbridge-backend/migrations/`:
+    1. Open a terminal and log in to your database:
+        ```
+        psql -U your_db_user -d flask_db
+        ```
+    2. Run a migration file (example):
+        ```
+        \i beatbridge-backend/migrations/create_user_customizations.sql
+        ```
+    3. Repeat for other migration files as needed.
+    
+    If you get errors about existing tables/columns, check the SQL for `IF NOT EXISTS` or adjust as needed.
 
 ---
 
