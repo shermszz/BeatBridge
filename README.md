@@ -8,18 +8,21 @@ This guide helps you set up PostgreSQL for a Flask application, including instal
 
 ## Table of Contents
 
-1. [Install PostgreSQL](#1-install-postgresql)
-2. [Set Up Environment Variables and PATH](#2-set-up-environment-variables-and-path)
-3. [Create Database & User](#3-create-database--user)
-4. [Useful PostgreSQL Commands](#4-useful-postgresql-commands)
-5. [Install Node.js and npm](#5-install-nodejs-and-npm)
-6. [Flask Setup](#6-flask-setup)
-7. [Troubleshooting](#7-troubleshooting)
-8. [References](#references)
+1. [Directory Structure](#1-directory-structure)
+2. [Install PostgreSQL](#2-install-postgresql)
+3. [Set Up Environment Variables and PATH](#3-set-up-environment-variables-and-path)
+4. [Create Database & User](#4-create-database--user)
+5. [Useful PostgreSQL Commands](#5-useful-postgresql-commands)
+6. [Install Node.js and npm](#6-install-nodejs-and-npm)
+7. [Flask Setup](#7-flask-setup)
+8. [Frontend Setup](#8-frontend-setup)
+9. [Running Backend and Frontend Together](#9-running-backend-and-frontend-together)
+10. [Troubleshooting](#10-troubleshooting)
+11. [References](#11-references)
 
 ---
 
-## Directory Structure
+## 1. Directory Structure
 
 ```
 BridgeBeat/
@@ -33,45 +36,7 @@ BridgeBeat/
 
 ---
 
-## Frontend Setup
-
-1. **Install Node.js and npm** (if not already installed):
-   - Download from [Node.js Official Site](https://nodejs.org/en)
-
-2. **Install frontend dependencies:**
-   ```sh
-   cd beatbridge-frontend
-   npm install
-   ```
-
-3. **Start the frontend development server:**
-   ```sh
-   npm start
-   ```
-   - The React app will run at http://localhost:3000
-
----
-
-## Running Backend and Frontend Together
-
-- Open **two terminal windows/tabs**:
-  1. In the first, start the backend:
-     ```sh
-     cd beatbridge-backend
-     flask run
-     # or
-     python3 app.py
-     ```
-  2. In the second, start the frontend:
-     ```sh
-     cd beatbridge-frontend
-     npm start
-     ```
-- The backend will be available at http://localhost:5000 and the frontend at http://localhost:3000.
-
----
-
-## 1. Install PostgreSQL
+## 2. Install PostgreSQL
 
 ### macOS
 
@@ -87,7 +52,7 @@ BridgeBeat/
 
 ---
 
-## 2. Set Up Environment Variables and PATH
+## 3. Set Up Environment Variables and PATH
 
 ### macOS & Linux
 
@@ -185,7 +150,7 @@ BridgeBeat/
 
 ---
 
-## 3. Create Database & User
+## 4. Create Database & User
 
 1. **Login to PostgreSQL:**
     ```
@@ -200,7 +165,7 @@ BridgeBeat/
 
 ---
 
-## 4. Useful PostgreSQL Commands
+## 5. Useful PostgreSQL Commands
 
 | Command                                   | Description                   |
 |--------------------------------------------|-------------------------------|
@@ -213,7 +178,7 @@ BridgeBeat/
 | `DROP DATABASE flask_db;`                 | Delete database               |
 
 ---
-## 5. Install Node.js and npm
+## 6. Install Node.js and npm
 
 1. Download Node.js installer: [Node.js Official Site](https://nodejs.org/en)
 2. Run the installer:
@@ -233,7 +198,7 @@ BridgeBeat/
     ```
     - This will launch the React application at http://localhost:3000.
     
-## 6. Flask Setup
+## 7. Flask Setup
 
 1. **Install requirements:**
     - Recommended: install all dependencies from the provided requirements file:
@@ -258,7 +223,45 @@ BridgeBeat/
     - The backend will run on http://localhost:5000.
     - User will then be prompted to enter PostgreSQL password if not set in `.env`.
 
-## 7. Troubleshooting
+---
+
+## 8. Frontend Setup
+
+1. **Install Node.js and npm** (if not already installed):
+   - Download from [Node.js Official Site](https://nodejs.org/en)
+
+2. **Install frontend dependencies:**
+   ```sh
+   cd beatbridge-frontend
+   npm install
+   ```
+
+3. **Start the frontend development server:**
+   ```sh
+   npm start
+   ```
+   - The React app will run at http://localhost:3000
+
+---
+
+## 9. Running Backend and Frontend Together
+
+- Open **two terminal windows/tabs**:
+  1. In the first, start the backend:
+     ```sh
+     cd beatbridge-backend
+     flask run
+     # or
+     python3 app.py
+     ```
+  2. In the second, start the frontend:
+     ```sh
+     cd beatbridge-frontend
+     npm start
+     ```
+- The backend will be available at http://localhost:5000 and the frontend at http://localhost:3000.
+
+## 10. Troubleshooting
 
 - **Role does not exist:**  
     Create user via psql:
@@ -288,12 +291,7 @@ BridgeBeat/
 
 ---
 
-## References
+## 11. References
 
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Flask-SQLAlchemy Guide](https://flask-sqlalchemy.palletsprojects.com/)
-
----
-
-
-
