@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import EmailVerification from './pages/EmailVerification';
 import Customisation from './pages/Customisation';
 import Profile from './pages/Profile';
+import SongRecommendation from './pages/SongRecommendation';
 import './styles/App.css';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
           <Route path="/customisation" element={<Customisation />} />
 
           <Route path="/profile" element={<Profile />} />
+          <Route path="/song-recommendation" element={<SongRecommendation />} />
         </Routes>
       </Layout>
     </Router>

@@ -141,6 +141,9 @@ BridgeBeat/
     # Google OAuth (optional)
     GOOGLE_CLIENT_ID=your_google_client_id
     GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+    # Last.fm API (for song recommendations)
+    LASTFM_API_KEY=your_lastfm_api_key
     ```
 2. **Never commit `.env` to Git!**  
     Add `.env` to your `.gitignore`:
@@ -197,7 +200,23 @@ BridgeBeat/
     npm start
     ```
     - This will launch the React application at http://localhost:3000.
-    
+
+## 6.1. Get Last.fm API Key (for Song Recommendations)
+
+To use the song recommendation feature, you'll need a Last.fm API key:
+
+1. Go to [Last.fm API](https://www.last.fm/api/account/create)
+2. Create a new API account
+3. Fill in the required information:
+   - Application name: "BeatBridge"
+   - Description: "Music recommendation system for BeatBridge app"
+   - Homepage URL: "http://localhost:3000"
+   - Callback URL: "http://localhost:3000"
+4. Submit the form
+5. Copy your API key and add it to your `.env` file as `LASTFM_API_KEY=your_api_key_here`
+
+---
+
 ## 7. Flask Setup
 
 1. **Install requirements:**
@@ -288,6 +307,17 @@ BridgeBeat/
     3. Repeat for other migration files as needed.
     
     If you get errors about existing tables/columns, check the SQL for `IF NOT EXISTS` or adjust as needed.
+
+- **Testing Last.fm API Integration:**
+    To verify that the song recommendation feature is working correctly:
+    1. Make sure you have set your `LASTFM_API_KEY` in the `.env` file
+    2. Run the test script:
+        ```
+        cd beatbridge-backend
+        python3 test_lastfm.py
+        ```
+    3. If the test passes, the song recommendation feature should work in the frontend
+    4. If the test fails, check your API key and internet connection
 
 ---
 

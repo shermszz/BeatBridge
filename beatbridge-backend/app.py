@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
 import jwt
 import random
+import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from oauthlib.oauth2 import WebApplicationClient
@@ -588,6 +589,99 @@ def google_callback():
             "profile_pic_url": user.profile_pic_url
         }
     }), 200
+
+# --- Song Recommendation System (Last.fm Integration) ---
+
+# Last.fm API configuration
+LASTFM_API_KEY = os.environ.get('LASTFM_API_KEY', 'your-lastfm-api-key')  # Get from environment variable
+LASTFM_BASE_URL = 'http://ws.audioscrobbler.com/2.0/'
+
+# List of popular genres for the frontend genre selection
+POPULAR_GENRES = [
+    "rock", "pop", "hip-hop", "electronic", "jazz", "classical", "indie", "metal", "country", "blues",
+    "reggae", "folk", "punk", "soul", "funk", "disco", "house", "techno", "trance", "k-pop"
+]
+
+@app.route('/api/genres', methods=['GET'])
+def get_genres():
+    """
+    Returns a static list of popular genres for the frontend to display.
+    """
+    genres = [{"id": g, "name": g.title(), "count": ""} for g in POPULAR_GENRES]
+    return jsonify({'genres': genres}), 200
+
+@app.route('/api/recommend-song', methods=['POST'])
+def recommend_song():
+    """Get song recommendations based on genre preferences"""
+    try:
+        data = request.get_json()
+        genres = data.get('genres', [])
+        
+        if not genres:
+            return jsonify({'error': 'Please select at least one genre'}), 400
+        
+
+        selected_genre = genres[0]
+        
+        # Get top tracks for the selected genre from Last.fm
+        params = {
+            'method': 'tag.gettoptracks',
+            'tag': selected_genre,
+            'api_key': LASTFM_API_KEY,
+            'format': 'json',
+            'limit': 50  # Get top 50 tracks
+        }
+        
+        response = requests.get(LASTFM_BASE_URL, params=params)
+        response.raise_for_status()
+        
+        data = response.json()
+        tracks = []
+        
+        # Build a list of tracks, using .get() for safety in case fields are missing
+        if 'tracks' in data and 'track' in data['tracks']:
+            for track in data['tracks']['track']:
+                tracks.append({
+                    'name': track.get('name', 'Unknown'),
+                    'artist': track.get('artist', {}).get('name', 'Unknown'),
+                    'url': track.get('url', ''),
+                    'listeners': track.get('listeners', 0)
+                })
+        
+        if not tracks:
+            return jsonify({'error': f'No tracks found for genre: {selected_genre}'}), 404
+        
+        # Select a random track from the top tracks
+        recommended_track = random.choice(tracks)
+        
+        # Get additional track info including album and tags
+        track_params = {
+            'method': 'track.getInfo',
+            'track': recommended_track['name'],
+            'artist': recommended_track['artist'],
+            'api_key': LASTFM_API_KEY,
+            'format': 'json'
+        }
+        
+        track_response = requests.get(LASTFM_BASE_URL, params=track_params)
+        if track_response.status_code == 200:
+            track_data = track_response.json()
+            if 'track' in track_data:
+                track_info = track_data['track']
+                recommended_track['album'] = track_info.get('album', {}).get('title', 'Unknown Album')
+                recommended_track['duration'] = track_info.get('duration', 'Unknown')
+                recommended_track['tags'] = [tag['name'] for tag in track_info.get('toptags', {}).get('tag', [])]
+        
+        return jsonify({
+            'recommendation': recommended_track,
+            'selected_genre': selected_genre,
+            'message': f"Here's a great {selected_genre} track for you!"
+        }), 200
+        
+    except requests.RequestException as e:
+        return jsonify({'error': f'Failed to get recommendation: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')
