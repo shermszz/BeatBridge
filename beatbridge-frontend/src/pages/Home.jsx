@@ -80,14 +80,20 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Skills Overview Card (temporary) */}
+        {/* Song Recommendation Section */}
         <div className="dashboard-card">
-          <h2>Skills Breakdown</h2>
-          <div className="chart-container">
-            <div className="chart-placeholder radar">
-              {/* Add actual radar chart component here */}
-              <p>Skills radar chart will be shown here</p>
-            </div>
+          <div className="card-header">
+          <h2>Song Recommendation</h2>
+          <button className="continue-session-btn" onClick={() => navigate('/song-recommendation')}>
+            <span className="btn-icon">▶</span>
+            Get Song Recommendation
+          </button>
+          </div>
+          <div className="activity-item">
+              <span className="activity-icon">🎶</span>
+              <div className="activity-details">
+                <p>Discover new music tailored to your favorite genres!</p>
+              </div>
           </div>
         </div>
 
