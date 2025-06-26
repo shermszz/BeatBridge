@@ -3,6 +3,7 @@
 ## Flask PostgreSQL Starter Guide
 
 This guide helps you set up PostgreSQL for a Flask application, including installation, configuration, and common PostgreSQL operations.
+Powered by [GetSongBPM](https://getsongbpm.com)
 
 ---
 
