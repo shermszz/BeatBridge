@@ -40,6 +40,7 @@ ALLOWED_ORIGINS = [
 
 # Configure application
 app = Flask(__name__)
+app.config['SESSION_COOKIE_NAME'] = 'session'
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
