@@ -34,8 +34,6 @@ This guide will help you deploy your BeatBridge application using Vercel for the
    MAIL_USERNAME=your_email@gmail.com
    MAIL_PASSWORD=your_email_password
    MAIL_DEFAULT_SENDER=your_email@gmail.com
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
    LASTFM_API_KEY=your_lastfm_api_key
    ```
 
@@ -67,20 +65,7 @@ In Vercel, add the following environment variable:
 REACT_APP_API_URL=https://your-backend-url.railway.app
 ```
 
-### 2.3 Update CORS Configuration
-Before deploying, update your backend CORS settings in `beatbridge-backend/app.py`:
-
-```python
-# Replace "your-frontend-domain.vercel.app" with your actual Vercel domain
-CORS(app,
-     resources={r"/*": {"origins": ["http://localhost:3000", "https://your-app-name.vercel.app"]}},
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization", "Accept"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
-```
-
-### 2.4 Deploy Frontend
+### 2.3 Deploy Frontend
 1. Click "Deploy" in Vercel
 2. Vercel will build and deploy your React app
 3. Note your frontend URL (e.g., `https://your-app-name.vercel.app`)
@@ -100,12 +85,6 @@ CORS(app,
 )
 
 # Also update the after_request and before_request functions with your actual Vercel domain
-```
-
-### 3.2 Update Frontend API URL
-In Vercel, update the environment variable:
-```
-REACT_APP_API_URL=https://your-actual-railway-backend-url.railway.app
 ```
 
 ## Step 4: Database Migrations
