@@ -35,7 +35,7 @@ app = Flask(__name__)
 
 # Enable CORS for React frontend
 CORS(app,
-     resources={r"/*": {"origins": ["http://localhost:3000", "https://your-frontend-domain.vercel.app"]}},
+     resources={r"/*": {"origins": ["http://localhost:3000", "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app/landing"]}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "Accept"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
