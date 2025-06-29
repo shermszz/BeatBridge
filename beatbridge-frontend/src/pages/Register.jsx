@@ -46,7 +46,6 @@ const Register = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        credentials: 'include',
         mode: 'cors',
         body: JSON.stringify(formData)
       });
@@ -56,6 +55,7 @@ const Register = () => {
       if (response.ok) {
         // Store the user ID in localStorage
         localStorage.setItem('user_id', data.user_id);
+        localStorage.setItem('token', data.token); // Store JWT token
         
         // Check if verification is required
         if (data.requires_verification) {

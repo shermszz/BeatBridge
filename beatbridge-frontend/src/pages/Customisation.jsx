@@ -93,12 +93,13 @@ const Customisation = () => {
     }
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${config.API_BASE_URL}/api/save-customization`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify({
           skill_level: skill,
           practice_frequency: practice,
@@ -143,8 +144,11 @@ const Customisation = () => {
   useEffect(() => {
     const fetchCustomization = async () => {
       try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (response.ok) {
           // If customisation exists, redirect to home

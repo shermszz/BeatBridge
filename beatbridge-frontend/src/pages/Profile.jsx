@@ -38,8 +38,11 @@ const Profile = () => {
 
   const fetchUserData = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${config.API_BASE_URL}/api/user`, {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (response.ok) {
         const userData = await response.json();
@@ -70,8 +73,11 @@ const Profile = () => {
 
   const fetchCustomizations = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (response.ok) {
         const data = await response.json();
@@ -117,9 +123,12 @@ const Profile = () => {
       if (selectedProfilePic) {
         const formData = new FormData();
         formData.append('profile_pic', selectedProfilePic);
+        const token = localStorage.getItem('token');
         const response = await fetch(`${config.API_BASE_URL}/api/upload-profile-pic`, {
           method: 'POST',
-          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           body: formData
         });
         const data = await response.json();
@@ -145,16 +154,18 @@ const Profile = () => {
       if (form.password) {
         payload.password = form.password;
       }
-      const response = await fetch(`${config.API_BASE_URL}/api/update-user`, {
+      
+      const token = localStorage.getItem('token');
+      const updateResponse = await fetch(`${config.API_BASE_URL}/api/update-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
-      const data = await response.json();
-      if (response.ok) {
+      const data = await updateResponse.json();
+      if (updateResponse.ok) {
         alert('Profile changes saved!');
         setForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
         setSelectedProfilePic(null);
@@ -190,12 +201,13 @@ const Profile = () => {
   const handleSaveCustomizations = async () => {
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${config.API_BASE_URL}/api/save-customization`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify({
           skill_level: customizations.skill_level,
           practice_frequency: customizations.practice_frequency,

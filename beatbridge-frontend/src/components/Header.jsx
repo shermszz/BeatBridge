@@ -31,14 +31,21 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-     await fetch(`${config.API_BASE_URL}/api/logout`, {
+      const token = localStorage.getItem('token');
+      await fetch(`${config.API_BASE_URL}/api/logout`, {
         method: 'POST',
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       localStorage.removeItem('user_id');
+      localStorage.removeItem('token');
       navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('token');
+      navigate('/');
     }
   };
 

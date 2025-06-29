@@ -18,13 +18,14 @@ const EmailVerification = () => {
       const response = await fetch(`${config.API_BASE_URL}/api/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ verification_code: verificationCode }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // Store the JWT token
+        localStorage.setItem('token', data.token);
         setSuccess(true);
         setTimeout(() => {
           navigate('/customisation');

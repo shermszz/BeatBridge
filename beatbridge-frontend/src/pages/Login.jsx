@@ -44,9 +44,15 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem('user_id', data.user_id);
+        localStorage.setItem('token', data.token); // Store JWT token
+        
         // Fetch user profile to get profile_pic
         try {
-          const userResponse = await fetch(`${config.API_BASE_URL}/api/user`, { credentials: 'include' });
+          const userResponse = await fetch(`${config.API_BASE_URL}/api/user`, { 
+            headers: {
+              'Authorization': `Bearer ${data.token}`
+            }
+          });
           if (userResponse.ok) {
             const userData = await userResponse.json();
             if (userData.profile_pic_url) {

@@ -58,7 +58,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Configure session
+# Configure session (keeping for backward compatibility but not using for auth)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -90,6 +90,31 @@ def unauthorized():
     if request.path.startswith('/api/'):
         return jsonify({"error": "Unauthorized", "message": "Please log in"}), 401
     return jsonify({"error": "Unauthorized"}), 401
+
+# JWT Authentication decorator
+def jwt_required(f):
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"error": "No token provided"}), 401
+        
+        token = auth_header.split(' ')[1]
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({"error": "Invalid token"}), 401
+            
+            # Add user_id to request context for use in route handlers
+            request.user_id = user_id
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+    
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
 # Database model
 class User(db.Model):
@@ -256,7 +281,8 @@ def register():
         return jsonify({
             "message": f"Registration successful. {verification_message}",
             "user_id": new_user.id,
-            "requires_verification": requires_verification
+            "requires_verification": requires_verification,
+            "token": new_user.generate_jwt_token()
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -293,29 +319,30 @@ def login():
         login_user(user)
         session["user_id"] = user.id
 
-        return jsonify({"user_id": user.id}), 200
+        return jsonify({
+            "user_id": user.id,
+            "token": user.generate_jwt_token()
+        }), 200
 
     except Exception as e:
         print(f"Login error: {str(e)}")
         return jsonify({"errors": {"general": "An error occurred during login"}}), 500
 
 @app.route("/api/logout", methods=["POST"])
-@login_required
+@jwt_required
 def logout():
     try:
-        logout_user()
-        session.clear()
+        # For JWT, we don't need to do anything server-side
+        # The client should remove the token
         return jsonify({"message": "Logged out successfully"}), 200
     except Exception as e:
         print(f"Logout error: {str(e)}")
         return jsonify({"error": "An error occurred during logout"}), 500
 
 @app.route('/api/user', methods=["GET"])
+@jwt_required
 def get_user():
-    if 'user_id' not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-    
-    user = User.query.get(session['user_id'])
+    user = User.query.get(request.user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -327,12 +354,10 @@ def get_user():
     }), 200
 
 @app.route("/api/get-customization", methods=["GET"])
-@login_required
+@jwt_required
 def get_customization():
     try:
-        user_id = session.get("user_id")
-        if not user_id:
-            return jsonify({"error": "User not authenticated"}), 401
+        user_id = request.user_id
         
         customization = UserCustomization.query.filter_by(user_id=user_id).first()
         if not customization:
@@ -351,7 +376,7 @@ def get_customization():
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/api/save-customization", methods=["POST"])
-@login_required
+@jwt_required
 def save_customization():
     try:
         data = request.get_json()
@@ -372,10 +397,8 @@ def save_customization():
         if errors:
             return jsonify({"errors": errors}), 400
             
-        # Get current user's ID from session
-        user_id = session.get("user_id")
-        if not user_id:
-            return jsonify({"error": "User not authenticated"}), 401
+        # Get current user's ID from JWT token
+        user_id = request.user_id
         
         # Update or create customization
         customization = UserCustomization.query.filter_by(user_id=user_id).first()
@@ -402,18 +425,15 @@ def save_customization():
 
 # Update user profile
 @app.route('/api/update-user', methods=["POST"])
-@login_required
+@jwt_required
 def update_user():
     # Get new password, email, and username from request if provided
     data = request.get_json()
     new_username = data.get("username")
     new_email = data.get("email")
     new_password = data.get("password")
-    user_id = session.get("user_id")
+    user_id = request.user_id
     errors = {}
-
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
 
     user = User.query.get(user_id)
     if not user:
@@ -453,7 +473,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/api/upload-profile-pic', methods=['POST'])
-@login_required
+@jwt_required
 def upload_profile_pic():
     if 'profile_pic' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -462,7 +482,7 @@ def upload_profile_pic():
         return jsonify({'error': 'No selected file'}), 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        user_id = session.get('user_id')
+        user_id = request.user_id
         ext = filename.rsplit('.', 1)[1].lower()
         filename = f"user_{user_id}.{ext}"
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -483,6 +503,7 @@ def verify_email():
     data = request.get_json()
     verification_code = data.get('verification_code')
 
+    # Find the user by verification code, not by session
     user = User.query.filter_by(verification_code=verification_code).first()
     if not user:
         return jsonify({"error": "Invalid verification code"}), 400

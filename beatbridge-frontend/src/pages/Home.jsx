@@ -18,8 +18,11 @@ const Home = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${config.API_BASE_URL}/api/user`, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         
         if (response.ok) {
