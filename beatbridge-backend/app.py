@@ -338,6 +338,8 @@ def get_customization():
         if not customization:
             return jsonify({"error": "No customization found"}), 404
         
+        print(f"User ID: {user_id}, Customization: {customization}")
+        
         return jsonify({
             "skill_level": customization.skill_level,
             "practice_frequency": customization.practice_frequency,

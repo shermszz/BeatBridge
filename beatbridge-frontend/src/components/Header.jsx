@@ -94,7 +94,7 @@ const Header = () => {
                 Let's Get Started
               </button>
               <img
-                src={profileIcon}
+                src="/loginIcon.svg"
                 alt="Login"
                 className="login-icon"
                 onClick={onLoginIconClick}

@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import defaultProfile from '../styles/images/loginIcon.svg';
 import '../styles/Profile.css';
 import config from '../config';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const defaultProfile = '/loginIcon.svg';
   const [profilePic, setProfilePic] = useState(defaultProfile);
   const [selectedProfilePic, setSelectedProfilePic] = useState(null);
   const [form, setForm] = useState({
