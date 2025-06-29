@@ -135,6 +135,25 @@ const Customisation = () => {
     'Alternative & Indie', 'World', 'Country & Roots'
   ];
 
+  useEffect(() => {
+    const fetchCustomization = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          // If customisation exists, redirect to home
+          navigate('/home');
+        }
+        // If 404, do nothing (show the form)
+      } catch (error) {
+        // Optionally handle network errors
+        console.error('Error fetching customisation:', error);
+      }
+    };
+    fetchCustomization();
+  }, [navigate]);
+
   return (
     <section className="hero">
       <h1>Tell us about yourself</h1>
