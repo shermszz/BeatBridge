@@ -32,14 +32,10 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 # Configure application
 app = Flask(__name__)
-
-# Enable CORS for React frontend
-CORS(app,
-     resources={r"/*": {"origins": ["http://localhost:3000", "https://your-frontend-domain.vercel.app"]}},
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization", "Accept"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
+CORS(app, origins=[
+    "https://beat-bridge-rosy.vercel.app",
+    "https://your-custom-domain.com"
+], supports_credentials=True)
 
 # Database configuration
 DB_USER = os.environ.get('DB_USER', 'postgres')
@@ -174,7 +170,7 @@ def after_request(response):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
-@app.route('/api/register', methods=["POST"])
+@app.route("/api/register", methods=["POST", "OPTIONS"])
 def register():
     data = request.get_json()
     
