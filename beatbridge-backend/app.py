@@ -17,7 +17,6 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from oauthlib.oauth2 import WebApplicationClient
 from dotenv import load_dotenv
-import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -31,13 +30,17 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
-# Configure application
-app = Flask(__name__)
-CORS(app, origins=[
+# Add this after loading environment variables
+ALLOWED_ORIGINS = [
     "https://beat-bridge-rosy.vercel.app",
     "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
     "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
-], supports_credentials=True)
+    # Add any other Vercel preview/production URLs here
+]
+
+# Configure application
+app = Flask(__name__)
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
 DB_USER = os.environ.get('DB_USER', 'postgres')
@@ -46,7 +49,7 @@ DB_HOST = os.environ.get('DB_HOST', 'localhost')
 DB_PORT = os.environ.get('DB_PORT', '5432')
 DB_NAME = os.environ.get('DB_NAME', 'flask_db')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -151,7 +154,8 @@ def before_request_func():
     if request.method == 'OPTIONS':
         response = make_response()
         origin = request.headers.get('Origin')
-        if origin in ["http://localhost:3000", "https://your-frontend-domain.vercel.app"]:
+        print(f"OPTIONS request from origin: {origin}")  # Debug log
+        if origin in ALLOWED_ORIGINS:
             response.headers.add('Access-Control-Allow-Origin', origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -164,18 +168,15 @@ def after_request(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
-    
-    # Handle CORS for both development and production
     origin = request.headers.get('Origin')
-    if origin in ["http://localhost:3000", "https://your-frontend-domain.vercel.app"]:
+    print(f"After request from origin: {origin}")  # Debug log
+    if origin in ALLOWED_ORIGINS:
         response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
 @app.route("/api/register", methods=["POST", "OPTIONS"])
 def register():
-    if request.method == "OPTIONS":
-        return '', 200
     data = request.get_json()
     
     username = data.get("username")
@@ -688,16 +689,6 @@ def recommend_song():
         return jsonify({'error': f'Failed to get recommendation: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-@app.route("/api/test", methods=["GET"])
-def test():
-    return "ok"
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    import traceback
-    print(traceback.format_exc())
-    return "Internal Server Error", 500
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
