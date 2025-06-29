@@ -689,6 +689,10 @@ def recommend_song():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
+@app.route("/api/test", methods=["GET"])
+def test():
+    return "ok"
+
 @app.errorhandler(Exception)
 def handle_exception(e):
     import traceback
