@@ -22,6 +22,7 @@ const EmailVerification = () => {
       });
 
       const data = await response.json();
+      console.log('API verify-email response:', data);
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
