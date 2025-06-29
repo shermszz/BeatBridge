@@ -27,7 +27,7 @@ const EmailVerification = () => {
       if (response.ok) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/home');
+          navigate('/customisation');
         }, 2000);
       } else {
         setError(data.error || 'Verification failed');
