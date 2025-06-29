@@ -32,7 +32,10 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 # Configure application
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    "https://beat-bridge-rosy.vercel.app",
+    "https://your-custom-domain.com"
+], supports_credentials=True)
 
 # Database configuration
 DB_USER = os.environ.get('DB_USER', 'postgres')
