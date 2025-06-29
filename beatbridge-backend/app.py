@@ -36,7 +36,6 @@ CORS(app, origins=[
     "https://beat-bridge-rosy.vercel.app",
     "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
     "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
-    # Add any others you see in Vercel!
 ], supports_credentials=True)
 
 # Database configuration
@@ -174,6 +173,8 @@ def after_request(response):
 
 @app.route("/api/register", methods=["POST", "OPTIONS"])
 def register():
+    if request.method == "OPTIONS":
+        return '', 200
     data = request.get_json()
     
     username = data.get("username")
