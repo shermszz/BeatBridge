@@ -38,6 +38,7 @@ CORS(app,
      resources={r"/*": {"origins": [
          "http://localhost:3000",
          "https://beat-bridge-rosy.vercel.app",
+         "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
          "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
          "https://beat-bridge-kzo5l3dt9-jianweis-projects-e43daaa5.vercel.app"
      ]}},
