@@ -24,8 +24,8 @@ const EmailVerification = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Store the JWT token
         localStorage.setItem('token', data.token);
+        console.log('Saved token:', data.token);
         setSuccess(true);
         navigate('/customisation');
       } else {
