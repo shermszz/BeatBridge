@@ -32,9 +32,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 # Configure application
 app = Flask(__name__)
-
-# Enable CORS for React frontend
-CORS(app, supports_credentials=True)
+CORS(app)
 
 # Database configuration
 DB_USER = os.environ.get('DB_USER', 'postgres')
@@ -169,7 +167,7 @@ def after_request(response):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
-@app.route('/api/register', methods=["POST"])
+@app.route("/api/register", methods=["POST", "OPTIONS"])
 def register():
     data = request.get_json()
     
