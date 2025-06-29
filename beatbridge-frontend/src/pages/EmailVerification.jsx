@@ -1,31 +1,34 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import '../styles/Register.css';
+import config from '../config';
 
 const EmailVerification = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      const response = await fetch('/api/verify-email', {
+      const response = await fetch(`${config.API_BASE_URL}/api/verify-email`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ verification_code: verificationCode })
+        body: JSON.stringify({ verification_code: verificationCode }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Verification successful, proceed to customization
-        navigate('/customisation');
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/home');
+        }, 2000);
       } else {
         setError(data.error || 'Verification failed');
       }

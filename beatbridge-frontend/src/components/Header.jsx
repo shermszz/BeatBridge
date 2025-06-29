@@ -4,6 +4,7 @@ import profileIcon from '../styles/images/loginIcon.svg';
 import defaultProfile from '../styles/images/loginIcon.svg';
 import logo from '../styles/images/Beatbridge.png';
 import '../styles/Header.css';
+import config from '../config';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -11,12 +12,18 @@ const Header = () => {
   const isLoggedIn = localStorage.getItem('user_id');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownTimeout = useRef();
-  const [profilePic, setProfilePic] = useState(localStorage.getItem('profile_pic') || defaultProfile);
+  const getProfilePicUrl = (pic) => {
+    if (!pic) return defaultProfile;
+    if (typeof pic === 'string' && pic.startsWith('http')) return pic;
+    if (typeof pic === 'string' && pic.startsWith('/')) return `${config.API_BASE_URL}${pic}`;
+    return defaultProfile;
+  };
+  const [profilePic, setProfilePic] = useState(getProfilePicUrl(localStorage.getItem('profile_pic')));
   const dropdownRef = useRef();
 
   useEffect(() => {
     const updateProfilePic = () => {
-      setProfilePic(localStorage.getItem('profile_pic') || defaultProfile);
+      setProfilePic(getProfilePicUrl(localStorage.getItem('profile_pic')));
     };
     window.addEventListener('profilePicUpdated', updateProfilePic);
     return () => window.removeEventListener('profilePicUpdated', updateProfilePic);
@@ -24,7 +31,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-     await fetch('http://localhost:5000/api/logout', {
+     await fetch(`${config.API_BASE_URL}/api/logout`, {
         method: 'POST',
         credentials: 'include'
       });

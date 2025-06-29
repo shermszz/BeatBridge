@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
+import config from '../config';
 
 const Home = () => {
-  const [username, setUsername] = useState('');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
   // Example data -> Suppose to show user their progress?
@@ -13,24 +15,30 @@ const Home = () => {
     status: 'Good Progress'
   };
 
-  // Fetch user data when component mounts, to include username in jsx
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUser = async () => {
       try {
-        const response = await fetch('/api/user', {
+        const response = await fetch(`${config.API_BASE_URL}/api/user`, {
           credentials: 'include'
         });
+        
         if (response.ok) {
-          const data = await response.json();
-          setUsername(data.username);
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          // If not logged in, redirect to landing
+          navigate('/landing');
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching user:', error);
+        navigate('/landing');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserData();
-  }, []);
+    fetchUser();
+  }, [navigate]);
 
   // For Continue where you left off Button
   const handleContinue = () => {
@@ -42,7 +50,7 @@ const Home = () => {
       <div className="dashboard-header">
         <div className="header-content">
           <div className="header-text">
-            <h1>Hello, {username}!</h1>
+            <h1>Hello, {user?.username}!</h1>
             <p className="subtitle">Track your progress and keep improving.</p>
           </div>
         </div>
@@ -80,14 +88,20 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Skills Overview Card (temporary) */}
+        {/* Song Recommendation Section */}
         <div className="dashboard-card">
-          <h2>Skills Breakdown</h2>
-          <div className="chart-container">
-            <div className="chart-placeholder radar">
-              {/* Add actual radar chart component here */}
-              <p>Skills radar chart will be shown here</p>
-            </div>
+          <div className="card-header">
+          <h2>Song Recommendation</h2>
+          <button className="continue-session-btn" onClick={() => navigate('/song-recommendation')}>
+            <span className="btn-icon">▶</span>
+            Get Song Recommendation
+          </button>
+          </div>
+          <div className="activity-item">
+              <span className="activity-icon">🎶</span>
+              <div className="activity-details">
+                <p>Discover new music tailored to your favorite genres!</p>
+              </div>
           </div>
         </div>
 

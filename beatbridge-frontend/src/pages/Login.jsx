@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
+import config from '../config';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -32,7 +33,7 @@ const Login = () => {
 
     // Proceed with server request
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch(`${config.API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials:'include',
@@ -45,11 +46,16 @@ const Login = () => {
         localStorage.setItem('user_id', data.user_id);
         // Fetch user profile to get profile_pic
         try {
-          const userResponse = await fetch('/api/user', { credentials: 'include' });
+          const userResponse = await fetch(`${config.API_BASE_URL}/api/user`, { credentials: 'include' });
           if (userResponse.ok) {
             const userData = await userResponse.json();
             if (userData.profile_pic_url) {
-              localStorage.setItem('profile_pic', userData.profile_pic_url);
+              // If the URL is not absolute, prepend the backend URL
+              const isAbsolute = userData.profile_pic_url.startsWith('http');
+              const picUrl = isAbsolute
+                ? userData.profile_pic_url
+                : `${config.API_BASE_URL}${userData.profile_pic_url}`;
+              localStorage.setItem('profile_pic', picUrl);
             } else {
               localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
             }

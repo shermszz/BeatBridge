@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import defaultProfile from '../styles/images/loginIcon.svg';
 import '../styles/Profile.css';
+import config from '../config';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Profile = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/user', {
+      const response = await fetch(`${config.API_BASE_URL}/api/user`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -49,8 +50,14 @@ const Profile = () => {
         }));
         // Set profile picture if available
         if (userData.profile_pic_url) {
-          setProfilePic(userData.profile_pic_url);
-          localStorage.setItem('profile_pic', userData.profile_pic_url);
+          const isAbsolute = userData.profile_pic_url.startsWith('http');
+          let picUrl = isAbsolute
+            ? userData.profile_pic_url
+            : `${config.API_BASE_URL}${userData.profile_pic_url}`;
+          // Add cache-busting query string
+          picUrl += `?t=${Date.now()}`;
+          setProfilePic(picUrl);
+          localStorage.setItem('profile_pic', picUrl);
         } else {
           setProfilePic(defaultProfile);
           localStorage.setItem('profile_pic', defaultProfile);
@@ -63,7 +70,7 @@ const Profile = () => {
 
   const fetchCustomizations = async () => {
     try {
-      const response = await fetch('/api/get-customization', {
+      const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -110,15 +117,21 @@ const Profile = () => {
       if (selectedProfilePic) {
         const formData = new FormData();
         formData.append('profile_pic', selectedProfilePic);
-        const response = await fetch('/api/upload-profile-pic', {
+        const response = await fetch(`${config.API_BASE_URL}/api/upload-profile-pic`, {
           method: 'POST',
           credentials: 'include',
           body: formData
         });
         const data = await response.json();
         if (response.ok && data.profile_pic_url) {
-          setProfilePic(data.profile_pic_url);
-          localStorage.setItem('profile_pic', data.profile_pic_url);
+          const isAbsolute = data.profile_pic_url.startsWith('http');
+          let picUrl = isAbsolute
+            ? data.profile_pic_url
+            : `${config.API_BASE_URL}${data.profile_pic_url}`;
+          // Add cache-busting query string
+          picUrl += `?t=${Date.now()}`;
+          setProfilePic(picUrl);
+          localStorage.setItem('profile_pic', picUrl);
           window.dispatchEvent(new Event('profilePicUpdated'));
         } else {
           alert(data.error || 'Failed to upload profile picture');
@@ -132,7 +145,7 @@ const Profile = () => {
       if (form.password) {
         payload.password = form.password;
       }
-      const response = await fetch('/api/update-user', {
+      const response = await fetch(`${config.API_BASE_URL}/api/update-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +190,7 @@ const Profile = () => {
   const handleSaveCustomizations = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/save-customization', {
+      const response = await fetch(`${config.API_BASE_URL}/api/save-customization`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

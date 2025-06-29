@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Customisation.css';
+import config from '../config';
 
 // Page shown after registration for optional user preferences
 const Customisation = () => {
   const navigate = useNavigate();
+  const [customizations, setCustomizations] = useState({
+    skill_level: '',
+    practice_frequency: '',
+    favorite_genres: []
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 // Error handling
@@ -26,6 +32,7 @@ const Customisation = () => {
     const userId = localStorage.getItem('user_id');
     if (!userId) {
       navigate('/login');
+      return;
     }
   }, [navigate]);
 
@@ -62,64 +69,47 @@ const Customisation = () => {
     return Object.values(errors).every(error => error === '');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setHasAttemptedSubmit(true);
-    
-    // Clear any previous errors
-    setError('');
-    setValidationErrors({
-      skill: '',
-      practice: '',
-      genres: ''
-    });
-
-    // Run validation
-    const isValid = validateForm();
-
-    if (!isValid) {
-      return;
+  const handleCustomizationChange = (type, value) => {
+    if (type === 'genres') {
+      setCustomizations(prev => ({
+        ...prev,
+        favorite_genres: prev.favorite_genres.includes(value)
+          ? prev.favorite_genres.filter(g => g !== value)
+          : [...prev.favorite_genres, value]
+      }));
+    } else {
+      setCustomizations(prev => ({
+        ...prev,
+        [type]: value
+      }));
     }
+  };
 
-    // If form is not valid or already submitting, do nothing
-    if (!isFormValid || isSubmitting) {
-      return;
-    }
-
+  const handleSave = async () => {
     setIsSubmitting(true);
-
     try {
-      // Send customization data to backend
-      const response = await fetch('/api/save-customization', {
+      const response = await fetch(`${config.API_BASE_URL}/api/save-customization`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          skill_level: skill,
-          practice_frequency: practice,
-          favorite_genres: genres
+          skill_level: customizations.skill_level,
+          practice_frequency: customizations.practice_frequency,
+          favorite_genres: customizations.favorite_genres
         })
       });
 
-      const data = await response.json();
-
       if (response.ok) {
+        alert('Customizations saved successfully!');
         navigate('/home');
-      } else if (response.status === 401) {
-        // If unauthorized, redirect to login
-        navigate('/login');
       } else {
-        // Handle validation errors from backend
-        if (data.errors) {
-          setValidationErrors(data.errors);
-        } else {
-          setError(data.error || 'Failed to save customization');
-        }
+        alert('Failed to save customizations');
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      console.error('Error saving customizations:', error);
+      alert('Error saving customizations');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +138,7 @@ const Customisation = () => {
   return (
     <section className="hero">
       <h1>Tell us about yourself</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSave}>
         {/* Select drum skill level */}
         <div className="customisation-section">
           <h2>What's your current level?</h2>

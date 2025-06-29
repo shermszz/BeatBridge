@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Register.css';
+import config from '../config';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ const Register = () => {
     if (!formData.username) newErrors.username = "Username required";
     if (!formData.email) newErrors.email = "Email required";
     if (!formData.password) newErrors.password = "Password required";
+    if (!formData.confirmation) newErrors.confirmation = "Password confirmation required";
     if (formData.password !== formData.confirmation) {
       newErrors.confirmation = "Passwords do not match";
     }
@@ -38,7 +40,7 @@ const Register = () => {
   
     // Proceed with server request
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch(`${config.API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
