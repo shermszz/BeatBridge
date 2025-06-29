@@ -34,7 +34,9 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 app = Flask(__name__)
 CORS(app, origins=[
     "https://beat-bridge-rosy.vercel.app",
-    "https://your-custom-domain.com"
+    "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
+    "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
+    # Add any others you see in Vercel!
 ], supports_credentials=True)
 
 # Database configuration
