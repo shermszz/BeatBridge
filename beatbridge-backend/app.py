@@ -32,6 +32,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 # Add this after loading environment variables
 ALLOWED_ORIGINS = [
+    "http://localhost:3000",
     "https://beat-bridge-rosy.vercel.app",
     "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
     "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
@@ -42,7 +43,8 @@ ALLOWED_ORIGINS = [
 app = Flask(__name__)
 app.config['SESSION_COOKIE_NAME'] = 'session'
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True
+is_local = os.environ.get("FLASK_ENV") == "development" or os.environ.get("LOCAL_DEV") == "1"
+app.config['SESSION_COOKIE_SECURE'] = not is_local
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration

@@ -85,7 +85,12 @@ const Customisation = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setHasAttemptedSubmit(true);
+    if (!validateForm()) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await fetch(`${config.API_BASE_URL}/api/save-customization`, {
@@ -95,9 +100,9 @@ const Customisation = () => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          skill_level: customizations.skill_level,
-          practice_frequency: customizations.practice_frequency,
-          favorite_genres: customizations.favorite_genres
+          skill_level: skill,
+          practice_frequency: practice,
+          favorite_genres: genres
         })
       });
 
