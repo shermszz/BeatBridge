@@ -27,9 +27,7 @@ const EmailVerification = () => {
         // Store the JWT token
         localStorage.setItem('token', data.token);
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/customisation');
-        }, 2000);
+        navigate('/customisation');
       } else {
         setError(data.error || 'Verification failed');
       }

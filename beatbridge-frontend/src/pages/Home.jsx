@@ -19,6 +19,7 @@ const Home = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('JWT token in Home.jsx:', token); // Debug log
         const response = await fetch(`${config.API_BASE_URL}/api/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
