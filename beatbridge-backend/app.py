@@ -482,21 +482,16 @@ def uploaded_file(filename):
 def verify_email():
     data = request.get_json()
     verification_code = data.get('verification_code')
-    user_id = session.get('user_id')
 
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-
-    user = User.query.get(user_id)
+    user = User.query.filter_by(verification_code=verification_code).first()
     if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if user.verification_code != verification_code:
         return jsonify({"error": "Invalid verification code"}), 400
 
     user.is_verified = True
     user.verification_code = None
     db.session.commit()
+    login_user(user)
+    session["user_id"] = user.id
 
     return jsonify({
         "message": "Email verified successfully",
