@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation} from 'react-router-dom';
-import profileIcon from '../styles/images/loginIcon.png';
+import profileIcon from '../styles/images/loginIcon.svg';
 import defaultProfile from '../styles/images/loginIcon.png';
 import logo from '../styles/images/Beatbridge.png';
 import '../styles/Header.css';
@@ -9,9 +9,9 @@ import config from '../config';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('user_id'));
   const [showDropdown, setShowDropdown] = useState(false);
-  const [profilePic, setProfilePic] = useState(profileIcon);
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profile_pic') || profileIcon);
   const dropdownRef = useRef(null);
   const dropdownTimeout = useRef();
 
@@ -23,12 +23,9 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const updateProfilePic = () => {
-      setProfilePic(getProfilePicUrl(localStorage.getItem('profile_pic')));
-    };
-    window.addEventListener('profilePicUpdated', updateProfilePic);
-    return () => window.removeEventListener('profilePicUpdated', updateProfilePic);
-  }, []);
+    setIsLoggedIn(!!localStorage.getItem('user_id'));
+    setProfilePic(localStorage.getItem('profile_pic') || profileIcon);
+  }, [location]);
 
   const handleLogout = async () => {
     try {
@@ -62,22 +59,6 @@ const Header = () => {
   const isCustomisation = location.pathname === '/customisation';
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isVerificationPage = location.pathname === '/verify-email';
-
-  // Dropdown handlers with delay
-  const handleProfileMouseEnter = () => {
-    clearTimeout(dropdownTimeout.current);
-    setShowDropdown(true);
-  };
-  const handleProfileMouseLeave = () => {
-    dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
-  };
-  const handleDropdownMouseEnter = () => {
-    clearTimeout(dropdownTimeout.current);
-    setShowDropdown(true);
-  };
-  const handleDropdownMouseLeave = () => {
-    dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
-  };
 
   return (
     <header className={isLanding || isVerificationPage ? 'landing-header' : ' '}>
@@ -130,12 +111,14 @@ const Header = () => {
                   {/* Profile Icon Dropdown */}
                   <div
                     className="profile-dropdown-wrapper"
-                    onMouseEnter={handleProfileMouseEnter}
-                    onMouseLeave={handleProfileMouseLeave}
+                    onMouseEnter={() => clearTimeout(dropdownTimeout.current)}
+                    onMouseLeave={() => {
+                      dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
+                    }}
                     ref={dropdownRef}
                   >
                     <img
-                      src={profilePic || profileIcon}
+                      src={profilePic}
                       alt="Profile"
                       className="header-profile-icon"
                       onClick={() => setShowDropdown(!showDropdown)}
@@ -143,8 +126,11 @@ const Header = () => {
                     {showDropdown && (
                       <div
                         className="profile-dropdown-menu"
-                        onMouseEnter={handleDropdownMouseEnter}
-                        onMouseLeave={handleDropdownMouseLeave}
+                        ref={dropdownRef}
+                        onMouseEnter={() => clearTimeout(dropdownTimeout.current)}
+                        onMouseLeave={() => {
+                          dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
+                        }}
                       >
                         <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
                         <div className="profile-dropdown-item">

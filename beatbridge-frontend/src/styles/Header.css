@@ -11,6 +11,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  margin-left: 15px;
 }
 
 .login-icon {
@@ -19,8 +20,8 @@
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid #fff;
-  background: #eee;
-  object-fit: cover;
+  background: transparent;
+  padding: 2px;
 }
 
 .header-profile-icon {
