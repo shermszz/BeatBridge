@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import config from '../config';
-import defaultProfileImage from '../styles/images/loginIcon.png';
+import defaultProfileImage from '../styles/images/loginIcon.svg';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -57,12 +57,7 @@ const Login = () => {
           if (userResponse.ok) {
             const userData = await userResponse.json();
             if (userData.profile_pic_url) {
-              // If the URL is not absolute, prepend the backend URL
-              const isAbsolute = userData.profile_pic_url.startsWith('http');
-              const picUrl = isAbsolute
-                ? userData.profile_pic_url
-                : `${config.API_BASE_URL}${userData.profile_pic_url}`;
-              localStorage.setItem('profile_pic', picUrl);
+              localStorage.setItem('profile_pic', userData.profile_pic_url);
             } else {
               localStorage.setItem('profile_pic', defaultProfileImage);
             }

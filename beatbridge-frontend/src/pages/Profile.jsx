@@ -2,12 +2,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
 import config from '../config';
-import defaultProfileImage from '../styles/images/loginIcon.png';
+import defaultProfileImage from '../styles/images/loginIcon.svg';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const defaultProfile = defaultProfileImage;
-  const [profilePic, setProfilePic] = useState(defaultProfile);
+  const [profilePic, setProfilePic] = useState(defaultProfileImage);
   const [selectedProfilePic, setSelectedProfilePic] = useState(null);
   const [form, setForm] = useState({
     username: '',
@@ -63,8 +62,8 @@ const Profile = () => {
           setProfilePic(picUrl);
           localStorage.setItem('profile_pic', picUrl);
         } else {
-          setProfilePic(defaultProfile);
-          localStorage.setItem('profile_pic', defaultProfile);
+          setProfilePic(defaultProfileImage);
+          localStorage.setItem('profile_pic', defaultProfileImage);
         }
       }
     } catch (error) {
@@ -97,13 +96,14 @@ const Profile = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleProfilePicChange = (e) => {
-    const file = e.target.files[0];
+  const handleProfilePicChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
       setSelectedProfilePic(file);
-      // Show preview immediately
       const reader = new FileReader();
-      reader.onload = (ev) => setProfilePic(ev.target.result);
+      reader.onloadend = () => {
+        setProfilePic(reader.result);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -258,21 +258,22 @@ const Profile = () => {
         <hr className="profile-divider" />
         <div className="profile-content">
           <div className="profile-pic-section">
-            <img src={profilePic} alt="Profile" className="profile-pic" />
-            <input
-              type="file"
-              accept="image/*"
-              className="profile-file-input"
-              ref={fileInputRef}
-              onChange={handleProfilePicChange}
-            />
-            <button
-              className="profile-pic-btn"
-              type="button"
-              onClick={() => fileInputRef.current.click()}
-            >
+            <div className="profile-picture-container">
+              <img
+                src={profilePic || defaultProfileImage}
+                alt="Profile"
+                className="profile-picture"
+              />
+            </div>
+            <label className="edit-profile-button">
               Edit profile picture
-            </button>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePicChange}
+                style={{ display: 'none' }}
+              />
+            </label>
           </div>
           <form className="profile-form" onSubmit={handleSave}>
             <div className="profile-row">
