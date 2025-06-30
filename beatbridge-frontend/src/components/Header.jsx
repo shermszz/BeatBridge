@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation} from 'react-router-dom';
 import profileIcon from '../styles/images/loginIcon.svg';
-import defaultProfile from '../styles/images/loginIcon.png';
 import logo from '../styles/images/Beatbridge.png';
 import '../styles/Header.css';
 import config from '../config';
@@ -9,23 +8,33 @@ import config from '../config';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('user_id'));
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [profilePic, setProfilePic] = useState(localStorage.getItem('profile_pic') || profileIcon);
-  const dropdownRef = useRef(null);
+  const isLoggedIn = localStorage.getItem('user_id');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownTimeout = useRef();
+  const [profilePic, setProfilePic] = useState(profileIcon); // Set default first
+  const dropdownRef = useRef();
 
   const getProfilePicUrl = (pic) => {
-    if (!pic) return defaultProfile;
-    if (typeof pic === 'string' && pic.startsWith('http')) return pic;
-    if (typeof pic === 'string' && pic.startsWith('/')) return `${config.API_BASE_URL}${pic}`;
-    return defaultProfile;
+    try {
+      if (!pic) return profileIcon;
+      if (typeof pic === 'string' && pic.startsWith('http')) return pic;
+      if (typeof pic === 'string' && pic.startsWith('/')) return `${config.API_BASE_URL}${pic}`;
+      return profileIcon;
+    } catch (error) {
+      console.error('Error in getProfilePicUrl:', error);
+      return profileIcon;
+    }
   };
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('user_id'));
-    setProfilePic(localStorage.getItem('profile_pic') || profileIcon);
-  }, [location]);
+    try {
+      const storedPic = localStorage.getItem('profile_pic');
+      setProfilePic(getProfilePicUrl(storedPic));
+    } catch (error) {
+      console.error('Error in profile pic effect:', error);
+      setProfilePic(profileIcon);
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -38,11 +47,13 @@ const Header = () => {
       });
       localStorage.removeItem('user_id');
       localStorage.removeItem('token');
+      localStorage.removeItem('profile_pic');
       navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
       localStorage.removeItem('user_id');
       localStorage.removeItem('token');
+      localStorage.removeItem('profile_pic');
       navigate('/');
     }
   };
@@ -82,13 +93,12 @@ const Header = () => {
               <button className="header-get-started-btn" onClick={handleGetStarted}>
                 Let's Get Started
               </button>
-              <button onClick={() => navigate('/login')} className="login-button">
-                <img
-                  src={profileIcon}
-                  alt="Login"
-                  className="login-icon"
-                />
-              </button>
+              <img
+                src={profileIcon}
+                alt="Login"
+                className="login-icon"
+                onClick={onLoginIconClick}
+              />
             </div>
           ) : isVerificationPage ? (
             <nav>
@@ -113,7 +123,7 @@ const Header = () => {
                     className="profile-dropdown-wrapper"
                     onMouseEnter={() => clearTimeout(dropdownTimeout.current)}
                     onMouseLeave={() => {
-                      dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
+                      dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
                     }}
                     ref={dropdownRef}
                   >
@@ -121,15 +131,14 @@ const Header = () => {
                       src={profilePic}
                       alt="Profile"
                       className="header-profile-icon"
-                      onClick={() => setShowDropdown(!showDropdown)}
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
                     />
-                    {showDropdown && (
+                    {dropdownOpen && (
                       <div
                         className="profile-dropdown-menu"
-                        ref={dropdownRef}
                         onMouseEnter={() => clearTimeout(dropdownTimeout.current)}
                         onMouseLeave={() => {
-                          dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
+                          dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
                         }}
                       >
                         <Link to="/profile" className="profile-dropdown-item">My Profile</Link>
