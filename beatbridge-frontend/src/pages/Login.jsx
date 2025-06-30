@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 import config from '../config';
+import defaultProfileImage from '../styles/images/loginIcon.png';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -63,16 +64,16 @@ const Login = () => {
                 : `${config.API_BASE_URL}${userData.profile_pic_url}`;
               localStorage.setItem('profile_pic', picUrl);
             } else {
-              localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
+              localStorage.setItem('profile_pic', defaultProfileImage);
             }
             window.dispatchEvent(new Event('profilePicUpdated'));
           } else {
             // fallback to default if user fetch fails
-            localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
+            localStorage.setItem('profile_pic', defaultProfileImage);
             window.dispatchEvent(new Event('profilePicUpdated'));
           }
         } catch (e) {
-          localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
+          localStorage.setItem('profile_pic', defaultProfileImage);
           window.dispatchEvent(new Event('profilePicUpdated'));
         }
         //Navigate to the main home page once logged in

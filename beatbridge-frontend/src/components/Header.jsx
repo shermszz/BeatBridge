@@ -100,12 +100,13 @@ const Header = () => {
               <button className="header-get-started-btn" onClick={handleGetStarted}>
                 Let's Get Started
               </button>
-              <img
-                src="/loginIcon.png"
-                alt="Login"
-                className="login-icon"
-                onClick={onLoginIconClick}
-              />
+              <button onClick={() => navigate('/login')} className="login-button">
+                <img
+                  src={profileIcon}
+                  alt="Login"
+                  className="login-icon"
+                />
+              </button>
             </div>
           ) : isVerificationPage ? (
             <nav>
