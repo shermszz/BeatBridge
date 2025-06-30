@@ -36,7 +36,8 @@ ALLOWED_ORIGINS = [
     "https://beat-bridge-rosy.vercel.app",
     "https://beat-bridge-jianweis-projects-e43daaa5.vercel.app",
     "https://beat-bridge-git-main-jianweis-projects-e43daaa5.vercel.app",
-    # Add any other Vercel preview/production URLs here
+    "https://beatbridge2.netlify.app",  # Add your Netlify domain
+    # Add any other Netlify preview/production URLs here
 ]
 
 # Configure application
@@ -48,13 +49,21 @@ app.config['SESSION_COOKIE_SECURE'] = not is_local
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
-DB_USER = os.environ.get('DB_USER', 'postgres')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
-DB_HOST = os.environ.get('DB_HOST', 'localhost')
-DB_PORT = os.environ.get('DB_PORT', '5432')
-DB_NAME = os.environ.get('DB_NAME', 'flask_db')
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Use DATABASE_URL if available (Railway), otherwise use individual credentials
+if DATABASE_URL:
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    DB_USER = os.environ.get('DB_USER', 'postgres')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+    DB_HOST = os.environ.get('DB_HOST', 'localhost')
+    DB_PORT = os.environ.get('DB_PORT', '5432')
+    DB_NAME = os.environ.get('DB_NAME', 'flask_db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -168,8 +177,17 @@ class UserCustomization(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # Create tables
-with app.app_context():
-    db.create_all()
+def init_db():
+    try:
+        with app.app_context():
+            db.create_all()
+            print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Error creating database tables: {e}")
+        raise e
+
+# Initialize database tables
+init_db()
 
 @login_manager.user_loader
 def load_user(user_id):
