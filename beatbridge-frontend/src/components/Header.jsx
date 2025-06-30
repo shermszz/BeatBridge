@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation} from 'react-router-dom';
-import profileIcon from '../styles/images/loginIcon.svg';
-import defaultProfile from '../styles/images/loginIcon.svg';
+import profileIcon from '../styles/images/loginIcon.png';
+import defaultProfile from '../styles/images/loginIcon.png';
 import logo from '../styles/images/Beatbridge.png';
 import '../styles/Header.css';
 import config from '../config';
@@ -101,7 +101,7 @@ const Header = () => {
                 Let's Get Started
               </button>
               <img
-                src="/loginIcon.svg"
+                src="/loginIcon.png"
                 alt="Login"
                 className="login-icon"
                 onClick={onLoginIconClick}

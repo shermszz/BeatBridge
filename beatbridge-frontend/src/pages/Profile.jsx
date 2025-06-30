@@ -5,7 +5,7 @@ import config from '../config';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const defaultProfile = '/loginIcon.svg';
+  const defaultProfile = '/loginIcon.png';
   const [profilePic, setProfilePic] = useState(defaultProfile);
   const [selectedProfilePic, setSelectedProfilePic] = useState(null);
   const [form, setForm] = useState({

@@ -63,16 +63,16 @@ const Login = () => {
                 : `${config.API_BASE_URL}${userData.profile_pic_url}`;
               localStorage.setItem('profile_pic', picUrl);
             } else {
-              localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+              localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
             }
             window.dispatchEvent(new Event('profilePicUpdated'));
           } else {
             // fallback to default if user fetch fails
-            localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+            localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
             window.dispatchEvent(new Event('profilePicUpdated'));
           }
         } catch (e) {
-          localStorage.setItem('profile_pic', require('../styles/images/loginIcon.svg'));
+          localStorage.setItem('profile_pic', require('../styles/images/loginIcon.png'));
           window.dispatchEvent(new Event('profilePicUpdated'));
         }
         //Navigate to the main home page once logged in
