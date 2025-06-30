@@ -3,6 +3,26 @@
   display: flex;
   align-items: center;
 }
+
+.login-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.login-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+  background: #eee;
+  object-fit: cover;
+}
+
 .header-profile-icon {
   width: 38px;
   height: 38px;
@@ -12,6 +32,7 @@
   background: #eee;
   object-fit: cover;
 }
+
 .profile-dropdown-menu {
   position: absolute;
   right: 0;

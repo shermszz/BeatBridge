@@ -9,17 +9,18 @@ import config from '../config';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = localStorage.getItem('user_id');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [profilePic, setProfilePic] = useState(profileIcon);
+  const dropdownRef = useRef(null);
   const dropdownTimeout = useRef();
+
   const getProfilePicUrl = (pic) => {
     if (!pic) return defaultProfile;
     if (typeof pic === 'string' && pic.startsWith('http')) return pic;
     if (typeof pic === 'string' && pic.startsWith('/')) return `${config.API_BASE_URL}${pic}`;
     return defaultProfile;
   };
-  const [profilePic, setProfilePic] = useState(getProfilePicUrl(localStorage.getItem('profile_pic')));
-  const dropdownRef = useRef();
 
   useEffect(() => {
     const updateProfilePic = () => {
@@ -65,17 +66,17 @@ const Header = () => {
   // Dropdown handlers with delay
   const handleProfileMouseEnter = () => {
     clearTimeout(dropdownTimeout.current);
-    setDropdownOpen(true);
+    setShowDropdown(true);
   };
   const handleProfileMouseLeave = () => {
-    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
+    dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
   };
   const handleDropdownMouseEnter = () => {
     clearTimeout(dropdownTimeout.current);
-    setDropdownOpen(true);
+    setShowDropdown(true);
   };
   const handleDropdownMouseLeave = () => {
-    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 220);
+    dropdownTimeout.current = setTimeout(() => setShowDropdown(false), 220);
   };
 
   return (
@@ -134,11 +135,12 @@ const Header = () => {
                     ref={dropdownRef}
                   >
                     <img
-                      src={profilePic}
+                      src={profilePic || profileIcon}
                       alt="Profile"
                       className="header-profile-icon"
+                      onClick={() => setShowDropdown(!showDropdown)}
                     />
-                    {dropdownOpen && (
+                    {showDropdown && (
                       <div
                         className="profile-dropdown-menu"
                         onMouseEnter={handleDropdownMouseEnter}
