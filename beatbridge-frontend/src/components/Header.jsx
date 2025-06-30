@@ -11,12 +11,12 @@ const Header = () => {
   const isLoggedIn = localStorage.getItem('user_id');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownTimeout = useRef();
-  const [profilePic, setProfilePic] = useState(profileIcon); // Set default first
+  const [profilePic, setProfilePic] = useState(profileIcon);
   const dropdownRef = useRef();
 
   const getProfilePicUrl = (pic) => {
     try {
-      if (!pic) return profileIcon;
+      if (!pic || pic === 'null' || pic === 'undefined') return profileIcon;
       if (typeof pic === 'string' && pic.startsWith('http')) return pic;
       if (typeof pic === 'string' && pic.startsWith('/')) return `${config.API_BASE_URL}${pic}`;
       return profileIcon;
@@ -27,6 +27,14 @@ const Header = () => {
   };
 
   useEffect(() => {
+    // Clear profile pic if not logged in
+    if (!isLoggedIn) {
+      setProfilePic(profileIcon);
+      localStorage.removeItem('profile_pic');
+      return;
+    }
+
+    // Load initial profile picture
     try {
       const storedPic = localStorage.getItem('profile_pic');
       setProfilePic(getProfilePicUrl(storedPic));
@@ -34,7 +42,20 @@ const Header = () => {
       console.error('Error in profile pic effect:', error);
       setProfilePic(profileIcon);
     }
-  }, []);
+
+    // Add event listener for profile picture updates
+    const handleProfilePicUpdate = () => {
+      const updatedPic = localStorage.getItem('profile_pic');
+      setProfilePic(getProfilePicUrl(updatedPic));
+    };
+
+    window.addEventListener('profilePicUpdated', handleProfilePicUpdate);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('profilePicUpdated', handleProfilePicUpdate);
+    };
+  }, [isLoggedIn]); // Add isLoggedIn as dependency
 
   const handleLogout = async () => {
     try {
@@ -45,15 +66,13 @@ const Header = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('token');
-      localStorage.removeItem('profile_pic');
+      localStorage.clear(); // Clear all localStorage
+      setProfilePic(profileIcon); // Reset profile pic state
       navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('token');
-      localStorage.removeItem('profile_pic');
+      localStorage.clear(); // Clear all localStorage
+      setProfilePic(profileIcon); // Reset profile pic state
       navigate('/');
     }
   };

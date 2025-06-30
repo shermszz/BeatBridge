@@ -20,8 +20,8 @@
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid #fff;
-  background: transparent;
-  padding: 2px;
+  background: #2a2a2a;
+  padding: 8px;
 }
 
 .header-profile-icon {
@@ -30,8 +30,16 @@
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid #fff;
-  background: #eee;
-  object-fit: cover;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Style for SVG when used as header profile icon */
+.header-profile-icon[src$=".svg"] {
+  padding: 8px;
 }
 
 .profile-dropdown-menu {
