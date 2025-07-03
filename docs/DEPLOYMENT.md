@@ -1,11 +1,11 @@
-# BeatBridge Deployment Guide: Vercel + Railway
+# BeatBridge Deployment Guide: Netlify + Railway
 
-This guide will help you deploy your BeatBridge application using Vercel for the frontend and Railway for the backend.
+This guide will help you deploy your BeatBridge application using Netlify for the frontend and Railway for the backend.
 
 ## Prerequisites
 
 1. **GitHub Account** - Your code should be in a GitHub repository
-2. **Vercel Account** - Sign up at [vercel.com](https://vercel.com)
+2. **Netlify Account** - Sign up at [netlify.com](https://netlify.com)
 3. **Railway Account** - Sign up at [railway.app](https://railway.app)
 4. **Last.fm API Key** - For song recommendations (optional)
 
@@ -47,44 +47,43 @@ This guide will help you deploy your BeatBridge application using Vercel for the
 1. Railway will automatically deploy when you push to your GitHub repository
 2. Note your backend URL (e.g., `https://your-app-name.railway.app`)
 
-## Step 2: Deploy Frontend to Vercel
+## Step 2: Deploy Frontend to Netlify
 
-### 2.1 Connect to Vercel
-1. Go to [vercel.com](https://vercel.com) and sign in
-2. Click "New Project"
-3. Import your GitHub repository
+### 2.1 Connect to Netlify
+1. Go to [netlify.com](https://netlify.com) and sign in
+2. Click "Add new site" > "Import an existing project"
+3. Connect your GitHub repository
 4. Configure the project:
-   - **Framework Preset**: Create React App
-   - **Root Directory**: `beatbridge-frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `build`
+   - **Base directory**: `beatbridge-frontend`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `build`
 
 ### 2.2 Set Environment Variables
-In Vercel, add the following environment variable:
+In Netlify, add the following environment variable:
 ```
 REACT_APP_API_URL=https://your-backend-url.railway.app
 ```
 
 ### 2.3 Deploy Frontend
-1. Click "Deploy" in Vercel
-2. Vercel will build and deploy your React app
-3. Note your frontend URL (e.g., `https://your-app-name.vercel.app`)
+1. Click "Deploy site" in Netlify
+2. Netlify will build and deploy your React app
+3. Note your frontend URL (e.g., `https://your-app-name.netlify.app`)
 
 ## Step 3: Update Configuration
 
 ### 3.1 Update Backend CORS
-After getting your Vercel domain, update the CORS origins in your backend:
+After getting your Netlify domain, update the CORS origins in your backend:
 
 ```python
 # In beatbridge-backend/app.py, update these lines:
 CORS(app,
-     resources={r"/*": {"origins": ["http://localhost:3000", "https://your-actual-vercel-domain.vercel.app"]}},
+     resources={r"/*": {"origins": ["http://localhost:3000", "https://your-actual-netlify-domain.netlify.app"]}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "Accept"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 
-# Also update the after_request and before_request functions with your actual Vercel domain
+# Also update the after_request and before_request functions with your actual Netlify domain
 ```
 
 ## Step 4: Database Migrations
@@ -103,7 +102,7 @@ Connect to your Railway PostgreSQL database and run the migration files:
 
 ## Step 5: Test Your Deployment
 
-1. **Frontend**: Visit your Vercel URL
+1. **Frontend**: Visit your Netlify URL
 2. **Backend**: Test API endpoints at your Railway URL
 3. **Database**: Verify data is being stored correctly
 4. **Features**: Test registration, login, song recommendations, etc.
@@ -113,7 +112,7 @@ Connect to your Railway PostgreSQL database and run the migration files:
 ### Common Issues
 
 1. **CORS Errors**
-   - Ensure your Vercel domain is added to CORS origins in the backend
+   - Ensure your Netlify domain is added to CORS origins in the backend
    - Check that environment variables are set correctly
 
 2. **Database Connection Issues**
@@ -121,7 +120,7 @@ Connect to your Railway PostgreSQL database and run the migration files:
    - Check that migrations have been run
 
 3. **API Calls Failing**
-   - Verify `REACT_APP_API_URL` is set correctly in Vercel
+   - Verify `REACT_APP_API_URL` is set correctly in Netlify
    - Check that the backend is running and accessible
 
 4. **Build Failures**
@@ -137,13 +136,13 @@ Connect to your Railway PostgreSQL database and run the migration files:
 - [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - [ ] `LASTFM_API_KEY`
 
-**Vercel (Frontend):**
+**Netlify (Frontend):**
 - [ ] `REACT_APP_API_URL`
 
 ## Cost Considerations
 
 - **Railway**: Free tier includes 500 hours/month, then $5/month
-- **Vercel**: Free tier includes unlimited deployments, 100GB bandwidth/month
+- **Netlify**: Free tier includes 300 build minutes/month, 100GB bandwidth/month
 - **PostgreSQL**: Included in Railway's free tier
 
 ## Next Steps
@@ -153,4 +152,4 @@ Connect to your Railway PostgreSQL database and run the migration files:
 3. Set up CI/CD for automatic deployments
 4. Implement backup strategies for your database
 
-Your BeatBridge application should now be live and accessible worldwide! 🎉 
+Your BeatBridge application should now be live and accessible worldwide :D
