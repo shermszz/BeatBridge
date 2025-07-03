@@ -10,6 +10,7 @@ const DRUMS = [
 
 const LOCAL_KEYBINDS_KEY = 'rhythm_trainer_keybinds';
 
+// Helper to get initial keybinds from localStorage or defaults
 function getInitialKeybinds() {
   const saved = localStorage.getItem(LOCAL_KEYBINDS_KEY);
   if (saved) {
@@ -69,11 +70,13 @@ export default function RhythmTrainer() {
     return () => window.removeEventListener('keydown', handleEditKey);
   }, [editingIdx, keybinds]);
 
+  // Once clicked on "Change", start editing a keybind
   const handleEditClick = (idx) => {
     setEditingIdx(idx);
     setError('');
   };
 
+  // Reset all keybinds to default settings
   const handleReset = () => {
     setKeybinds(DRUMS.map(d => d.defaultKey));
     setError('');
@@ -107,6 +110,7 @@ export default function RhythmTrainer() {
             >
               Change
             </button>
+            {/* Audio element for drum sound */}
             <audio ref={el => audioRefs.current[idx] = el} src={drum.file} preload="auto" />
           </div>
         ))}
