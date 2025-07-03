@@ -10,6 +10,7 @@ import EmailVerification from './pages/EmailVerification';
 import Customisation from './pages/Customisation';
 import Profile from './pages/Profile';
 import SongRecommendation from './pages/SongRecommendation';
+import RhythmTrainer from './pages/RhythmTrainer';
 import './styles/App.css';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
 
           <Route path="/profile" element={<Profile />} />
           <Route path="/song-recommendation" element={<SongRecommendation />} />
+          <Route path="/rhythm-trainer" element={<RhythmTrainer />} />
         </Routes>
       </Layout>
     </Router>

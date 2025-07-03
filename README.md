@@ -46,7 +46,9 @@ BridgeBeat/
 │       └── test_lastfm.py             # Last.fm API test script
 ├── beatbridge-frontend/               # React frontend (UI)
 │   ├── package.json                   # Node.js dependencies
-│   ├── vercel.json                    # Vercel deployment config
+│   ├── vercel.json     
+│   └── public/  
+│       ├── sounds/...                 # Drum sounds                
 │   └── src/                           # React source code
 │       ├── App.jsx
 │       ├── index.jsx
