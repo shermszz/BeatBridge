@@ -43,8 +43,8 @@
 }
 
 .profile-picture-container {
-  width: 200px;
-  height: 200px;
+  width: 175px;
+  height: 175px;
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid #ff4b4b;
@@ -102,11 +102,11 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.2s;
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
-.edit-profile-button:hover {
-  background: #ff3333;
-}
 
 .profile-form {
   flex: 1;
