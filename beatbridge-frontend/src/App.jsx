@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -25,19 +26,40 @@ function App() {
           <Route path="/landing" element={<Landing />} />
 
           {/* Home page for logged-in users */}
-          <Route path="/home" element={<Home />} />
+          <Route path="/home" element={
+            <ProtectedRoute requireVerification={true}>
+              <Home />
+            </ProtectedRoute>
+          } />
 
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailVerification />} />
 
-          {/* Page to gather user preferences after registration */}
-          <Route path="/customisation" element={<Customisation />} />
+          {/* Page to gather user preferences after registration and email verification */}
+          <Route path="/customisation" element={
+            <ProtectedRoute requireVerification={true}>
+              <Customisation />
+            </ProtectedRoute>
+          } />
 
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/song-recommendation" element={<SongRecommendation />} />
-          <Route path="/rhythm-trainer" element={<RhythmTrainer />} />
+          {/* Pages to Features */}
+          <Route path="/profile" element={
+            <ProtectedRoute requireVerification={true}>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/song-recommendation" element={
+            <ProtectedRoute requireVerification={true}>
+              <SongRecommendation />
+            </ProtectedRoute>
+          } />
+          <Route path="/rhythm-trainer" element={
+            <ProtectedRoute requireVerification={true}>
+              <RhythmTrainer />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Layout>
     </Router>

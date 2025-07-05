@@ -8,7 +8,8 @@ import config from '../config';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = localStorage.getItem('user_id');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownTimeout = useRef();
   const [profilePic, setProfilePic] = useState(profileIcon);
@@ -27,21 +28,59 @@ const Header = () => {
   };
 
   useEffect(() => {
-    // Clear profile pic if not logged in
-    if (!isLoggedIn) {
-      setProfilePic(profileIcon);
-      localStorage.removeItem('profile_pic');
-      return;
-    }
+    const checkAuthStatus = async () => {
+      const userId = localStorage.getItem('user_id');
+      const token = localStorage.getItem('token');
+      
+      if (!userId || !token) {
+        setIsLoggedIn(false);
+        setIsVerified(false);
+        setProfilePic(profileIcon);
+        localStorage.removeItem('profile_pic');
+        return;
+      }
 
-    // Load initial profile picture
-    try {
-      const storedPic = localStorage.getItem('profile_pic');
-      setProfilePic(getProfilePicUrl(storedPic));
-    } catch (error) {
-      console.error('Error in profile pic effect:', error);
-      setProfilePic(profileIcon);
-    }
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setIsLoggedIn(true);
+          setIsVerified(userData.is_verified || false);
+          
+          // Load profile picture
+          if (userData.profile_pic_url) {
+            localStorage.setItem('profile_pic', userData.profile_pic_url);
+            setProfilePic(getProfilePicUrl(userData.profile_pic_url));
+          } else {
+            localStorage.setItem('profile_pic', profileIcon);
+            setProfilePic(profileIcon);
+          }
+        } else {
+          // Token is invalid, clear everything
+          setIsLoggedIn(false);
+          setIsVerified(false);
+          setProfilePic(profileIcon);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user_id');
+          localStorage.removeItem('profile_pic');
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsLoggedIn(false);
+        setIsVerified(false);
+        setProfilePic(profileIcon);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('profile_pic');
+      }
+    };
+
+    checkAuthStatus();
 
     // Add event listener for profile picture updates
     const handleProfilePicUpdate = () => {
@@ -55,7 +94,7 @@ const Header = () => {
     return () => {
       window.removeEventListener('profilePicUpdated', handleProfilePicUpdate);
     };
-  }, [isLoggedIn]); // Add isLoggedIn as dependency
+  }, [location.pathname]); // Re-check when location changes
 
   const handleLogout = async () => {
     try {
@@ -106,8 +145,8 @@ const Header = () => {
       {/* Show navigation only if not on customisation page */}
       {!isCustomisation && (
         <>
-          {/* If user is on landing page and not logged in, show register button and login icon */}
-          {isLanding && !isLoggedIn ? (
+          {/* If user is on landing page and not logged in OR not verified, show register button and login icon */}
+          {isLanding && (!isLoggedIn || !isVerified) ? (
             <div className="landing-actions">
               <button className="header-get-started-btn" onClick={handleGetStarted}>
                 Let's Get Started
@@ -131,7 +170,7 @@ const Header = () => {
             </nav>
           ) : (
             <nav>
-              {isLoggedIn && !isVerificationPage ? (
+              {isLoggedIn && isVerified && !isVerificationPage ? (
                 <div className="dashboard-buttons">
                   <Link to="/home" className="dash-btn">Home</Link>
                   <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>

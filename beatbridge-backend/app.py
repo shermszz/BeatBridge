@@ -125,6 +125,39 @@ def jwt_required(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+# JWT Authentication decorator with verification requirement
+def jwt_verified_required(f):
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"error": "No token provided"}), 401
+        
+        token = auth_header.split(' ')[1]
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({"error": "Invalid token"}), 401
+            
+            # Check if user is verified
+            user = User.query.get(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            
+            if not user.is_verified:
+                return jsonify({"error": "Email verification required"}), 403
+            
+            # Add user_id to request context for use in route handlers
+            request.user_id = user_id
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+    
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
 # Database model
 class User(db.Model):
     __tablename__ = 'users'
@@ -292,15 +325,19 @@ def register():
             verification_message = "Email verification is not available."
             requires_verification = False
         
-        # Log the user in after registration
-        login_user(new_user)
-        session["user_id"] = new_user.id
+        # Only log in and provide token if user is verified
+        if new_user.is_verified:
+            login_user(new_user)
+            session["user_id"] = new_user.id
+            token = new_user.generate_jwt_token()
+        else:
+            token = None
         
         return jsonify({
             "message": f"Registration successful. {verification_message}",
             "user_id": new_user.id,
             "requires_verification": requires_verification,
-            "token": new_user.generate_jwt_token()
+            "token": token
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -332,6 +369,10 @@ def login():
         # Ensure username exists and password is correct
         if user is None or not check_password_hash(user.hash, password):
             return jsonify({"errors": {"general": "Invalid username and/or password"}}), 401
+
+        # Check if user is verified
+        if not user.is_verified:
+            return jsonify({"errors": {"general": "Please verify your email before logging in. Check your email for the verification code."}}), 403
 
         # Remember which user has logged in
         login_user(user)
@@ -368,7 +409,8 @@ def get_user():
         "id": user.id,
         "username": user.username,
         "email": user.email,
-        "profile_pic_url": user.profile_pic_url  # Return profile picture URL
+        "profile_pic_url": user.profile_pic_url,  # Return profile picture URL
+        "is_verified": user.is_verified  # Return verification status
     }), 200
 
 @app.route("/api/get-customization", methods=["GET"])
@@ -394,7 +436,7 @@ def get_customization():
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/api/save-customization", methods=["POST"])
-@jwt_required
+@jwt_verified_required
 def save_customization():
     try:
         data = request.get_json()
@@ -443,7 +485,7 @@ def save_customization():
 
 # Update user profile
 @app.route('/api/update-user', methods=["POST"])
-@jwt_required
+@jwt_verified_required
 def update_user():
     # Get new password, email, and username from request if provided
     data = request.get_json()
@@ -491,7 +533,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/api/upload-profile-pic', methods=['POST'])
-@jwt_required
+@jwt_verified_required
 def upload_profile_pic():
     if 'profile_pic' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -536,6 +578,25 @@ def verify_email():
         "message": "Email verified successfully",
         "token": user.generate_jwt_token()
     }), 200
+
+@app.route('/api/check-verification-status', methods=['POST'])
+def check_verification_status():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "User ID required"}), 400
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({
+        "is_verified": user.is_verified,
+        "user_id": user.id
+    }), 200
+
+
 
 def send_verification_email(user):
     verification_code = user.generate_verification_code()
