@@ -12,6 +12,7 @@ import Customisation from './pages/Customisation';
 import Profile from './pages/Profile';
 import SongRecommendation from './pages/SongRecommendation';
 import RhythmTrainer from './pages/RhythmTrainer';
+import RhythmTrainerChapters from './pages/RhythmTrainerChapters';
 import './styles/App.css';
 
 function App() {
@@ -58,6 +59,11 @@ function App() {
           <Route path="/rhythm-trainer" element={
             <ProtectedRoute requireVerification={true}>
               <RhythmTrainer />
+            </ProtectedRoute>
+          } />
+          <Route path="/rhythm-trainer-chapters" element={
+            <ProtectedRoute requireVerification={true}>
+              <RhythmTrainerChapters />
             </ProtectedRoute>
           } />
         </Routes>
