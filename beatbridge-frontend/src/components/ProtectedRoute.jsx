@@ -1,3 +1,4 @@
+// Prevents users from accessing pages without being logged in or verified email
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import config from '../config';

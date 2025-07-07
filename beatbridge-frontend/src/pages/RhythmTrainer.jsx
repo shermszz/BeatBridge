@@ -17,47 +17,47 @@ const DRUMS = [
     keys: ['y'], 
     file: '/sounds/Crash.mp3', 
     type: 'cymbal',
-    style: { top: '8%', left: '25%', width: '12%' }
+    style: { top: '17%', left: '25%', width: '12%' }
   },
   { 
     name: 'Ride', 
     keys: ['u'], 
-    file: '/sounds/Crash.mp3',
+    file: '/sounds/Ride.mp3',
     type: 'cymbal',
-    style: { top: '8%', right: '15%', width: '12%' }
+    style: { top: '18%', right: '18%', width: '12%' }
   },
   { 
     name: 'Hi-Hat Open', 
     keys: ['e'], 
-    file: '/sounds/Hi-Hat.mp3', 
+    file: '/sounds/Open Hihat.mp3', 
     type: 'cymbal',
-    style: { top: '18%', left: '12%', width: '10%' }
+    style: { top: '27%', left: '12%', width: '10%' }
   },
   { 
     name: 'Hi-Hat Closed', 
     keys: ['r'], 
     file: '/sounds/Hi-Hat.mp3', 
     type: 'cymbal',
-    style: { top: '28%', left: '12%', width: '10%' }
+    style: { top: '27%', left: '21.5%', width: '10%' }
   },
   { 
     name: 'High Tom', 
     keys: ['c'], 
-    file: '/sounds/Snare.mp3',
+    file: '/sounds/High Tom.mp3',
     type: 'tom',
-    style: { top: '30%', left: '35%', width: '15%' }
+    style: { top: '30%', left: '32%', width: '15%' }
   },
   { 
     name: 'Low Tom', 
     keys: ['g'], 
-    file: '/sounds/Snare.mp3',
+    file: '/sounds/Low Tom.mp3',
     type: 'tom',
-    style: { top: '30%', right: '35%', width: '15%' }
+    style: { top: '30%', right: '32%', width: '15%' }
   },
   { 
     name: 'Floor Tom', 
     keys: ['h'], 
-    file: '/sounds/Snare.mp3',
+    file: '/sounds/Floor Tom.mp3',
     type: 'tom',
     style: { top: '45%', right: '15%', width: '18%' }
   },
@@ -66,7 +66,7 @@ const DRUMS = [
     keys: ['j'], 
     file: '/sounds/Snare.mp3',
     type: 'snare',
-    style: { top: '45%', left: '25%', width: '15%' }
+    style: { top: '42%', left: '24%', width: '15%' }
   },
   { 
     name: 'Bass', 
@@ -104,6 +104,16 @@ export default function RhythmTrainer() {
   const [editingKeyIdx, setEditingKeyIdx] = useState(null); // Which key in the drum's bindings is being edited
   const [error, setError] = useState(''); // Error for keybind editing
   const [activeDrumIdxs, setActiveDrumIdxs] = useState([]); // Indices of drums currently being played
+  const keybindCardRef = useRef(null);
+  const drumKitContainerRef = useRef(null);
+  const [drumKitHeight, setDrumKitHeight] = useState(null);
+
+  // Synchronize drum kit container height with keybind card
+  useEffect(() => {
+    if (keybindCardRef.current) {
+      setDrumKitHeight(keybindCardRef.current.offsetHeight);
+    }
+  }, [keybinds, showShortcuts, editingDrum, editingKeyIdx]);
 
   // Save keybinds to localStorage whenever they change
   useEffect(() => {
@@ -229,69 +239,80 @@ export default function RhythmTrainer() {
 
       {/* Virtual Drum Section (Middle) */}
       <div className="virtual-drum-section">
-        <div className="section-controls">
-          <button 
-            className="control-btn"
-            onClick={() => setShowShortcuts(!showShortcuts)}
+        <h2 className="section-title">Virtual Drum Kit</h2>
+        <p style={{ color: '#fff', textAlign: 'center', marginTop: '0.5rem', marginBottom: '2rem', fontSize: '1.08rem', opacity: 0.85 }}>
+          This is a preview of the virtual drum kit you will be interacting with!
+        </p>
+        {/* Flex row for drum kit and keybind controls */}
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', gap: '2.5rem', width: '100%' }}>
+          <div
+            className="drum-kit-container"
+            style={{ flex: '1 1 0', maxWidth: 700, height: drumKitHeight ? drumKitHeight : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            ref={drumKitContainerRef}
           >
-            {showShortcuts ? 'Hide shortcuts' : 'Show shortcuts'}
-          </button>
-        </div>
-        
-        <div className="drum-kit-container">
-          <img src={VirtualDrumKit} alt="Virtual Drum Kit" className="drum-kit-image" />
-          <div className="drum-kit-overlay">
-            {DRUMS.map((drum, idx) => (
-              <div
-                key={drum.name}
-                className={`drum ${drum.type} ${activeDrumIdxs.includes(idx) ? 'active' : ''}`}
-                style={drum.style}
-                onClick={() => handleDrumClick(idx)}
-              >
-                <div className="drum-hotspot"></div>
-                {showShortcuts && (
-                  <div className="key-label">
-                    {keybinds[idx][0].toUpperCase()}
-                  </div>
-                )}
-                <audio
-                  ref={el => audioRefs.current[idx] = el}
-                  src={drum.file}
-                  preload="auto"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Keybind Controls */}
-        <div className="keybind-controls">
-          <h3>Customize Key Bindings</h3>
-          <div className="keybind-grid">
-            {DRUMS.map((drum, drumIdx) => (
-              <div key={drum.name} className="keybind-row">
-                <span className="drum-name">{drum.name}:</span>
-                <div className="key-buttons">
-                  {keybinds[drumIdx].map((key, keyIdx) => (
-                    <button
-                      key={keyIdx}
-                      className="key-button"
-                      onClick={() => handleEditClick(drumIdx, keyIdx)}
-                      disabled={editingDrum !== null}
-                    >
-                      {editingDrum === drumIdx && editingKeyIdx === keyIdx ? 
-                        'Press a key...' : 
-                        key.toUpperCase()}
-                    </button>
-                  ))}
+            <img src={VirtualDrumKit} alt="Virtual Drum Kit" className="drum-kit-image" style={{ maxHeight: drumKitHeight ? drumKitHeight : '100%', width: '100%', objectFit: 'contain' }} />
+            <div className="drum-kit-overlay">
+              {DRUMS.map((drum, idx) => (
+                <div
+                  key={drum.name}
+                  className={`drum ${drum.type} ${activeDrumIdxs.includes(idx) ? 'active' : ''}`}
+                  style={drum.style}
+                  onClick={() => handleDrumClick(idx)}
+                >
+                  <div className="drum-hotspot"></div>
+                  {showShortcuts && (
+                    <div className="key-label">
+                      {keybinds[idx][0].toUpperCase()}
+                    </div>
+                  )}
+                  <audio
+                    ref={el => audioRefs.current[idx] = el}
+                    src={drum.file}
+                    preload="auto"
+                  />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <button className="reset-keybinds-btn" onClick={handleReset}>
-            Reset All Keybinds
-          </button>
-          {error && <div className="keybind-error">{error}</div>}
+          {/* Keybind Controls to the right */}
+          <div
+            className="keybind-controls"
+            style={{ flex: '0 0 340px', minWidth: 300, marginTop: 0 }}
+            ref={keybindCardRef}
+          >
+            <h3>Customize Key Bindings</h3>
+            <div className="keybind-grid">
+              {DRUMS.map((drum, drumIdx) => (
+                <div key={drum.name} className="keybind-row">
+                  <span className="drum-name">{drum.name}:</span>
+                  <div className="key-buttons">
+                    {keybinds[drumIdx].map((key, keyIdx) => (
+                      <button
+                        key={keyIdx}
+                        className="key-button"
+                        onClick={() => handleEditClick(drumIdx, keyIdx)}
+                        disabled={editingDrum !== null}
+                      >
+                        {editingDrum === drumIdx && editingKeyIdx === keyIdx ? 
+                          'Press a key...' : 
+                          key.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="reset-keybinds-btn" onClick={handleReset}>
+              Reset All Keybinds
+            </button>
+            <button 
+              className="shortcuts-toggle-btn"
+              onClick={() => setShowShortcuts(!showShortcuts)}
+            >
+              {showShortcuts ? 'Hide shortcuts' : 'Show shortcuts'}
+            </button>
+            {error && <div className="keybind-error">{error}</div>}
+          </div>
         </div>
       </div>
 
