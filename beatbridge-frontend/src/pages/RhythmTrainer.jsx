@@ -8,13 +8,73 @@ import TargetIcon from '../styles/images/RhythmTrainerIcons/target.png';
 import MusicNoteIcon from '../styles/images/RhythmTrainerIcons/music-note.png';
 import LightningIcon from '../styles/images/RhythmTrainerIcons/lightning.png';
 import LadderIcon from '../styles/images/RhythmTrainerIcons/ladder.png';
+import VirtualDrumKit from '../styles/images/virtualDrumKit.jpg';
 
-// Drum definitions and default keybinds
+// Drum definitions with multiple key bindings and positions
 const DRUMS = [
-  { name: 'Crash', defaultKey: 'C', file: '/sounds/Crash.mp3' },
-  { name: 'Hi-Hat', defaultKey: 'H', file: '/sounds/Hi-Hat.mp3' },
-  { name: 'Snare', defaultKey: 'S', file: '/sounds/Snare.mp3' },
-  { name: 'Kick', defaultKey: 'K', file: '/sounds/Kick.mp3' },
+  { 
+    name: 'Crash', 
+    keys: ['y'], 
+    file: '/sounds/Crash.mp3', 
+    type: 'cymbal',
+    style: { top: '8%', left: '25%', width: '12%' }
+  },
+  { 
+    name: 'Ride', 
+    keys: ['u'], 
+    file: '/sounds/Crash.mp3',
+    type: 'cymbal',
+    style: { top: '8%', right: '15%', width: '12%' }
+  },
+  { 
+    name: 'Hi-Hat Open', 
+    keys: ['e'], 
+    file: '/sounds/Hi-Hat.mp3', 
+    type: 'cymbal',
+    style: { top: '18%', left: '12%', width: '10%' }
+  },
+  { 
+    name: 'Hi-Hat Closed', 
+    keys: ['r'], 
+    file: '/sounds/Hi-Hat.mp3', 
+    type: 'cymbal',
+    style: { top: '28%', left: '12%', width: '10%' }
+  },
+  { 
+    name: 'High Tom', 
+    keys: ['c'], 
+    file: '/sounds/Snare.mp3',
+    type: 'tom',
+    style: { top: '30%', left: '35%', width: '15%' }
+  },
+  { 
+    name: 'Low Tom', 
+    keys: ['g'], 
+    file: '/sounds/Snare.mp3',
+    type: 'tom',
+    style: { top: '30%', right: '35%', width: '15%' }
+  },
+  { 
+    name: 'Floor Tom', 
+    keys: ['h'], 
+    file: '/sounds/Snare.mp3',
+    type: 'tom',
+    style: { top: '45%', right: '15%', width: '18%' }
+  },
+  { 
+    name: 'Snare', 
+    keys: ['j'], 
+    file: '/sounds/Snare.mp3',
+    type: 'snare',
+    style: { top: '45%', left: '25%', width: '15%' }
+  },
+  { 
+    name: 'Bass', 
+    keys: ['s'], 
+    file: '/sounds/Kick.mp3',
+    type: 'bass',
+    style: { top: '50%', left: '50%', transform: 'translateX(-50%)', width: '20%' }
+  },
 ];
 
 const LOCAL_KEYBINDS_KEY = 'rhythm_trainer_keybinds';
@@ -25,21 +85,25 @@ function getInitialKeybinds() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === DRUMS.length) {
+      // Validate the saved keybinds match our current drum structure
+      if (Array.isArray(parsed) && parsed.every((bind, i) => 
+        Array.isArray(bind) && bind.length === DRUMS[i].keys.length)) {
         return parsed;
       }
     } catch {}
   }
-  return DRUMS.map(d => d.defaultKey);
+  return DRUMS.map(d => d.keys);
 }
 
 export default function RhythmTrainer() {
   // Refs and state
   const audioRefs = useRef([]); // For playing drum sounds
   const [keybinds, setKeybinds] = useState(getInitialKeybinds()); // Keybinds for each drum
-  const [editingIdx, setEditingIdx] = useState(null); // Which keybind is being edited
+  const [showShortcuts, setShowShortcuts] = useState(true); // Toggle for showing shortcuts
+  const [editingDrum, setEditingDrum] = useState(null); // Which drum is being edited
+  const [editingKeyIdx, setEditingKeyIdx] = useState(null); // Which key in the drum's bindings is being edited
   const [error, setError] = useState(''); // Error for keybind editing
-  const [activeDrumIdxs, setActiveDrumIdxs] = useState([]); // Indices of drums currently being played (for green highlight)
+  const [activeDrumIdxs, setActiveDrumIdxs] = useState([]); // Indices of drums currently being played
 
   // Save keybinds to localStorage whenever they change
   useEffect(() => {
@@ -49,56 +113,67 @@ export default function RhythmTrainer() {
   // Keydown handler for playing drums
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (editingIdx !== null) return; // Don't play while editing
-      const idx = keybinds.findIndex(k => k.toLowerCase() === e.key.toLowerCase());
-      if (idx !== -1) {
-        // Play sound and highlight drum
-        const audio = audioRefs.current[idx];
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play();
-        }
-        setActiveDrumIdxs(prev => [...prev, idx]);
-        setTimeout(() => {
-          setActiveDrumIdxs(prev => prev.filter(i => i !== idx));
-        }, 150);
+      const key = e.key.toLowerCase();
+      
+      // Find the first drum that has this key in its bindings
+      const drumIdx = DRUMS.findIndex(drum => 
+        keybinds[DRUMS.indexOf(drum)].some(k => k.toLowerCase() === key)
+      );
+
+      if (drumIdx !== -1) {
+        handleDrumClick(drumIdx);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [keybinds, editingIdx]);
+  }, [keybinds]);
 
   // Keydown handler for editing keybind
   useEffect(() => {
-    if (editingIdx === null) return;
+    if (editingDrum === null || editingKeyIdx === null) return;
+    
     const handleEditKey = (e) => {
-      const newKey = e.key.length === 1 ? e.key.toUpperCase() : '';
-      if (!newKey) return;
-      if (keybinds.includes(newKey)) {
+      const newKey = e.key.toLowerCase();
+      if (newKey.length !== 1) return;
+
+      // Check if key is already used in any drum's bindings
+      const isKeyUsed = DRUMS.some((drum, drumIdx) => 
+        keybinds[drumIdx].some(k => k.toLowerCase() === newKey)
+      );
+
+      if (isKeyUsed) {
         setError('Key already in use!');
         return;
       }
-      setKeybinds(prev => prev.map((k, i) => i === editingIdx ? newKey : k));
-      setEditingIdx(null);
+
+      setKeybinds(prev => prev.map((drumKeys, idx) => 
+        idx === editingDrum 
+          ? drumKeys.map((k, keyIdx) => keyIdx === editingKeyIdx ? newKey : k)
+          : drumKeys
+      ));
+      setEditingDrum(null);
+      setEditingKeyIdx(null);
       setError('');
     };
+
     window.addEventListener('keydown', handleEditKey);
     return () => window.removeEventListener('keydown', handleEditKey);
-  }, [editingIdx, keybinds]);
+  }, [editingDrum, editingKeyIdx, keybinds]);
 
   // Once clicked on "Change", start editing a keybind
-  const handleEditClick = (idx) => {
-    setEditingIdx(idx);
+  const handleEditClick = (drumIdx, keyIdx) => {
+    setEditingDrum(drumIdx);
+    setEditingKeyIdx(keyIdx);
     setError('');
   };
 
   // Reset all keybinds to default settings
   const handleReset = () => {
-    setKeybinds(DRUMS.map(d => d.defaultKey));
+    setKeybinds(DRUMS.map(d => d.keys));
     setError('');
   };
 
-  // Handler: Play drum by click (also highlights)
+  // Handler: Play drum by click
   const handleDrumClick = (idx) => {
     const audio = audioRefs.current[idx];
     if (audio) {
@@ -151,55 +226,76 @@ export default function RhythmTrainer() {
           </div>
         </div>
       </div>
-      {/* Virtual Drum Section (Middle, Card) */}
+
+      {/* Virtual Drum Section (Middle) */}
       <div className="virtual-drum-section">
-        <h2 className="section-title">Virtual Drum Kit</h2>
-        <p className="description-text">
-          Try out the virtual drum kit for a taste of what you'll be interacting with in our structured lessons!
-        </p>
-        {/* Drum pads */}
-        <div className="drum-pad-row">
-          {DRUMS.map((drum, idx) => (
-            <div key={drum.name} className="drum-pad-col">
-              <button
-                className={`drum-pad-btn${activeDrumIdxs.includes(idx) ? ' active-drum' : ''}`}
-                onClick={() => handleDrumClick(idx)}
-              >
-                {drum.name}
-              </button>
-              <span className="drum-key-label">
-                Key: {editingIdx === idx ? <em>Press a key...</em> : keybinds[idx]}
-              </span>
-              <button
-                className="change-key-btn"
-                onClick={() => handleEditClick(idx)}
-                disabled={editingIdx !== null}
-              >
-                Change
-              </button>
-              {/* Audio element for drum sound */}
-              <audio ref={el => audioRefs.current[idx] = el} src={drum.file} preload="auto" />
-            </div>
-          ))}
-        </div>
-        {/* Reset keybinds button */}
-        <div className="reset-btn-row">
-          <button
-            className="reset-keybinds-btn"
-            onClick={handleReset}
+        <div className="section-controls">
+          <button 
+            className="control-btn"
+            onClick={() => setShowShortcuts(!showShortcuts)}
           >
-            Reset Keybinds
+            {showShortcuts ? 'Hide shortcuts' : 'Show shortcuts'}
           </button>
         </div>
-        {/* Error message for keybinds */}
-        {error && <div className="keybind-error">{error}</div>}
-        {/* Instructions for keybinds*/}
-        <p className="rhythm-trainer-desc">
-          Press the keys <b>{keybinds.join(', ')}</b> or click the drums to play!<br />
-          You can change the keybinds above.
-        </p>
+        
+        <div className="drum-kit-container">
+          <img src={VirtualDrumKit} alt="Virtual Drum Kit" className="drum-kit-image" />
+          <div className="drum-kit-overlay">
+            {DRUMS.map((drum, idx) => (
+              <div
+                key={drum.name}
+                className={`drum ${drum.type} ${activeDrumIdxs.includes(idx) ? 'active' : ''}`}
+                style={drum.style}
+                onClick={() => handleDrumClick(idx)}
+              >
+                <div className="drum-hotspot"></div>
+                {showShortcuts && (
+                  <div className="key-label">
+                    {keybinds[idx][0].toUpperCase()}
+                  </div>
+                )}
+                <audio
+                  ref={el => audioRefs.current[idx] = el}
+                  src={drum.file}
+                  preload="auto"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Keybind Controls */}
+        <div className="keybind-controls">
+          <h3>Customize Key Bindings</h3>
+          <div className="keybind-grid">
+            {DRUMS.map((drum, drumIdx) => (
+              <div key={drum.name} className="keybind-row">
+                <span className="drum-name">{drum.name}:</span>
+                <div className="key-buttons">
+                  {keybinds[drumIdx].map((key, keyIdx) => (
+                    <button
+                      key={keyIdx}
+                      className="key-button"
+                      onClick={() => handleEditClick(drumIdx, keyIdx)}
+                      disabled={editingDrum !== null}
+                    >
+                      {editingDrum === drumIdx && editingKeyIdx === keyIdx ? 
+                        'Press a key...' : 
+                        key.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="reset-keybinds-btn" onClick={handleReset}>
+            Reset All Keybinds
+          </button>
+          {error && <div className="keybind-error">{error}</div>}
+        </div>
       </div>
-      {/* Start Practising Button (Bottom, Centered) */}
+
+      {/* Start Practising Button (Bottom) */}
       <div className="start-practising-section">
         <Link to="/rhythm-trainer-chapters" className="start-practising-btn">
           Start Practising Now!

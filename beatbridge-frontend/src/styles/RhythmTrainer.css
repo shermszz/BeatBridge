@@ -1,20 +1,21 @@
 .rhythm-trainer-container {
-  text-align: center;
-  margin-top: 2rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  background: #2c2f3b;
+  min-height: 100vh;
 }
 
 .rhythm-trainer-title {
-  /* Gradient text for title */
   text-align: center;
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: #fff;
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
   margin-bottom: 0.5rem;
-  background: linear-gradient(120deg, #ff4f4f 0%, #fff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-top: 3.3rem;
+  color: #ffb3b3;
+  text-shadow: 0 4px 24px #ff5a36a0;
 }
 
 .drum-pad-row {
@@ -245,22 +246,10 @@
 
 .virtual-drum-section {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto 2.5rem auto;
-  min-height: 520px;
-  height: unset;
-  background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
-  border-radius: 28px;
-  padding: 2.5rem 2rem 2rem 2rem;
-  box-shadow: 0 4px 18px 0 rgba(231,76,60,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.08);
-  border: 2.5px solid transparent;  
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  backdrop-filter: blur(5px);
-  transition: box-shadow 0.12s, transform 0.12s;
-  position: relative;
-  z-index: 1;
 }
 
 .virtual-drum-section::before {
@@ -334,4 +323,279 @@
   .start-practising-section {
     margin-top: 1.5rem;
   }
+}
+
+/* About section styles */
+.about-section {
+  margin-bottom: 3rem;
+}
+
+.description-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #ffb3b3;
+}
+
+.description-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* Features grid */
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.feature-icon-img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Virtual Drum Kit styles */
+.virtual-drum-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 3rem;
+}
+
+/* Drum Kit Container */
+.drum-kit-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  user-select: none;
+  background: transparent;
+}
+
+.drum-kit-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.drum-kit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Drum elements */
+.drum {
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drum-hotspot {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: transparent;
+  transition: transform 0.15s ease;
+}
+
+.drum:hover .drum-hotspot {
+  background: transparent;
+}
+
+.drum.active .drum-hotspot {
+  background: transparent;
+  transform: scale(0.95);
+}
+
+/* Adjust click areas for each drum type */
+.drum.cymbal {
+  height: 0;
+  padding-bottom: 100%; /* Make it circular */
+}
+
+.drum.tom, .drum.snare {
+  height: 0;
+  padding-bottom: 100%;
+}
+
+.drum.bass {
+  height: 0;
+  padding-bottom: 100%;
+}
+
+/* Drum labels */
+.key-label {
+  position: relative;
+  z-index: 20;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* Make sure the click areas are properly sized */
+.drum.cymbal .drum-hotspot,
+.drum.tom .drum-hotspot,
+.drum.snare .drum-hotspot,
+.drum.bass .drum-hotspot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.key-bindings {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.key-bind {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 4px;
+  border-radius: 3px;
+  min-width: 16px;
+  font-size: 0.7rem;
+}
+
+/* Customize Key Bindings section */
+.keybind-controls {
+  background: rgba(31, 31, 41, 0.8);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.keybind-controls h3 {
+  color: #ff9f9f;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.keybind-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.keybind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.drum-name {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.key-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.key-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 30px;
+  text-align: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.key-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.reset-keybinds-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.8rem;
+  background: rgba(255, 59, 48, 0.2);
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.reset-keybinds-btn:hover {
+  background: rgba(255, 59, 48, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .key-label {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}
+
+.section-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.control-btn {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+  background: #f0f0f0;
 } 
