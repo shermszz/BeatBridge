@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../styles/SongRecommendation.css';
 import config from '../config';
 
 function SongRecommendation() {
+  // Get navigation state (e.g., showFavorites) from router
+  const location = useLocation();
   // State for genres, selected genre, recommendation, loading, and errors
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -11,6 +14,7 @@ function SongRecommendation() {
   const [genreLoading, setGenreLoading] = useState(true);
   const [error, setError] = useState('');
   const [favorites, setFavorites] = useState([]);
+  // showFavorites controls whether the favorites section is shown
   const [showFavorites, setShowFavorites] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
@@ -18,6 +22,10 @@ function SongRecommendation() {
   useEffect(() => {
     fetchGenres();
     fetchFavorites();
+    // If navigated with state.showFavorites, open the favorites section automatically
+    if (location.state && location.state.showFavorites) {
+      setShowFavorites(true);
+    }
   }, []);
 
   // Fetch genres from backend
