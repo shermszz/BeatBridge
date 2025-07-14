@@ -23,6 +23,7 @@
   font-size: 2.5rem;
   color: #fff;
   margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .dashboard-header .subtitle {
@@ -36,41 +37,82 @@
   align-items: center;
   margin-bottom: 1.5rem;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .card-header h2 {
   margin: 0;
+  font-size: 1.4rem;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Action Buttons */
 .continue-session-btn {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff4646 100%);
+  background: linear-gradient(135deg, #1e1e2f 0%, #23234a 100%);
   color: white;
-  border: none;
+  border: 2px solid #ff4f4f;
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: 50px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 70, 70, 0.3);
-  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(255, 79, 79, 0.15);
+}
+
+.continue-session-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff4f4f 0%, #d63a3a 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.continue-session-btn:hover::before {
+  opacity: 1;
 }
 
 .continue-session-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 70, 70, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 79, 79, 0.25);
+  border-color: transparent;
 }
 
 .continue-session-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(255, 70, 70, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 79, 79, 0.15);
 }
 
 .btn-icon {
   font-size: 1rem;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(135deg, #ff4f4f 0%, #d63a3a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.continue-session-btn:hover .btn-icon {
+  background: #fff;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.continue-session-btn span:not(.btn-icon) {
+  position: relative;
+  z-index: 2;
 }
 
 .dashboard-grid {

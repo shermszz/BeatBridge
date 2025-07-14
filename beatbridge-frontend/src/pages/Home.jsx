@@ -67,7 +67,7 @@ const Home = () => {
             <h2>Overall Progress</h2>
             <button className="continue-session-btn" onClick={handleContinue}>
               <span className="btn-icon">▶</span>
-              Continue where you left off
+              <span>Resume Training</span>
             </button>
           </div>
           <div className="score-display">
@@ -95,17 +95,17 @@ const Home = () => {
         {/* Song Recommendation Section */}
         <div className="dashboard-card">
           <div className="card-header">
-          <h2>Song Recommendation</h2>
-          <button className="continue-session-btn" onClick={() => navigate('/song-recommendation')}>
-            <span className="btn-icon">▶</span>
-            Get Song Recommendation
-          </button>
+            <h2>Song Recommendation</h2>
+            <button className="continue-session-btn" onClick={() => navigate('/song-recommendation')}>
+              <span className="btn-icon">🎵</span>
+              <span>Discover Music</span>
+            </button>
           </div>
           <div className="activity-item">
-              <span className="activity-icon">🎶</span>
-              <div className="activity-details">
-                <p>Discover new music tailored to your favorite genres!</p>
-              </div>
+            <span className="activity-icon">🎶</span>
+            <div className="activity-details">
+              <p>Discover new music tailored to your favorite genres!</p>
+            </div>
           </div>
         </div>
 

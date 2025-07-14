@@ -17,6 +17,8 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from oauthlib.oauth2 import WebApplicationClient
 from dotenv import load_dotenv
+from functools import lru_cache
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -711,86 +713,328 @@ POPULAR_GENRES = [
     "reggae", "folk", "punk", "soul", "funk", "disco", "house", "techno", "trance", "k-pop"
 ]
 
+GENRE_CACHE = {}
+CACHE_DURATION = timedelta(hours=1)
+TRACKS_PER_PAGE = 50  # Increased from 20
+MAX_PAGES = 3  # Number of pages to cache per genre
+
+def fetch_genre_tracks(genre, page=1):
+    """Fetch tracks for a genre from Last.fm with pagination"""
+    params = {
+        'method': 'tag.gettoptracks',
+        'tag': genre,
+        'api_key': LASTFM_API_KEY,
+        'format': 'json',
+        'limit': TRACKS_PER_PAGE,
+        'page': page
+    }
+    response = requests.get(LASTFM_BASE_URL, params=params, timeout=5)
+    response.raise_for_status()
+    return response.json()
+
 @app.route('/api/genres', methods=['GET'])
 def get_genres():
     """
-    Returns a static list of popular genres for the frontend to display.
+    Returns a static list of popular genres and pre-fetches tracks for each genre
     """
+    # Pre-fetch tracks for each genre if not in cache or if cache is expired
+    current_time = datetime.utcnow()
+    
+    for genre in POPULAR_GENRES:
+        try:
+            # Check if we need to refresh the cache for this genre
+            cache_key_base = f"genre_tracks_{genre}"
+            cache_time_key = f"{cache_key_base}_time"
+            
+            if (cache_time_key not in GENRE_CACHE or 
+                current_time - GENRE_CACHE[cache_time_key] > CACHE_DURATION):
+                
+                # Fetch multiple pages of tracks
+                all_tracks = []
+                for page in range(1, MAX_PAGES + 1):
+                    try:
+                        tracks_data = fetch_genre_tracks(genre, page)
+                        if 'tracks' in tracks_data and 'track' in tracks_data['tracks']:
+                            all_tracks.extend(tracks_data['tracks']['track'])
+                    except Exception as e:
+                        print(f"Failed to fetch page {page} for {genre}: {str(e)}")
+                        continue
+
+                if all_tracks:
+                    # Store all tracks in cache
+                    GENRE_CACHE[cache_key_base] = {'tracks': {'track': all_tracks}}
+                    GENRE_CACHE[cache_time_key] = current_time
+                    print(f"Cached {len(all_tracks)} tracks for {genre}")
+                
+        except Exception as e:
+            print(f"Failed to pre-fetch tracks for {genre}: {str(e)}")
+            continue
+
     genres = [{"id": g, "name": g.title(), "count": ""} for g in POPULAR_GENRES]
     return jsonify({'genres': genres}), 200
 
 @app.route('/api/recommend-song', methods=['POST'])
+@jwt_verified_required
 def recommend_song():
-    """Get song recommendations based on genre preferences"""
+    """Get song recommendations based on genre preferences and user's skill level"""
     try:
         data = request.get_json()
         genres = data.get('genres', [])
         
         if not genres:
             return jsonify({'error': 'Please select at least one genre'}), 400
-        
 
+        # Get user's skill level
+        user_id = request.user_id
+        customization = UserCustomization.query.filter_by(user_id=user_id).first()
+        skill_level = customization.skill_level if customization else 'First-timer'
         selected_genre = genres[0]
         
-        # Get top tracks for the selected genre from Last.fm
-        params = {
-            'method': 'tag.gettoptracks',
-            'tag': selected_genre,
-            'api_key': LASTFM_API_KEY,
-            'format': 'json',
-            'limit': 50  # Get top 50 tracks
-        }
-        
-        response = requests.get(LASTFM_BASE_URL, params=params)
-        response.raise_for_status()
-        
-        data = response.json()
-        tracks = []
-        
-        # Build a list of tracks, using .get() for safety in case fields are missing
-        if 'tracks' in data and 'track' in data['tracks']:
-            for track in data['tracks']['track']:
-                tracks.append({
-                    'name': track.get('name', 'Unknown'),
-                    'artist': track.get('artist', {}).get('name', 'Unknown'),
-                    'url': track.get('url', ''),
-                    'listeners': track.get('listeners', 0)
-                })
-        
-        if not tracks:
-            return jsonify({'error': f'No tracks found for genre: {selected_genre}'}), 404
-        
-        # Select a random track from the top tracks
-        recommended_track = random.choice(tracks)
-        
-        # Get additional track info including album and tags
-        track_params = {
-            'method': 'track.getInfo',
-            'track': recommended_track['name'],
-            'artist': recommended_track['artist'],
-            'api_key': LASTFM_API_KEY,
-            'format': 'json'
-        }
-        
-        track_response = requests.get(LASTFM_BASE_URL, params=track_params)
-        if track_response.status_code == 200:
-            track_data = track_response.json()
-            if 'track' in track_data:
-                track_info = track_data['track']
-                recommended_track['album'] = track_info.get('album', {}).get('title', 'Unknown Album')
-                recommended_track['duration'] = track_info.get('duration', 'Unknown')
-                recommended_track['tags'] = [tag['name'] for tag in track_info.get('toptags', {}).get('tag', [])]
+        # Get tracks from cache
+        cache_key = f"genre_tracks_{selected_genre}"
+        try:
+            if cache_key not in GENRE_CACHE:
+                # If not in cache, fetch first page
+                GENRE_CACHE[cache_key] = fetch_genre_tracks(selected_genre)
+            
+            tracks_data = GENRE_CACHE[cache_key]
+            if 'tracks' not in tracks_data or 'track' not in tracks_data['tracks']:
+                return jsonify({'error': f'No tracks found for genre: {selected_genre}'}), 404
+
+            # Get all available tracks
+            available_tracks = tracks_data['tracks']['track']
+            
+            # Get recently recommended tracks for this user and genre
+            recent_tracks_key = f"recent_tracks_{user_id}_{selected_genre}"
+            recent_tracks = GENRE_CACHE.get(recent_tracks_key, set())
+            
+            # Filter out recently recommended tracks
+            fresh_tracks = [t for t in available_tracks if t['url'] not in recent_tracks]
+            
+            # If we've recommended most tracks, clear the recent tracks
+            if len(fresh_tracks) < 5:
+                fresh_tracks = available_tracks
+                recent_tracks = set()
+            
+            # Get a random track from the fresh tracks
+            track = random.choice(fresh_tracks)
+            
+            # Update recent tracks
+            recent_tracks.add(track['url'])
+            if len(recent_tracks) > len(available_tracks) * 0.7:  # Clear if we've used 70% of tracks
+                recent_tracks = {track['url']}
+            GENRE_CACHE[recent_tracks_key] = recent_tracks
+
+            # Get additional track info
+            try:
+                params = {
+                    'method': 'track.getInfo',
+                    'artist': track['artist']['name'],
+                    'track': track['name'],
+                    'api_key': LASTFM_API_KEY,
+                    'format': 'json'
+                }
+                track_info = requests.get(LASTFM_BASE_URL, params=params, timeout=2).json()
+                if 'track' in track_info:
+                    track.update(track_info['track'])
+            except Exception as e:
+                print(f"Error fetching track details: {str(e)}")
+
+            # Build the recommendation with only verified data
+            album_images = track.get('album', {}).get('image', [])
+            album_image = next((img['#text'] for img in reversed(album_images) if img['#text']), None)
+            if not album_image:
+                album_image = track.get('image', [{'#text': None}])[-1].get('#text')
+
+            recommended_track = {
+                'name': track.get('name', 'Unknown'),
+                'artist': track.get('artist', {}).get('name', 'Unknown'),
+                'url': track.get('url', ''),
+                'listeners': track.get('listeners', 0),
+                'album': track.get('album', {}).get('title', 'Unknown Album'),
+                'album_image': album_image,
+                'duration': track.get('duration', '180000'),  # Default to 3 minutes if not available
+                'tags': track.get('toptags', {}).get('tag', []) or track.get('tags', {}).get('tag', [])
+            }
+
+            # Add rhythm complexity and tempo ratings based on skill level and genre
+            rhythm_complexity = {
+                'First-timer': 1,
+                'Beginner': 2,
+                'Intermediate': 3,
+                'Advanced': 4
+            }
+
+            # Adjust tempo rating based on genre
+            fast_genres = {'metal', 'punk', 'rock', 'electronic', 'techno', 'house'}
+            slow_genres = {'blues', 'jazz', 'classical', 'folk'}
+            
+            base_tempo = tempo_rating = {
+                'First-timer': 1,
+                'Beginner': 2,
+                'Intermediate': 3,
+                'Advanced': 4
+            }[skill_level]
+
+            if selected_genre in fast_genres:
+                tempo_rating = min(4, base_tempo + 1)
+            elif selected_genre in slow_genres:
+                tempo_rating = max(1, base_tempo - 1)
+            else:
+                tempo_rating = base_tempo
+
+            # Add skill level context to the response
+            skill_context = {
+                'First-timer': 'Perfect for beginners to practice basic rhythms!',
+                'Beginner': 'Great for developing your fundamental skills.',
+                'Intermediate': 'This song will help you build more advanced techniques.',
+                'Advanced': 'A challenging piece to test your drumming mastery!'
+            }
+
+            response_data = {
+                'recommendation': recommended_track,
+                'selected_genre': selected_genre,
+                'skill_level': skill_level,
+                'skill_context': skill_context.get(skill_level, ''),
+                'rhythm_complexity': rhythm_complexity.get(skill_level, 2),
+                'tempo_rating': tempo_rating,
+                'message': f"Here's a {selected_genre} track matched to your skill level!"
+            }
+
+            return jsonify(response_data), 200
+            
+        except requests.RequestException as e:
+            print(f"Debug - Request error: {str(e)}")
+            return jsonify({'error': f'Failed to get recommendation: {str(e)}'}), 500
+            
+    except Exception as e:
+        print(f"Debug - Unexpected error: {str(e)}")
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+# --- User Favorites Management ---
+
+@app.route('/api/favorites', methods=['GET'])
+@jwt_verified_required
+def get_favorites():
+    """Get user's favorite songs"""
+    try:
+        user_id = request.user_id
+        favorites = db.session.execute(text("""
+            SELECT 
+                id, song_name, artist_name, album_name, song_url, duration,
+                album_image, rhythm_complexity, tempo_rating, skill_level, tags,
+                created_at
+            FROM user_favorites 
+            WHERE user_id = :user_id 
+            ORDER BY created_at DESC
+        """), {"user_id": user_id}).fetchall()
         
         return jsonify({
-            'recommendation': recommended_track,
-            'selected_genre': selected_genre,
-            'message': f"Here's a great {selected_genre} track for you!"
+            "favorites": [{
+                "id": f.id,
+                "song_name": f.song_name,
+                "artist_name": f.artist_name,
+                "album_name": f.album_name,
+                "song_url": f.song_url,
+                "duration": f.duration,
+                "album_image": f.album_image,
+                "rhythm_complexity": f.rhythm_complexity,
+                "tempo_rating": f.tempo_rating,
+                "skill_level": f.skill_level,
+                "tags": f.tags.split(',') if f.tags else [],
+                "created_at": f.created_at.isoformat()
+            } for f in favorites]
         }), 200
-        
-    except requests.RequestException as e:
-        return jsonify({'error': f'Failed to get recommendation: {str(e)}'}), 500
     except Exception as e:
-        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+        print(f"Error fetching favorites: {str(e)}")
+        return jsonify({"error": "Failed to fetch favorites"}), 500
+
+@app.route('/api/favorites', methods=['POST'])
+@jwt_verified_required
+def add_favorite():
+    """Add a song to user's favorites"""
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['song_name', 'artist_name', 'song_url']
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+            
+        # Check if song is already in favorites
+        existing = db.session.execute(text("""
+            SELECT id FROM user_favorites 
+            WHERE user_id = :user_id 
+            AND song_name = :song_name 
+            AND artist_name = :artist_name
+        """), {
+            "user_id": user_id,
+            "song_name": data['song_name'],
+            "artist_name": data['artist_name']
+        }).first()
+        
+        if existing:
+            return jsonify({"error": "Song already in favorites"}), 409
+            
+        # Add to favorites with additional fields
+        result = db.session.execute(text("""
+            INSERT INTO user_favorites (
+                user_id, song_name, artist_name, album_name, song_url, duration,
+                album_image, rhythm_complexity, tempo_rating, skill_level, tags
+            )
+            VALUES (
+                :user_id, :song_name, :artist_name, :album_name, :song_url, :duration,
+                :album_image, :rhythm_complexity, :tempo_rating, :skill_level, :tags
+            )
+            RETURNING id
+        """), {
+            "user_id": user_id,
+            "song_name": data['song_name'],
+            "artist_name": data['artist_name'],
+            "album_name": data.get('album_name'),
+            "song_url": data['song_url'],
+            "duration": data.get('duration'),
+            "album_image": data.get('album_image'),
+            "rhythm_complexity": data.get('rhythm_complexity'),
+            "tempo_rating": data.get('tempo_rating'),
+            "skill_level": data.get('skill_level'),
+            "tags": ','.join(str(tag) for tag in data.get('tags', []) if tag)  # Convert tags to strings and filter out None/empty
+        })
+        
+        db.session.commit()
+        return jsonify({"message": "Song added to favorites"}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding favorite: {str(e)}")
+        return jsonify({"error": "Failed to add favorite"}), 500
+
+@app.route('/api/favorites/<int:favorite_id>', methods=['DELETE'])
+@jwt_verified_required
+def remove_favorite(favorite_id):
+    """Remove a song from user's favorites"""
+    try:
+        user_id = request.user_id
+        
+        # Delete favorite if it belongs to the user
+        result = db.session.execute(text("""
+            DELETE FROM user_favorites 
+            WHERE id = :favorite_id AND user_id = :user_id
+            RETURNING id
+        """), {
+            "favorite_id": favorite_id,
+            "user_id": user_id
+        }).first()
+        
+        if not result:
+            return jsonify({"error": "Favorite not found"}), 404
+            
+        db.session.commit()
+        return jsonify({"message": "Song removed from favorites"}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error removing favorite: {str(e)}")
+        return jsonify({"error": "Failed to remove favorite"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))

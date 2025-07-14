@@ -172,10 +172,30 @@ const Header = () => {
             <nav>
               {isLoggedIn && isVerified && !isVerificationPage ? (
                 <div className="dashboard-buttons">
-                  <Link to="/home" className="dash-btn">Home</Link>
-                  <Link to="/song-recommendation" className="dash-btn">Song Recommendation</Link>
-                  <Link to="/rhythm-trainer" className="dash-btn">Rhythm Trainer</Link>
-                  <Link to="/jam-session" className="dash-btn">Jam Session</Link>
+                  <Link 
+                    to="/home" 
+                    className={`dash-btn ${location.pathname === '/home' ? 'active' : ''}`}
+                  >
+                    <span>Home</span>
+                  </Link>
+                  <Link 
+                    to="/song-recommendation" 
+                    className={`dash-btn ${location.pathname === '/song-recommendation' ? 'active' : ''}`}
+                  >
+                    <span>Song Recommendation</span>
+                  </Link>
+                  <Link 
+                    to="/rhythm-trainer" 
+                    className={`dash-btn ${location.pathname === '/rhythm-trainer' ? 'active' : ''}`}
+                  >
+                    <span>Rhythm Trainer</span>
+                  </Link>
+                  <Link 
+                    to="/jam-session" 
+                    className={`dash-btn ${location.pathname === '/jam-session' ? 'active' : ''}`}
+                  >
+                    <span>Jam Session</span>
+                  </Link>
                   {/* Profile Icon Dropdown */}
                   <div
                     className="profile-dropdown-wrapper"
