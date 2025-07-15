@@ -128,7 +128,7 @@ const Home = () => {
             {favoritesLoading ? (
               <div className="favorites-loading">Loading...</div>
             ) : favorites.length === 0 ? (
-              <div className="favorites-empty">No favorite songs yet.</div>
+              <div className="favorites-empty">No favorite songs added yet!</div>
             ) : (
               <div className="favorites-list-scroll">
                 {favorites.map(fav => (
@@ -156,10 +156,10 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Jam Session Card (replaces Recent Activity) */}
+        {/* Jam Session Card */}
         <div className="dashboard-card">
           <h2>Jam Session</h2>
-          <div style={{ color: '#ffb3b3', fontWeight: 600, fontSize: '1.5rem', marginTop: '7rem', fontStyle: 'italic', textAlign: 'center'}}>
+          <div style={{ color: '#ffb3b3', fontWeight: 600, fontSize: '1.5rem', marginTop: '3rem', fontStyle: 'italic', textAlign: 'center'}}>
             🎸 Coming soon!
           </div>
         </div>
