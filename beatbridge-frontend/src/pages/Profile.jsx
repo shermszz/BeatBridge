@@ -25,6 +25,11 @@ const Profile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef();
 
+  // Add state for genres
+  const [genres, setGenres] = useState([]);
+  const [genreLoading, setGenreLoading] = useState(true);
+  const [genreError, setGenreError] = useState('');
+
   // Check if user is logged in
   useEffect(() => {
     const userId = localStorage.getItem('user_id');
@@ -34,6 +39,7 @@ const Profile = () => {
     }
     fetchUserData();
     fetchCustomizations();
+    fetchGenres(); // Fetch genres when the component mounts
   }, [navigate]);
 
   const fetchUserData = async () => {
@@ -90,6 +96,23 @@ const Profile = () => {
     } catch (error) {
       console.error('Error fetching customizations:', error);
     }
+  };
+
+  const fetchGenres = async () => {
+    setGenreLoading(true);
+    setGenreError('');
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/api/genres`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch genres');
+      }
+      setGenres(data.genres);
+    } catch (err) {
+      setGenreError('Error fetching genres. Please try again later.');
+      setGenres([]);
+    }
+    setGenreLoading(false);
   };
 
   const handleInputChange = (e) => {
@@ -244,12 +267,6 @@ const Profile = () => {
     { value: 'Not sure yet', description: 'I\'ll decide later' }
   ];
 
-  const genreOptions = [
-    'Rock', 'Pop', 'Blues', 'Funk', 'Jazz', 
-    'Metal', 'Hip-Hop', 'Electronic', 'Classical',
-    'Alternative & Indie', 'World', 'Country & Roots'
-  ];
-
   return (
     <div className="profile-container">
       {/* My Account Section */}
@@ -376,17 +393,23 @@ const Profile = () => {
             <div style={{ marginBottom: '2rem' }}>
               <div className="customization-label">Pick 1 or more you'd like to play</div>
               <div className="customizations-grid">
-                {genreOptions.map((genre) => (
-                  <button
-                    key={genre}
-                    type="button"
-                    className={`customization-option${customizations.favorite_genres.includes(genre) ? ' selected' : ''}`}
-                    onClick={() => handleCustomizationChange('genres', genre)}
-                  >
-                    {genre}
-                    {customizations.favorite_genres.includes(genre) && <span style={{ color: '#ff4f4f', marginLeft: '0.5rem' }}>✓</span>}
-                  </button>
-                ))}
+                {genreLoading ? (
+                  <div>Loading genres...</div>
+                ) : genreError ? (
+                  <div>{genreError}</div>
+                ) : (
+                  genres.map((genre) => (
+                    <button
+                      key={genre.id || genre.name}
+                      type="button"
+                      className={`customization-option${customizations.favorite_genres.includes(genre.name) ? ' selected' : ''}`}
+                      onClick={() => handleCustomizationChange('genres', genre.name)}
+                    >
+                      {genre.name}
+                      {customizations.favorite_genres.includes(genre.name) && <span style={{ color: '#ff4f4f', marginLeft: '0.5rem' }}>✓</span>}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>

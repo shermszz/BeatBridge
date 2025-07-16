@@ -418,6 +418,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none; /* Only allow .drum-hotspot to be clickable */
 }
 
 .drum-hotspot {
@@ -427,6 +428,7 @@
   border-radius: 50%;
   background: transparent;
   transition: transform 0.15s ease;
+  pointer-events: auto; /* Make only the green circle clickable */
 }
 
 .drum:hover .drum-hotspot {

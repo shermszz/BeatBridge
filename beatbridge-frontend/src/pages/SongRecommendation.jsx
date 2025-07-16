@@ -17,11 +17,15 @@ function SongRecommendation() {
   // showFavorites controls whether the favorites section is shown
   const [showFavorites, setShowFavorites] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [userGenres, setUserGenres] = useState([]);
+  const [userGenresLoading, setUserGenresLoading] = useState(true);
+  const [userGenresError, setUserGenresError] = useState('');
 
   // Fetch the static genre list and favorites from backend on mount
   useEffect(() => {
     fetchGenres();
     fetchFavorites();
+    fetchUserGenres();
     // If navigated with state.showFavorites, open the favorites section automatically
     if (location.state && location.state.showFavorites) {
       setShowFavorites(true);
@@ -65,6 +69,34 @@ function SongRecommendation() {
       console.error('Error fetching favorites:', err);
     }
     setFavoritesLoading(false);
+  };
+
+  const fetchUserGenres = async () => {
+    setUserGenresLoading(true);
+    setUserGenresError('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Handle both array and comma-separated string
+        let favGenres = data.favorite_genres;
+        if (typeof favGenres === 'string') {
+          favGenres = favGenres.split(',').map(g => g.trim()).filter(Boolean);
+        }
+        setUserGenres(favGenres || []);
+      } else {
+        setUserGenres([]);
+      }
+    } catch (err) {
+      setUserGenresError('Error fetching your preferred genres.');
+      setUserGenres([]);
+    }
+    setUserGenresLoading(false);
   };
 
   // Handle selecting a single genre
@@ -221,6 +253,10 @@ function SongRecommendation() {
     setLoading(false);
   };
 
+  // Divide genres into preferred and others
+  const preferredGenres = genres.filter(g => userGenres.includes(g.name));
+  const otherGenres = genres.filter(g => !userGenres.includes(g.name));
+
   return (
     <div className="song-recommendation-container">
       <div className="song-recommendation-content">
@@ -356,23 +392,44 @@ function SongRecommendation() {
                 {/* Genre Selection */}
                 <div className="genre-selection">
                   <h2>Select a Genre</h2>
-                  {genreLoading ? (
+                  {genreLoading || userGenresLoading ? (
                     <div className="loading-container">
                       <div className="loading-spinner"></div>
                       <p>Loading genres...</p>
                     </div>
                   ) : (
-                    <div className="genre-grid">
-                      {genres.map((genre) => (
-                        <button
-                          key={genre.id}
-                          onClick={() => handleGenreSelect(genre.id)}
-                          className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
-                        >
-                          {genre.name}
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      {userGenres.length > 0 && (
+                        <div className="genre-card">
+                          <h3 style={{marginTop: 0, color: '#fff', textAlign: 'center'}}>Your Preferred Genres</h3>
+                          <div className="genre-grid">
+                            {preferredGenres.map((genre) => (
+                              <button
+                                key={genre.id}
+                                onClick={() => handleGenreSelect(genre.id)}
+                                className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
+                              >
+                                {genre.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="genre-card">
+                        <h3 style={{marginTop: 0, color: '#fff', textAlign: 'center'}}>Other Genres</h3>
+                        <div className="genre-grid">
+                          {otherGenres.map((genre) => (
+                            <button
+                              key={genre.id}
+                              onClick={() => handleGenreSelect(genre.id)}
+                              className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
+                            >
+                              {genre.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   )}
                   <button
                     onClick={handleGetRecommendation}
