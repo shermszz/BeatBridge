@@ -421,25 +421,6 @@
   pointer-events: none; /* Only allow .drum-hotspot to be clickable */
 }
 
-.drum-hotspot {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: transparent;
-  transition: transform 0.15s ease;
-  pointer-events: auto; /* Make only the green circle clickable */
-}
-
-.drum:hover .drum-hotspot {
-  background: transparent;
-}
-
-.drum.active .drum-hotspot {
-  background: transparent;
-  transform: scale(0.95);
-}
-
 /* Adjust click areas for each drum type */
 .drum.cymbal {
   height: 0;
