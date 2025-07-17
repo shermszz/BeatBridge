@@ -118,3 +118,16 @@
     transform: translateY(0);
   }
 } 
+
+.chapter0-fadein-message {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: chapter0-fadein-message 0.8s ease-out forwards;
+}
+
+@keyframes chapter0-fadein-message {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

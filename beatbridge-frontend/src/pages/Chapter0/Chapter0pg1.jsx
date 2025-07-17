@@ -23,6 +23,17 @@ export default function Chapter0pg1() {
   const [tourStep, setTourStep] = useState(null); // null = not started, 0+ = current drum
   const [activeDrumIdx, setActiveDrumIdx] = useState(null);
   const drumKitRef = useRef(null);
+  // Track if the user has finished the tour
+  const [tourFinished, setTourFinished] = useState(false);
+  const [tourStarted, setTourStarted] = useState(false);
+
+  // When tourStep changes to null after the last drum, set tourFinished
+  React.useEffect(() => {
+    if (tourStep !== null) setTourStarted(true);
+    if (tourStarted && tourStep === null && activeDrumIdx === null) {
+      setTourFinished(true);
+    }
+  }, [tourStep, activeDrumIdx, tourStarted]);
 
   const playDrum = idx => {
     const audio = audioRefs.current[idx];
@@ -236,14 +247,21 @@ export default function Chapter0pg1() {
           )}
         </div>
       </div>
+      {tourFinished && (
+          <div className="chapter0-fadein-message" style={{ marginTop: '2.5rem', marginBottom: '-2rem', textAlign: 'center', fontSize: '1.18rem', color: '#fff', background: '#2d3350', borderRadius: 12, padding: '1.5rem 2rem', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 2px 16px #0004' }}>
+            Now that you learn all the parts of the drums, it's time to learn some of the basics of drum notations!
+          </div>
+        )}
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
           <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
             ← Back
           </Link>
+          
           <Link to="/chapter0pg2" className="chapter0-back-link">
             Next →
           </Link>
+          
         </div>
       </div>
       {/* Audio elements for each drum */}
