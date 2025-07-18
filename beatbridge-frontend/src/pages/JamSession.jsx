@@ -253,7 +253,7 @@ const JamSession = () => {
     <div className="jam-studio-container">
       {/* Jam Session Header and Description - styled like Song Recommendation */}
       <div className="jam-session-header">
-        <h1 className="jam-session-title germania-font">
+        <h1 className="jam-session-title">
           <span role="img" aria-label="drum" className="jam-session-emoji"></span> Jam Session
         </h1>
         <p className="jam-session-subtitle">

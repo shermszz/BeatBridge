@@ -1,19 +1,15 @@
-.germania-font {
-  font-family: 'Germania One', sans-serif;
-}
-
 .jam-session-header {
   margin: 2.5rem auto 1.5rem auto;
   text-align: center;
   max-width: 900px;
 }
 .jam-session-title {
-  font-size: 4rem;
-  font-weight: 700;
+  font-size: 3.2rem;
+  font-weight: 800;
   color: #ff4f4f;
   margin-bottom: 1.5rem;
   margin-top: -0.3rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 0 16px #ff4f4f55;
   display: flex;
   align-items: center;
   justify-content: center;
