@@ -86,7 +86,7 @@ function SongRecommendation() {
           artist_name: typeof song.artist === 'object' ? song.artist.name : song.artist || '',
           album_name: song.album || '',
           song_url: song.url || '',
-          duration: song.duration || null,
+          duration: song.duration ? parseInt(song.duration, 10) : null,
           album_image: song.album_image || null,
           rhythm_complexity: recommendation.rhythm_complexity,
           tempo_rating: recommendation.tempo_rating,
