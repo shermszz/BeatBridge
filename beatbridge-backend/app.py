@@ -19,6 +19,7 @@ from oauthlib.oauth2 import WebApplicationClient
 from dotenv import load_dotenv
 from functools import lru_cache
 import time
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -1002,6 +1003,65 @@ def remove_favorite(favorite_id):
         db.session.rollback()
         print(f"Error removing favorite: {str(e)}")
         return jsonify({"error": "Failed to remove favorite"}), 500
+
+@app.route('/api/jam-sessions', methods=['POST'])
+@jwt_verified_required
+def create_jam_session():
+    data = request.get_json()
+    user_id = request.user_id
+    title = data.get('title')
+    pattern_json = data.get('pattern_json')
+    is_public = data.get('is_public', True)
+    parent_jam_id = data.get('parent_jam_id')
+
+    if not title or not pattern_json:
+        return jsonify({'error': 'Title and pattern are required'}), 400
+
+    result = db.session.execute(text("""
+        INSERT INTO jam_sessions (user_id, title, pattern_json, is_public, parent_jam_id)
+        VALUES (:user_id, :title, :pattern_json, :is_public, :parent_jam_id)
+        RETURNING id
+    """), {
+        'user_id': user_id,
+        'title': title,
+        'pattern_json': json.dumps(pattern_json),
+        'is_public': is_public,
+        'parent_jam_id': parent_jam_id
+    })
+    db.session.commit()
+    jam_id = result.fetchone()[0]
+    return jsonify({'message': 'Jam session created', 'jam_id': jam_id}), 201
+
+@app.route('/api/jam-sessions/<int:jam_id>', methods=['GET'])
+def get_jam_session(jam_id):
+    result = db.session.execute(text("""
+        SELECT * FROM jam_sessions WHERE id = :jam_id
+    """), {'jam_id': jam_id}).first()
+    if not result:
+        return jsonify({'error': 'Jam session not found'}), 404
+    jam = dict(result)
+    jam['pattern_json'] = json.loads(jam['pattern_json'])
+    return jsonify(jam), 200
+
+@app.route('/api/jam-sessions/user/<int:user_id>', methods=['GET'])
+def get_user_jam_sessions(user_id):
+    results = db.session.execute(text("""
+        SELECT * FROM jam_sessions WHERE user_id = :user_id ORDER BY created_at DESC
+    """), {'user_id': user_id}).fetchall()
+    jams = [dict(row) for row in results]
+    for jam in jams:
+        jam['pattern_json'] = json.loads(jam['pattern_json'])
+    return jsonify(jams), 200
+
+@app.route('/api/jam-sessions/explore', methods=['GET'])
+def explore_jam_sessions():
+    results = db.session.execute(text("""
+        SELECT * FROM jam_sessions WHERE is_public = TRUE ORDER BY created_at DESC LIMIT 20
+    """)).fetchall()
+    jams = [dict(row) for row in results]
+    for jam in jams:
+        jam['pattern_json'] = json.loads(jam['pattern_json'])
+    return jsonify(jams), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
