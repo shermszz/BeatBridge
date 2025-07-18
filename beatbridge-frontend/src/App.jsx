@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import SongRecommendation from './pages/SongRecommendation';
 import RhythmTrainer from './pages/RhythmTrainer';
 import RhythmTrainerChapters from './pages/RhythmTrainerChapters';
+import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
 import './styles/App.css';
 
 function App() {
@@ -64,6 +65,11 @@ function App() {
           <Route path="/rhythm-trainer-chapters" element={
             <ProtectedRoute requireVerification={true}>
               <RhythmTrainerChapters />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter-0" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0pg1 />
             </ProtectedRoute>
           } />
         </Routes>

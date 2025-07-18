@@ -257,7 +257,7 @@ export default function RhythmTrainer() {
                   key={drum.name}
                   className={`drum ${drum.type} ${activeDrumIdxs.includes(idx) ? 'active' : ''}`}
                   style={drum.style}
-                  onClick={() => handleDrumClick(idx)}
+                  // REMOVED onClick from here
                 >
                   <div className="drum-hotspot"></div>
                   {showShortcuts && (

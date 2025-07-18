@@ -84,15 +84,21 @@ nav {
 
 /* Active Navigation Button */
 .dash-btn.active {
-  color: #ff4f4f;
+  color: #fff;
   font-weight: 700;
-  background: transparent;
+  background: #18182a !important;
+  box-shadow: none;
+}
+.dash-btn.active:hover,
+.dash-btn.active:focus {
+  background: #18182a !important;
+  color: #fff;
 }
 
 .dash-btn.active::after {
-  width: 100%;
-  height: 2px;
-  background: #ff4f4f;
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
 }
 
 .dash-btn.active:hover {

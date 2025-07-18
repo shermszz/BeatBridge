@@ -6,6 +6,8 @@ import config from '../config';
 const Home = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
   const navigate = useNavigate();
   
   // Example data -> Suppose to show user their progress?
@@ -19,18 +21,15 @@ const Home = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
-        console.log('JWT token in Home.jsx:', token); // Debug log
         const response = await fetch(`${config.API_BASE_URL}/api/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
         } else {
-          // If not logged in, redirect to landing
           navigate('/landing');
         }
       } catch (error) {
@@ -40,11 +39,34 @@ const Home = () => {
         setLoading(false);
       }
     };
-
     fetchUser();
   }, [navigate]);
 
-  // For Continue where you left off Button
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      setFavoritesLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${config.API_BASE_URL}/api/favorites`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFavorites(data.favorites);
+        } else {
+          setFavorites([]);
+        }
+      } catch (error) {
+        setFavorites([]);
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
   const handleContinue = () => {
     navigate('/rhythm-trainer');
   };
@@ -92,7 +114,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Song Recommendation Section */}
+        {/* Song Recommendation Section with Favorites */}
         <div className="dashboard-card">
           <div className="card-header">
             <h2>Song Recommendation</h2>
@@ -101,39 +123,44 @@ const Home = () => {
               <span>Discover Music</span>
             </button>
           </div>
-          <div className="activity-item">
-            <span className="activity-icon">🎶</span>
-            <div className="activity-details">
-              <p>Discover new music tailored to your favorite genres!</p>
-            </div>
+          <div className="favorites-dashboard-section">
+            <h3 className="favorites-section-title">Your Favorite Songs</h3>
+            {favoritesLoading ? (
+              <div className="favorites-loading">Loading...</div>
+            ) : favorites.length === 0 ? (
+              <div className="favorites-empty">No favorite songs added yet!</div>
+            ) : (
+              <div className="favorites-list-scroll">
+                {favorites.map(fav => (
+                  <div
+                    key={fav.id}
+                    className="favorite-song-item"
+                    onClick={() => navigate('/song-recommendation', { state: { showFavorites: true } })}
+                    onMouseOver={e => e.currentTarget.classList.add('hovered')}
+                    onMouseOut={e => e.currentTarget.classList.remove('hovered')}
+                  >
+                    <span className="favorite-song-icon">🎵</span>
+                    <div className="favorite-song-info">
+                      <span className="favorite-song-title">{fav.song_name}</span>
+                      <span className="favorite-song-artist">by <span className="favorite-song-artist-name">{fav.artist_name}</span></span>
+                    </div>
+                    {fav.tags && fav.tags.length > 0 && (
+                      <span className="favorite-genre-badge">
+                        {typeof fav.tags[0] === 'object' ? fav.tags[0].name : fav.tags[0]}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Activity Card */}
+        {/* Jam Session Card */}
         <div className="dashboard-card">
-          <h2>Recent Activity</h2>
-          <div className="activity-list">
-            <div className="activity-item">
-              <span className="activity-icon">🎵</span>
-              <div className="activity-details">
-                <p>Completed Rhythm Training</p>
-                <small>2 hours ago</small>
-              </div>
-            </div>
-            <div className="activity-item">
-              <span className="activity-icon">🎸</span>
-              <div className="activity-details">
-                <p>New Song Recommendation</p>
-                <small>Yesterday</small>
-              </div>
-            </div>
-            <div className="activity-item">
-              <span className="activity-icon">🎼</span>
-              <div className="activity-details">
-                <p>Joined Jam Session</p>
-                <small>2 days ago</small>
-              </div>
-            </div>
+          <h2>Jam Session</h2>
+          <div style={{ color: '#ffb3b3', fontWeight: 600, fontSize: '1.5rem', marginTop: '3rem', fontStyle: 'italic', textAlign: 'center'}}>
+            🎸 Coming soon!
           </div>
         </div>
       </div>

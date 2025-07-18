@@ -42,6 +42,10 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 82.5%;
 }
 
 .chapter-card::before {
@@ -67,7 +71,11 @@
 }
 
 .chapter-content {
+  flex: 1 1 auto;
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .chapter-title {
@@ -104,7 +112,9 @@
   background: var(--accent-color);
 }
 
-.start-chapter-btn {
+.start-chapter-btn,
+.start-chapter-btn:link,
+.start-chapter-btn:visited {
   width: 100%;
   background: var(--accent-color);
   color: #fff;
@@ -115,12 +125,20 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-top: auto;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
 }
 
-.start-chapter-btn:hover {
+.start-chapter-btn:hover,
+.start-chapter-btn:active {
   background: #fff;
   color: var(--accent-color);
-  transform: scale(1.02);
+  text-decoration: none;
 }
 
 .chapters-footer {
@@ -161,4 +179,52 @@
   .chapter-card {
     padding: 1.5rem;
   }
+} 
+
+.advanced-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.advanced-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem 2.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+}
+.close-modal-btn {
+  position: absolute;
+  top: 0.7rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #888;
+  cursor: pointer;
+}
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 1.2rem 0 0.5rem 0;
+}
+.modal-link-btn {
+  background: #3498db;
+  color: #fff;
+  padding: 0.7rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.modal-link-btn:hover {
+  background: #217dbb;
 } 
