@@ -19,7 +19,11 @@ const ALL_INSTRUMENTS = SOUND_FILES.map(f => ({
   id: f.replace(/\s|\./g, '').toLowerCase(),
   file: f
 }));
-const DEFAULT_INSTRUMENTS = [ALL_INSTRUMENTS.find(i => i.name === 'Kick'), ALL_INSTRUMENTS.find(i => i.name === 'Snare')].filter(Boolean);
+const DEFAULT_INSTRUMENTS = [
+  ALL_INSTRUMENTS.find(i => i.name === 'Hi-Hat'),
+  ALL_INSTRUMENTS.find(i => i.name === 'Kick'),
+  ALL_INSTRUMENTS.find(i => i.name === 'Snare'),
+].filter(Boolean);
 
 const TIME_SIGNATURES = [
   { label: '4/4', beats: 4, note: 4 },
@@ -64,6 +68,8 @@ const JamSession = () => {
   const [metronomeMuted, setMetronomeMuted] = useState(false);
   const audioBuffers = useRef({});
   const audioCtx = useRef(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [dragMode, setDragMode] = useState(null); // 'activate' or 'deactivate'
 
   // Update steps and pattern when time signature or note resolution changes
   useEffect(() => {
@@ -112,6 +118,24 @@ const JamSession = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMouseUp = () => setIsMouseDown(false);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  useEffect(() => {
+    const handleSpacebar = (e) => {
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        if (isPlaying) stopPlayback();
+        else startPlayback();
+      }
+    };
+    window.addEventListener('keydown', handleSpacebar);
+    return () => window.removeEventListener('keydown', handleSpacebar);
+  }, [isPlaying]);
+
   // Save a new jam session
   const handleSave = async () => {
     setLoading(true);
@@ -139,10 +163,15 @@ const JamSession = () => {
   };
 
   // Sequencer grid toggle
-  const toggleStep = (rowIdx, colIdx) => {
+  const toggleStep = (rowIdx, colIdx, forceMode = null) => {
     setPattern(prev => {
       const newPattern = prev.map(arr => [...arr]);
-      newPattern[rowIdx][colIdx] = newPattern[rowIdx][colIdx] ? 0 : 1;
+      const current = newPattern[rowIdx][colIdx];
+      let newValue;
+      if (forceMode === 'activate') newValue = 1;
+      else if (forceMode === 'deactivate') newValue = 0;
+      else newValue = current ? 0 : 1;
+      newPattern[rowIdx][colIdx] = newValue;
       return newPattern;
     });
   };
@@ -222,6 +251,18 @@ const JamSession = () => {
 
   return (
     <div className="jam-studio-container">
+      {/* Jam Session Header and Description - styled like Song Recommendation */}
+      <div className="jam-session-header">
+        <h1 className="jam-session-title germania-font">
+          <span role="img" aria-label="drum" className="jam-session-emoji"></span> Jam Session
+        </h1>
+        <p className="jam-session-subtitle">
+          Create, edit, and play your own drum patterns! Click or drag to toggle steps, add or remove instruments, and experiment with rhythms. Use the controls below to save, play, or clear your session.
+        </p>
+        <p className="jam-session-shortcuts">
+          <b>Shortcuts:</b> Spacebar = Play/Pause &nbsp;|&nbsp; Click = Toggle Step &nbsp;|&nbsp; Click & Drag = Multi-toggle &nbsp;|&nbsp; Clear All = Reset Grid
+        </p>
+      </div>
       {/* Top Bar */}
       <div className="jam-studio-topbar">
         <input
@@ -325,13 +366,51 @@ const JamSession = () => {
                       <td
                         key={colIdx}
                         className={`jam-step-cell${val ? ' active' : ''}${currentStep === colIdx ? ' playing' : ''}`}
-                        onClick={() => toggleStep(rowIdx, colIdx)}
+                        onMouseDown={e => {
+                          setIsMouseDown(true);
+                          const mode = val ? 'deactivate' : 'activate';
+                          setDragMode(mode);
+                          toggleStep(rowIdx, colIdx, mode); // Toggle immediately on mousedown
+                        }}
+                        onMouseEnter={e => {
+                          if (isMouseDown && dragMode) {
+                            toggleStep(rowIdx, colIdx, dragMode);
+                          }
+                        }}
+                        onMouseUp={e => {
+                          setIsMouseDown(false);
+                          setDragMode(null);
+                          // If mouseup happens on the same cell as mousedown, treat as click
+                          if (!dragMode) {
+                            toggleStep(rowIdx, colIdx);
+                          }
+                        }}
+                        onTouchStart={e => {
+                          setIsMouseDown(true);
+                          const mode = val ? 'deactivate' : 'activate';
+                          setDragMode(mode);
+                          toggleStep(rowIdx, colIdx, mode); // Toggle immediately on touchstart
+                        }}
+                        onTouchEnd={e => {
+                          setIsMouseDown(false);
+                          setDragMode(null);
+                          toggleStep(rowIdx, colIdx);
+                        }}
                       ></td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Clear All button below the grid */}
+          <div style={{ margin: '1.5rem 0 0 0', textAlign: 'center' }}>
+            <button
+              className="jam-clear-all-btn"
+              onClick={() => setPattern(Array(instruments.length).fill().map(() => Array(steps).fill(0)))}
+            >
+              Clear All
+            </button>
           </div>
         </div>
         {/* Right: Instruments/Upload Panel */}
