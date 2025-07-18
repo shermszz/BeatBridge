@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, UTC
 import os
 from dotenv import load_dotenv
 import requests
+from app.song_recommendation import song_recommendation_bp
 
 # Load environment variables
 load_dotenv()
@@ -226,5 +227,7 @@ def create_app():
             
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+
+    app.register_blueprint(song_recommendation_bp)
 
     return app 

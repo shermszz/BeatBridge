@@ -15,6 +15,7 @@ import RhythmTrainer from './pages/RhythmTrainer';
 import RhythmTrainerChapters from './pages/RhythmTrainerChapters';
 import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
 import JamSession from './pages/JamSession';
+import Backlink from './pages/Backlink';
 import './styles/App.css';
 
 function App() {
@@ -78,6 +79,7 @@ function App() {
               <JamSession />
             </ProtectedRoute>
           } />
+          <Route path="/backlink" element={<Backlink />} />
         </Routes>
       </Layout>
     </Router>
