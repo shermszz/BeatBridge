@@ -14,6 +14,7 @@ import SongRecommendation from './pages/SongRecommendation';
 import RhythmTrainer from './pages/RhythmTrainer';
 import RhythmTrainerChapters from './pages/RhythmTrainerChapters';
 import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
+import Chapter0pg2 from './pages/Chapter0/Chapter0pg2';
 import './styles/App.css';
 
 function App() {
@@ -70,6 +71,11 @@ function App() {
           <Route path="/chapter-0" element={
             <ProtectedRoute requireVerification={true}>
               <Chapter0pg1 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter0pg2" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0pg2 />
             </ProtectedRoute>
           } />
         </Routes>
