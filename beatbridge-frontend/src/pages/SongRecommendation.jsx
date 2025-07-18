@@ -182,27 +182,74 @@ function SongRecommendation() {
     return `${mins}min ${remSecs}s`;
   };
 
-  // Fetch a song recommendation for the user
+  // Fetch a song recommendation for the selected genre
   const handleGetRecommendation = async () => {
+    if (!selectedGenre) {
+      setError('Please select a genre');
+      return;
+    }
     setLoading(true);
     setError('');
     setRecommendation(null);
-    try {
-      const userId = localStorage.getItem('user_id');
-      if (!userId) {
-        setError('Please log in to get recommendations');
-        setLoading(false);
-        return;
+
+    const maxRetries = 2;
+    let retryCount = 0;
+
+    const fetchRecommendation = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Please log in to get recommendations');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
+        const response = await fetch(`${config.API_BASE_URL}/api/recommend-song`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ genres: [selectedGenre] }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to get recommendation');
+        }
+        return data;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          throw new Error('Request took too long. Retrying...');
+        }
+        throw err;
       }
-      const response = await fetch(`${config.API_BASE_URL}/api/recommend-song?user_id=${userId}`);
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get recommendation');
+    };
+
+    while (retryCount < maxRetries) {
+      try {
+        const data = await fetchRecommendation();
+        // Add artificial delay
+        await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+        setRecommendation(data);
+        break;
+      } catch (err) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          setError(err.message.replace('Retrying...', 'Please try again.'));
+          console.error('Error getting recommendation:', err);
+        } else {
+          console.log(`Retry ${retryCount}/${maxRetries}:`, err.message);
+          // Wait a short time before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-      setRecommendation(data.song);
-    } catch (err) {
-      setError(err.message || 'Failed to get recommendation');
     }
+
     setLoading(false);
   };
 
@@ -397,17 +444,101 @@ function SongRecommendation() {
                 {error && <p className="error-message">{error}</p>}
 
                 {/* Recommendation Result */}
-                {recommendation && (
+                {recommendation && recommendation.recommendation && (
                   <div className="recommendation-result">
-                    <h3>Recommended Song</h3>
-                    <p><strong>Title:</strong> {recommendation.title}</p>
-                    <p><strong>Artist:</strong> {recommendation.artist}</p>
-                    <p><strong>BPM:</strong> {recommendation.bpm}</p>
-                    {recommendation.url && (
-                      <a href={recommendation.url} target="_blank" rel="noopener noreferrer" className="listen-button">
-                        Listen on Last.fm
-                      </a>
-                    )}
+                    <div className="song-card">
+                      {recommendation.recommendation.album_image ? (
+                        <div className="album-art-container">
+                          <img 
+                            src={recommendation.recommendation.album_image} 
+                            alt={`${recommendation.recommendation.album} album art`}
+                            className="album-art"
+                          />
+                        </div>
+                      ) : (
+                        <div className="album-art-placeholder">
+                          <span>🎵</span>
+                        </div>
+                      )}
+                      <div className="song-info">
+                        <h3 className="song-title">{recommendation.recommendation.name}</h3>
+                        <p className="song-artist">
+                          by {typeof recommendation.recommendation.artist === 'object' 
+                              ? recommendation.recommendation.artist.name 
+                              : recommendation.recommendation.artist}
+                        </p>
+                        {recommendation.recommendation.album && (
+                          <p className="song-album">
+                            Album: {recommendation.recommendation.album}
+                          </p>
+                        )}
+                        <p className="song-duration">
+                          Duration: {formatDuration(recommendation.recommendation.duration)}
+                        </p>
+
+                        {/* Rhythm and Tempo Ratings */}
+                        <div className="song-ratings">
+                          <div className="rating-item">
+                            <span className="rating-label">Rhythm Complexity: </span>
+                            <span className="rating-stars">
+                              {[...Array(4)].map((_, index) => (
+                                <span
+                                  key={index}
+                                  className={index < recommendation.rhythm_complexity ? "filled-stars" : "empty-stars"}
+                                >
+                                  {index < recommendation.rhythm_complexity ? "★" : "☆"}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                          <div className="rating-item">
+                            <span className="rating-label">Tempo Challenge: </span>
+                            <span className="rating-stars">
+                              {[...Array(4)].map((_, index) => (
+                                <span
+                                  key={index}
+                                  className={index < recommendation.tempo_rating ? "filled-stars" : "empty-stars"}
+                                >
+                                  {index < recommendation.tempo_rating ? "★" : "☆"}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Skill Level Context */}
+                        <div className="skill-context">
+                          <div className="skill-header">
+                            <h4 className="skill-level">Recommended for {recommendation.skill_level} drummers</h4>
+                          </div>
+                          <p className="skill-description">{recommendation.skill_context}</p>
+                        </div>
+
+                        <div className="song-tags">
+                          {recommendation.recommendation.tags && recommendation.recommendation.tags.map((tag, index) => (
+                            <span key={index} className="tag">
+                              {typeof tag === 'object' ? tag.name : tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="song-actions">
+                          <a
+                            href={recommendation.recommendation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="listen-button"
+                          >
+                            Listen on Last.fm
+                          </a>
+                          <button
+                            onClick={() => handleAddToFavorites(recommendation.recommendation)}
+                            className="add-favorite-button"
+                          >
+                            Add to Favorites
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
