@@ -735,41 +735,8 @@ def fetch_genre_tracks(genre, page=1):
 @app.route('/api/genres', methods=['GET'])
 def get_genres():
     """
-    Returns a static list of popular genres and pre-fetches tracks for each genre
+    Returns a static list of popular genres for the frontend genre selection
     """
-    # Pre-fetch tracks for each genre if not in cache or if cache is expired
-    current_time = datetime.utcnow()
-    
-    for genre in POPULAR_GENRES:
-        try:
-            # Check if we need to refresh the cache for this genre
-            cache_key_base = f"genre_tracks_{genre}"
-            cache_time_key = f"{cache_key_base}_time"
-            
-            if (cache_time_key not in GENRE_CACHE or 
-                current_time - GENRE_CACHE[cache_time_key] > CACHE_DURATION):
-                
-                # Fetch multiple pages of tracks
-                all_tracks = []
-                for page in range(1, MAX_PAGES + 1):
-                    try:
-                        tracks_data = fetch_genre_tracks(genre, page)
-                        if 'tracks' in tracks_data and 'track' in tracks_data['tracks']:
-                            all_tracks.extend(tracks_data['tracks']['track'])
-                    except Exception as e:
-                        print(f"Failed to fetch page {page} for {genre}: {str(e)}")
-                        continue
-
-                if all_tracks:
-                    # Store all tracks in cache
-                    GENRE_CACHE[cache_key_base] = {'tracks': {'track': all_tracks}}
-                    GENRE_CACHE[cache_time_key] = current_time
-                    print(f"Cached {len(all_tracks)} tracks for {genre}")
-                
-        except Exception as e:
-            print(f"Failed to pre-fetch tracks for {genre}: {str(e)}")
-            continue
-
     genres = [{"id": g, "name": g.title(), "count": ""} for g in POPULAR_GENRES]
     return jsonify({'genres': genres}), 200
 
