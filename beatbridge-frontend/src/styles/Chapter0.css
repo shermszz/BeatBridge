@@ -24,6 +24,131 @@
   text-align: center;
 }
 
+/* Chapter0pg2 - Drum Notation Styles */
+.chapter0-cards-container {
+  position: relative;
+  height: 600px;
+  max-width: 700px;
+  margin: 2.5rem auto 0 auto;
+}
+
+.chapter0-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(44,49,80,0.95);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px #0004;
+  padding: 2rem 1.5rem;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.chapter0-card-notes {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.chapter0-card-notes.hidden {
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.chapter0-card-rests {
+  opacity: 0;
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.chapter0-card-rests.visible {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.chapter0-card-title {
+  text-align: center;
+  color: #ffb3b3;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 8px #000a;
+}
+
+.chapter0-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  font-size: 1.08rem;
+}
+
+.chapter0-table-header {
+  background: rgba(255,179,179,0.12);
+}
+
+.chapter0-table-header th {
+  padding: 0.7rem 0.5rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.chapter0-table-header th.center {
+  text-align: center;
+}
+
+.chapter0-table-row {
+  border-bottom: 1px solid #444;
+}
+
+.chapter0-table-row:nth-child(even) {
+  background: rgba(255,255,255,0.01);
+}
+
+.chapter0-table-row:nth-child(odd) {
+  background: rgba(255,255,255,0.04);
+}
+
+.chapter0-table-cell {
+  padding: 0.7rem 0.5rem;
+}
+
+.chapter0-table-cell.bold {
+  font-weight: 700;
+}
+
+.chapter0-table-cell.center {
+  text-align: center;
+}
+
+.chapter0-nav-button {
+  background: rgba(255,179,179,0.15);
+  border: 2px solid #ffb3b3;
+  color: #ffb3b3;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 1rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 2px 8px rgba(255,179,179,0.3);
+}
+
+.chapter0-nav-button:hover {
+  transform: scale(1.1);
+  background: rgba(255,179,179,0.25);
+}
+
+.chapter0-nav-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+
 .chapter0-drum-kit-container {
   position: relative;
   max-width: 700px;
