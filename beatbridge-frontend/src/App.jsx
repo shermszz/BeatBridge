@@ -14,6 +14,8 @@ import SongRecommendation from './pages/SongRecommendation';
 import RhythmTrainer from './pages/RhythmTrainer';
 import RhythmTrainerChapters from './pages/RhythmTrainerChapters';
 import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
+import Chapter0pg2 from './pages/Chapter0/Chapter0pg2';
+import Chapter0pg3 from './pages/Chapter0/Chapter0pg3';
 import JamSession from './pages/JamSession';
 import './styles/App.css';
 
@@ -71,6 +73,16 @@ function App() {
           <Route path="/chapter-0" element={
             <ProtectedRoute requireVerification={true}>
               <Chapter0pg1 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter0pg2" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0pg2 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter0pg3" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0pg3 />
             </ProtectedRoute>
           } />
           <Route path="/jam-session" element={
