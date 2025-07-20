@@ -124,14 +124,16 @@ function WholeNoteDemoGrid() {
     }
     return () => clearInterval(interval);
   }, []);
+  // Center grid like RestDemoGrid
+  const gridWidth = 4 * 36 + 3 * 11;
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <audio ref={audioRef} src={process.env.PUBLIC_URL + '/sounds/Snare.mp3'} preload="auto" />
-      <div style={{ display: 'flex', gap: '1.2rem', margin: '1.5rem 0 0.5rem 0', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: gridWidth, margin: '1.5rem 0 0.5rem 0', gap: '0.7rem' }}>
         {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
-            width: 44,
-            height: 44,
+            width: 36,
+            height: 36,
             borderRadius: 8,
             background: i === 0 ? '#ffb3b3' : '#232946',
             border: playhead === i ? '3px solid #ffe066' : '2px solid #888',
@@ -226,7 +228,7 @@ function NoteDemoGrid({ type }) {
       <audio ref={audioRef} src={process.env.PUBLIC_URL + '/sounds/Snare.mp3'} preload="auto" />
       {type === 'sixteenth' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', margin: '1.5rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
-          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
             {Array.from({ length: 8 }).map((_, i) => {
               let fill = false;
               if (type === 'whole' && i === 0) fill = true;
@@ -257,7 +259,7 @@ function NoteDemoGrid({ type }) {
               );
             })}
           </div>
-          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
             {Array.from({ length: 8 }).map((_, i) => {
               const idx = i + 8;
               let fill = false;
@@ -292,7 +294,7 @@ function NoteDemoGrid({ type }) {
         </div>
       ) : type === 'eighth' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', margin: '1.5rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
-          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
             {Array.from({ length: 4 }).map((_, i) => {
               let fill = false;
               if (type === 'whole' && i === 0) fill = true;
@@ -323,7 +325,7 @@ function NoteDemoGrid({ type }) {
               );
             })}
           </div>
-          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
             {Array.from({ length: 4 }).map((_, i) => {
               const idx = i + 4;
               let fill = false;
@@ -357,7 +359,7 @@ function NoteDemoGrid({ type }) {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: '0.7rem', margin: '1.5rem 0 0.5rem 0', justifyContent: 'center', width: gridWidth }}>
+        <div style={{ display: 'flex', gap: '0.7rem', margin: '1.5rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
           {Array.from({ length: boxes }).map((_, i) => {
             let fill = false;
             if (type === 'whole' && i === 0) fill = true;
@@ -429,36 +431,39 @@ export default function Chapter0pg2() {
       {/* Note Card Carousel - always visible */}
       <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0 2.5rem 0' }}>
         <div className={`chapter0-note-carousel-card${slideDirection ? ' ' + slideDirection : ''}`} style={{ background: '#232946', borderRadius: 16, boxShadow: '0 2px 16px #0004', padding: '2.2rem 2.5rem', minWidth: 400, maxWidth: 520, color: '#fff', textAlign: 'center', position: 'relative', transition: 'transform 0.3s, opacity 0.3s' }}>
-          <div style={{ display: 'flex', flexDirection: noteCardIdx === 0 ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: noteCardIdx === 0 ? 0 : '1.5rem', marginBottom: '1.5rem', textAlign: noteCardIdx === 0 ? 'center' : 'left' }}>
-            <div style={{ flex: 1, textAlign: noteCardIdx === 0 ? 'center' : 'left' }}>
-              <h3 style={{ fontWeight: 700, fontSize: '1.25rem', color: '#ffb3b3', marginBottom: '1.1rem' }}>{noteDescriptions[noteCardIdx].title}</h3>
-              {noteCardIdx === 0 ? (
-                <div style={{ fontSize: '1.08rem', color: '#fff', margin: 0, textAlign: 'center', whiteSpace: 'pre-line' }}>
-                  {noteDescriptions[0].desc.join('\n\n')}
-                </div>
-              ) : noteCardIdx >= 1 && noteCardIdx <= 5 ? (
-                <>
+          {/* Layout: text and PNG side by side, grid below */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ fontWeight: 700, fontSize: '1.25rem', color: '#ffb3b3', marginBottom: '1.1rem', textAlign: 'left' }}>{noteDescriptions[noteCardIdx].title}</h3>
+                {noteCardIdx === 0 ? (
+                  <div style={{ fontSize: '1.08rem', color: '#fff', margin: 0, textAlign: 'left', whiteSpace: 'pre-line' }}>
+                    {noteDescriptions[0].desc.join('\n\n')}
+                  </div>
+                ) : noteCardIdx >= 1 && noteCardIdx <= 5 ? (
+                  <ul style={{ fontSize: '1.08rem', color: '#fff', margin: 0, paddingLeft: '1.2rem', textAlign: 'left', listStyle: 'disc', display: 'block' }}>
+                    {noteDescriptions[noteCardIdx].desc.map((point, i) => (
+                      <li key={i} style={{ marginBottom: '0.6rem' }}>{point}</li>
+                    ))}
+                  </ul>
+                ) : (
                   <ul style={{ fontSize: '1.08rem', color: '#fff', margin: 0, paddingLeft: '1.2rem', textAlign: 'left', listStyle: 'disc' }}>
                     {noteDescriptions[noteCardIdx].desc.map((point, i) => (
                       <li key={i} style={{ marginBottom: '0.6rem' }}>{point}</li>
                     ))}
                   </ul>
-                  <NoteDemoGrid type={['whole','half','quarter','eighth','sixteenth'][noteCardIdx-1]} />
-                </>
-              ) : (
-                <ul style={{ fontSize: '1.08rem', color: '#fff', margin: 0, paddingLeft: '1.2rem', textAlign: 'left', listStyle: 'disc' }}>
-                  {noteDescriptions[noteCardIdx].desc.map((point, i) => (
-                    <li key={i} style={{ marginBottom: '0.6rem' }}>{point}</li>
-                  ))}
-                </ul>
+                )}
+              </div>
+              {noteImages[noteCardIdx] && noteCardIdx >= 1 && noteCardIdx <= 5 && (
+                <img 
+                  src={noteImages[noteCardIdx]} 
+                  alt={noteDescriptions[noteCardIdx].title} 
+                  style={{ width: noteCardIdx === 1 ? 44 : 56, height: noteCardIdx === 1 ? 44 : 56, objectFit: 'contain', display: 'block', marginLeft: '2.2rem' }} 
+                />
               )}
             </div>
-            {noteImages[noteCardIdx] && (
-              <img 
-                src={noteImages[noteCardIdx]} 
-                alt={noteDescriptions[noteCardIdx].title} 
-                style={{ width: noteCardIdx === 1 ? 44 : 56, height: noteCardIdx === 1 ? 44 : 56, objectFit: 'contain', display: 'block' }} 
-              />
+            {noteCardIdx >= 1 && noteCardIdx <= 5 && (
+              <NoteDemoGrid type={['whole','half','quarter','eighth','sixteenth'][noteCardIdx-1]} />
             )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2.5rem', marginTop: '2.2rem' }}>

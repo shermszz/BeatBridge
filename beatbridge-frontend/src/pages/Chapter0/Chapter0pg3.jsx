@@ -93,6 +93,234 @@ const restTable = [
   },
 ];
 
+function RestDemoGrid({ type }) {
+  // Map rest type to duration in beats (out of 4)
+  const boxCounts = {
+    whole: 4,
+    half: 4,
+    quarter: 4,
+    eighth: 8,
+    sixteenth: 16,
+  };
+  const intervalMap = {
+    whole: 700,
+    half: 700,
+    quarter: 700,
+    eighth: 350,
+    sixteenth: 175,
+  };
+  const boxes = boxCounts[type] || 4;
+  const interval = intervalMap[type] || 700;
+  const [playhead, setPlayhead] = React.useState(0);
+  const audioRef = React.useRef(null);
+  React.useEffect(() => {
+    setPlayhead(0);
+    const id = setInterval(() => {
+      setPlayhead(p => {
+        const next = (p + 1) % boxes;
+        // Play snare sound for pink boxes
+        if (
+          (type === 'half' && (next === 2 || next === 3)) ||
+          (type === 'quarter' && (next >= 1 && next <= 3)) ||
+          (type === 'eighth' && (next >= 1 && next <= 7)) ||
+          (type === 'sixteenth' && (next >= 1 && next <= 15))
+        ) {
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play();
+          }
+        }
+        return next;
+      });
+    }, interval);
+    return () => clearInterval(id);
+  }, [type, boxes, interval]);
+  let gridWidth = 0;
+  if (type === 'sixteenth') gridWidth = 8 * 36 + 7 * 11;
+  else if (type === 'eighth') gridWidth = 8 * 36 + 7 * 11;
+  else gridWidth = 4 * 36 + 3 * 11;
+
+  // Helper to determine box color and content
+  function getBoxStyle(i) {
+    // Whole rest: all gray rest
+    if (type === 'whole') {
+      return { background: '#bfc9d1', content: <span style={{ fontSize: 18, fontWeight: 900 }}>⏸</span> };
+    }
+    // Half rest: 1st and 2nd box rest, 3rd and 4th pink (snare)
+    if (type === 'half') {
+      if (i === 0 || i === 1) return { background: '#bfc9d1', content: <span style={{ fontSize: 18, fontWeight: 900 }}>⏸</span> };
+      if (i === 2 || i === 3) return { background: '#ffb3c6', content: <span style={{ width: 12, height: 12, display: 'inline-block', borderRadius: '50%', background: '#232946', margin: 'auto' }}></span> };
+      return { background: '#232946', content: '' };
+    }
+    // Quarter rest: 1st box rest, 2nd-4th pink (snare)
+    if (type === 'quarter') {
+      if (i === 0) return { background: '#bfc9d1', content: <span style={{ fontSize: 18, fontWeight: 900 }}>⏸</span> };
+      if (i >= 1 && i <= 3) return { background: '#ffb3c6', content: <span style={{ width: 12, height: 12, display: 'inline-block', borderRadius: '50%', background: '#232946', margin: 'auto' }}></span> };
+      return { background: '#232946', content: '' };
+    }
+    // Eighth rest: 1st box rest, 2-8 pink (snare)
+    if (type === 'eighth') {
+      if (i === 0) return { background: '#bfc9d1', content: <span style={{ fontSize: 18, fontWeight: 900 }}>⏸</span> };
+      if (i >= 1 && i <= 7) return { background: '#ffb3c6', content: <span style={{ width: 12, height: 12, display: 'inline-block', borderRadius: '50%', background: '#232946', margin: 'auto' }}></span> };
+      return { background: '#232946', content: '' };
+    }
+    // Sixteenth rest: 1st box rest, 2-16 pink (snare)
+    if (type === 'sixteenth') {
+      if (i === 0) return { background: '#bfc9d1', content: <span style={{ fontSize: 18, fontWeight: 900 }}>⏸</span> };
+      if (i >= 1 && i <= 15) return { background: '#ffb3c6', content: <span style={{ width: 12, height: 12, display: 'inline-block', borderRadius: '50%', background: '#232946', margin: 'auto' }}></span> };
+      return { background: '#232946', content: '' };
+    }
+    return { background: '#232946', content: '' };
+  }
+
+  // Render grid
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <audio ref={audioRef} src={process.env.PUBLIC_URL + '/sounds/Snare.mp3'} preload="auto" />
+      {type === 'sixteenth' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', margin: '0.3rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const { background, content } = getBoxStyle(i);
+              return (
+                <div key={i} style={{
+                  width: 36,
+                  height: 36,
+                  lineHeight: '36px',
+                  boxSizing: 'border-box',
+                  borderRadius: 8,
+                  background,
+                  border: playhead === i ? '3px solid #ffe066' : '2px solid #888',
+                  boxShadow: playhead === i ? '0 0 12px 2px #ffe06688' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: background === '#bfc9d1' ? '#232946' : '#fff',
+                  transition: 'border 0.2s, box-shadow 0.2s',
+                }}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const idx = i + 8;
+              const { background, content } = getBoxStyle(idx);
+              return (
+                <div key={idx} style={{
+                  width: 36,
+                  height: 36,
+                  lineHeight: '36px',
+                  boxSizing: 'border-box',
+                  borderRadius: 8,
+                  background,
+                  border: playhead === idx ? '3px solid #ffe066' : '2px solid #888',
+                  boxShadow: playhead === idx ? '0 0 12px 2px #ffe06688' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: background === '#bfc9d1' ? '#232946' : '#fff',
+                  transition: 'border 0.2s, box-shadow 0.2s',
+                }}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : type === 'eighth' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', margin: '0.3rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+            {Array.from({ length: 4 }).map((_, i) => {
+              const { background, content } = getBoxStyle(i);
+              return (
+                <div key={i} style={{
+                  width: 36,
+                  height: 36,
+                  lineHeight: '36px',
+                  boxSizing: 'border-box',
+                  borderRadius: 8,
+                  background,
+                  border: playhead === i ? '3px solid #ffe066' : '2px solid #888',
+                  boxShadow: playhead === i ? '0 0 12px 2px #ffe06688' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: background === '#bfc9d1' ? '#232946' : '#fff',
+                  transition: 'border 0.2s, box-shadow 0.2s',
+                }}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '0.7rem', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+            {Array.from({ length: 4 }).map((_, i) => {
+              const idx = i + 4;
+              const { background, content } = getBoxStyle(idx);
+              return (
+                <div key={idx} style={{
+                  width: 36,
+                  height: 36,
+                  lineHeight: '36px',
+                  boxSizing: 'border-box',
+                  borderRadius: 8,
+                  background,
+                  border: playhead === idx ? '3px solid #ffe066' : '2px solid #888',
+                  boxShadow: playhead === idx ? '0 0 12px 2px #ffe06688' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: background === '#bfc9d1' ? '#232946' : '#fff',
+                  transition: 'border 0.2s, box-shadow 0.2s',
+                }}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: '0.7rem', margin: '0.3rem 0 0.5rem 0', justifyContent: 'center', alignItems: 'center', width: gridWidth }}>
+          {Array.from({ length: boxes }).map((_, i) => {
+            const { background, content } = getBoxStyle(i);
+            return (
+              <div key={i} style={{
+                width: 36,
+                height: 36,
+                lineHeight: '36px',
+                boxSizing: 'border-box',
+                borderRadius: 8,
+                background,
+                border: playhead === i ? '3px solid #ffe066' : '2px solid #888',
+                boxShadow: playhead === i ? '0 0 12px 2px #ffe06688' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: 16,
+                color: background === '#bfc9d1' ? '#232946' : '#fff',
+                transition: 'border 0.2s, box-shadow 0.2s',
+              }}>
+                {content}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Chapter0pg3() {
   const [restCardIdx, setRestCardIdx] = useState(0);
   const [slideDirection, setSlideDirection] = useState('');
@@ -143,6 +371,7 @@ export default function Chapter0pg3() {
               />
             )}
           </div>
+          {restCardIdx >= 1 && restCardIdx <= 5 && <RestDemoGrid type={['whole','half','quarter','eighth','sixteenth'][restCardIdx-1]} />}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2.5rem', marginTop: '2.2rem' }}>
             <div style={{ width: 48, display: 'flex', justifyContent: 'center' }}>
               {restCardIdx > 0 && (
