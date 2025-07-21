@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import '../../styles/Chapter0.css';
+import '../../styles/Chapter0pg1-3.css';
 
 const notes = [
   { name: 'Whole Note', type: 'whole' },

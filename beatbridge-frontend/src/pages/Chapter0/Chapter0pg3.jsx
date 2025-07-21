@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import '../../styles/Chapter0.css';
+import '../../styles/Chapter0pg1-3.css';
 
 const restDescriptions = [
   {
@@ -428,7 +428,7 @@ export default function Chapter0pg3() {
         <Link to="/chapter0pg2" className="chapter0-back-link">
           ← Back
         </Link>
-        <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
+        <Link to="/Chapter0/Chapter0pg4" className="chapter0-back-link">
           Next →
         </Link>
       </div>

@@ -2,7 +2,7 @@
  * Drum Kit Guided Tour for Chapter 0 (Start Tour below drum kit)
  */
 import React, { useRef, useState } from 'react';
-import '../../styles/Chapter0.css';
+import '../../styles/Chapter0pg1-3.css';
 import VirtualDrumKit from '../../styles/images/virtualDrumKit.jpg';
 import { Link } from 'react-router-dom';
 
