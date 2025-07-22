@@ -211,7 +211,10 @@ def create_app():
                 return jsonify({'error': 'Failed to fetch recommendations'}), 500
                 
             tracks = response.json()['tracks']['track']
-            
+
+            if not tracks:
+                return jsonify({'error': f'No tracks found for genre: {genre}. Please try another genre or try again later.'}), 404
+
             # Return a random track from the list
             import random
             track = random.choice(tracks)

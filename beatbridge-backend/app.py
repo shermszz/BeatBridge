@@ -785,7 +785,11 @@ def recommend_song():
             if len(fresh_tracks) < 5:
                 fresh_tracks = available_tracks
                 recent_tracks = set()
-            
+
+            # ADD THIS CHECK:
+            if not fresh_tracks:
+                return jsonify({'error': f'No tracks found for genre: {selected_genre}. Please try another genre or try again later.'}), 404
+
             # Get a random track from the fresh tracks
             track = random.choice(fresh_tracks)
             
