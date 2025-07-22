@@ -9,7 +9,7 @@ const CHAPTERS = [
     title: "Introduction",
     description: "Get familiar with the drum kit and learn the basics of drumming!",
     difficulty: "First-Timer",
-    duration: "10 min",
+    duration: "15 min",
     icon: "🥁",
     color: "#e74c3c"
   },
@@ -63,6 +63,8 @@ const CHAPTERS = [
 export default function RhythmTrainerChapters() {
   const [showModal, setShowModal] = useState(false);
   const [checkedSkill, setCheckedSkill] = useState(false);
+  const [progress, setProgress] = useState(1);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,6 +93,23 @@ export default function RhythmTrainerChapters() {
       }
     };
     fetchSkillLevel();
+  }, []);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProgress(data.chapter_progress || 1);
+        }
+      } catch (err) {}
+      setLoading(false);
+    };
+    fetchProgress();
   }, []);
 
   const handleCloseModal = () => {
@@ -126,36 +145,40 @@ export default function RhythmTrainerChapters() {
           Choose a chapter to start your drumming journey
         </p>
       </div>
-      
       <div className="chapters-grid">
-        {CHAPTERS.map((chapter, idx) => (
-          <div 
-            key={chapter.id} 
-            className="chapter-card"
-            style={{ '--accent-color': chapter.color }}
-          >
-            <div className="chapter-icon">{chapter.icon}</div>
-            <div className="chapter-content">
-              <h3 className="chapter-title">{chapter.title}</h3>
-              <p className="chapter-description">{chapter.description}</p>
-              <div className="chapter-meta">
-                <span className="chapter-difficulty">{chapter.difficulty}</span>
-                <span className="chapter-duration">{chapter.duration}</span>
+        {loading ? (
+          <div style={{color:'#ffb3b3', textAlign:'center', width:'100%'}}>Loading...</div>
+        ) : CHAPTERS.map((chapter, idx) => {
+          const chapterNum = idx + 1;
+          const isLocked = chapterNum > progress;
+          return (
+            <div 
+              key={chapter.id} 
+              className={`chapter-card${isLocked ? ' locked' : ''}`}
+              style={{ '--accent-color': chapter.color }}
+            >
+              <div className="chapter-icon">{chapter.icon}</div>
+              <div className="chapter-content">
+                <h3 className="chapter-title">{chapter.title}</h3>
+                <p className="chapter-description">{chapter.description}</p>
+                <div className="chapter-meta">
+                  <span className="chapter-difficulty">{chapter.difficulty}</span>
+                  <span className="chapter-duration">{chapter.duration}</span>
+                </div>
               </div>
-            </div>
-            {idx === 0 ? (
-              <Link to="/chapter-0" className="start-chapter-btn">
-                Start Chapter 0
-              </Link>
-            ) : (
-              <button className="start-chapter-btn">
-                Start Chapter {idx}
+              <button 
+                className={`start-chapter-btn${isLocked ? ' locked' : ''}`}
+                disabled={isLocked}
+                tabIndex={isLocked ? -1 : 0}
+                onClick={isLocked ? undefined : () => navigate(chapterNum === 1 ? '/chapter0-dashboard' : `/chapter${idx}-dashboard`)}
+              >
+                {isLocked ? <>Locked <span role="img" aria-label="locked">🔒</span></> : `Start Chapter ${idx}`}
               </button>
-            )}
-          </div>
-        ))}
+              
+            </div>
+          );
+        })}
       </div>
-      
       <div className="chapters-footer">
         <Link to="/rhythm-trainer" className="back-to-trainer-btn">
           ← Back to Virtual Drum

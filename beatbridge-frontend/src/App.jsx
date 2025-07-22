@@ -17,6 +17,8 @@ import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
 import Chapter0pg2 from './pages/Chapter0/Chapter0pg2';
 import Chapter0pg3 from './pages/Chapter0/Chapter0pg3';
 import Chapter0pg4 from './pages/Chapter0/Chapter0pg4';
+import Chapter0pg5 from './pages/Chapter0/Chapter0pg5';
+import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
 import './styles/App.css';
 
@@ -86,9 +88,19 @@ function App() {
               <Chapter0pg3 />
             </ProtectedRoute>
           } />
-          <Route path="/Chapter0/Chapter0pg4" element={
+          <Route path="/chapter0pg4" element={
             <ProtectedRoute requireVerification={true}>
               <Chapter0pg4 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter0pg5" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0pg5 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter0-dashboard" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0Dashboard />
             </ProtectedRoute>
           } />
           <Route path="/jam-session" element={

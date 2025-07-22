@@ -2,9 +2,10 @@
  * Drum Kit Guided Tour for Chapter 0 (Start Tour below drum kit)
  */
 import React, { useRef, useState } from 'react';
-import '../../styles/Chapter0pg1-3.css';
+import '../../styles/Chapter0/Chapter0pg1-3.css';
 import VirtualDrumKit from '../../styles/images/virtualDrumKit.jpg';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import config from '../../config';
 
 const DRUMS = [
   { name: 'Crash Cymbal', file: '/sounds/Crash.mp3', style: { top: '8.5%', left: '20%', width: '13%' }, description: 'The crash cymbal is medium to large cymbal designed to be struck hard, and it produces a loud, explosive accent, usually marking transitions between song sections or dramatic moments.' },
@@ -26,6 +27,7 @@ export default function Chapter0pg1() {
   // Track if the user has finished the tour
   const [tourFinished, setTourFinished] = useState(false);
   const [tourStarted, setTourStarted] = useState(false);
+  const navigate = useNavigate();
 
   // When tourStep changes to null after the last drum, set tourFinished
   React.useEffect(() => {
@@ -210,6 +212,38 @@ export default function Chapter0pg1() {
     return <div style={style}>{label}</div>;
   };
 
+  // Add this function to update progress
+  const updateProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Calling updateProgress (chapter_progress=2)');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter_progress: 2 })
+      });
+    } catch (err) { console.error('updateProgress error:', err); }
+  };
+
+  // Add this function to update page progress
+  const updatePageProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Calling updatePageProgress (chapter0_page_progress=2)');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter0_page_progress: 2 })
+      });
+    } catch (err) { console.error('updatePageProgress error:', err); }
+  };
+
   return (
     <div className="chapter0-container">
       {/* Overlay for the whole website, rendered at the top level when tour is active */}
@@ -250,6 +284,18 @@ export default function Chapter0pg1() {
       {tourFinished && (
           <div className="chapter0-fadein-message" style={{ marginTop: '2.5rem', marginBottom: '-2rem', textAlign: 'center', fontSize: '1.18rem', color: '#fff', background: '#2d3350', borderRadius: 12, padding: '1.5rem 2rem', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 2px 16px #0004' }}>
             Now that you learn all the parts of the drums, it's time to learn some of the basics of drum notations!
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button
+                className="chapter0-back-link"
+                onClick={async () => {
+                  console.log('Next button clicked!');
+                  await updatePageProgress();
+                  navigate('/chapter0pg2');
+                }}
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
@@ -257,11 +303,15 @@ export default function Chapter0pg1() {
           <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
             ← Back
           </Link>
-          
-          <Link to="/chapter0pg2" className="chapter0-back-link">
+          <button
+            className="chapter0-back-link"
+            onClick={async () => {
+              await updatePageProgress();
+              navigate('/chapter0pg2');
+            }}
+          >
             Next →
-          </Link>
-          
+          </button>
         </div>
       </div>
       {/* Audio elements for each drum */}
