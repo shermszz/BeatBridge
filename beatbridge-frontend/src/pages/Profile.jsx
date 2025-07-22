@@ -132,10 +132,10 @@ const Profile = () => {
   };
 
   const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setFormErrors({});
-    setPasswordError('');
+    e.preventDefault(); //To prevent the default form submission behavior
+    setIsSubmitting(true); //Set isSubmitting to true to disable the save button
+    setFormErrors({}); //Reset form e rrors
+    setPasswordError(''); //Reset password error
     // Password match validation
     if (form.password !== form.confirmPassword) {
       setPasswordError('Passwords do not match');
@@ -145,8 +145,8 @@ const Profile = () => {
     try {
       // 1. Upload profile picture if selected
       if (selectedProfilePic) {
-        const formData = new FormData();
-        formData.append('profile_pic', selectedProfilePic);
+        const formData = new FormData(); 
+        formData.append('profile_pic', selectedProfilePic); 
         const token = localStorage.getItem('token');
         const response = await fetch(`${config.API_BASE_URL}/api/upload-profile-pic`, {
           method: 'POST',
@@ -155,12 +155,12 @@ const Profile = () => {
           },
           body: formData
         });
-        const data = await response.json();
+        const data = await response.json(); //Parse the response as JSON
         if (response.ok && data.profile_pic_url) {
-          const isAbsolute = data.profile_pic_url.startsWith('http');
+          const isAbsolute = data.profile_pic_url.startsWith('http'); //Check if the profile picture url is an absolute path url
           let picUrl = isAbsolute
             ? data.profile_pic_url
-            : `${config.API_BASE_URL}${data.profile_pic_url}`;
+            : `${config.API_BASE_URL}${data.profile_pic_url}`; //If the profile picture url is not absolute, add the base url from netlify
           // Add cache-busting query string
           picUrl += `?t=${Date.now()}`;
           setProfilePic(picUrl);
@@ -175,10 +175,10 @@ const Profile = () => {
         username: form.username,
         email: form.email
       };
-      if (form.password) {
+      if (form.password) { //If the password is not empty, add it to the payload
         payload.password = form.password;
       }
-      
+      // 3. Send the payload to the server to update the user
       const token = localStorage.getItem('token');
       const updateResponse = await fetch(`${config.API_BASE_URL}/api/update-user`, {
         method: 'POST',

@@ -602,12 +602,12 @@ def check_verification_status():
 
 
 def send_verification_email(user):
-    verification_code = user.generate_verification_code()
-    db.session.commit()
+    verification_code = user.generate_verification_code() #Generate a verification code for the user
+    db.session.commit() #Commit the changes to the database
     
-    msg = Message('Verify your BeatBridge account',
+    msg = Message('Verify your BeatBridge account', #Create a message object with the verification code
                   sender=app.config['MAIL_USERNAME'],
-                  recipients=[user.email])
+                  recipients=[user.email])  #Set the sender and recipients
     
     msg.body = f'''Welcome to BeatBridge!
     
@@ -615,9 +615,9 @@ Your verification code is: {verification_code}
 
 Please enter this code to verify your email address.
 
-If you did not create a BeatBridge account, please ignore this email.
+If you did not create a BeatBridge account, please ignore this email. 
 '''
-    mail.send(msg)
+    mail.send(msg) #Send the email
 
 @app.route('/api/google-login')
 def google_login():

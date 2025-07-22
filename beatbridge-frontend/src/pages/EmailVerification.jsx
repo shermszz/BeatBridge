@@ -4,13 +4,13 @@ import '../styles/Register.css';
 import config from '../config';
 
 const EmailVerification = () => {
-  const [verificationCode, setVerificationCode] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
+  const [verificationCode, setVerificationCode] = useState(''); //To store the verification code
+  const [error, setError] = useState(''); //To store the error message
+  const [success, setSuccess] = useState(false); //To store the success message
+  const [isLoading, setIsLoading] = useState(true); //To show a loading state while checking the verification status
+  const navigate = useNavigate(); //To navigate to the next page
+  const [searchParams] = useSearchParams(); //To get the search params from the URL
+  const location = useLocation(); //To get the location of the current page
 
     // Check if user is already verified on component mount
   useEffect(() => {
