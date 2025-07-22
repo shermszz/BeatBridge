@@ -55,14 +55,17 @@ const Register = () => {
       if (response.ok) {
         // Store the user ID in localStorage
         localStorage.setItem('user_id', data.user_id);
-        localStorage.setItem('token', data.token); // Store JWT token
         
         // Check if verification is required
         if (data.requires_verification) {
+          // Don't store token if verification is required
           // Navigate to verification page
           navigate('/verify-email');
         } else {
-          // Navigate directly to customisation if verification not required
+          // Store token and navigate directly to customisation if verification not required
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
           navigate('/customisation');
         }
       } else {

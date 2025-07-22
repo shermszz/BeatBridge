@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Login.css';
 import config from '../config';
 import defaultProfileImage from '../styles/images/loginIcon.svg';
@@ -10,7 +10,16 @@ const Login = () => {
     password: ''
   });
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for success message from navigation state
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({
@@ -73,6 +82,12 @@ const Login = () => {
         }
         //Navigate to the main home page once logged in
         navigate('/home');
+      } else if (response.status === 403 && data.errors?.general?.includes('verify your email')) {
+        // User is not verified, redirect to verification page
+        setErrors({ general: 'Please verify your email first. Redirecting to verification page...' });
+        setTimeout(() => {
+          navigate('/verify-email');
+        }, 2000);
       } else {
         setErrors(data.errors || { general: 'Login failed' });
       }
@@ -84,6 +99,19 @@ const Login = () => {
   return (
     <section className="hero">
     <h1>Log in</h1>
+
+    {successMessage && (
+      <div style={{ 
+        color: '#4CAF50', 
+        backgroundColor: '#4CAF5020', 
+        padding: '10px', 
+        borderRadius: '5px', 
+        marginBottom: '20px',
+        textAlign: 'center'
+      }}>
+        {successMessage}
+      </div>
+    )}
 
     <form onSubmit={handleSubmit}>
       <div className="mb-3">

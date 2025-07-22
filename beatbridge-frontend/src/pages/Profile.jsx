@@ -25,6 +25,11 @@ const Profile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef();
 
+  // Add state for genres
+  const [genres, setGenres] = useState([]);
+  const [genreLoading, setGenreLoading] = useState(true);
+  const [genreError, setGenreError] = useState('');
+
   // Check if user is logged in
   useEffect(() => {
     const userId = localStorage.getItem('user_id');
@@ -34,6 +39,7 @@ const Profile = () => {
     }
     fetchUserData();
     fetchCustomizations();
+    fetchGenres(); // Fetch genres when the component mounts
   }, [navigate]);
 
   const fetchUserData = async () => {
@@ -92,6 +98,23 @@ const Profile = () => {
     }
   };
 
+  const fetchGenres = async () => {
+    setGenreLoading(true);
+    setGenreError('');
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/api/genres`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch genres');
+      }
+      setGenres(data.genres);
+    } catch (err) {
+      setGenreError('Error fetching genres. Please try again later.');
+      setGenres([]);
+    }
+    setGenreLoading(false);
+  };
+
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -109,10 +132,10 @@ const Profile = () => {
   };
 
   const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setFormErrors({});
-    setPasswordError('');
+    e.preventDefault(); //To prevent the default form submission behavior
+    setIsSubmitting(true); //Set isSubmitting to true to disable the save button
+    setFormErrors({}); //Reset form e rrors
+    setPasswordError(''); //Reset password error
     // Password match validation
     if (form.password !== form.confirmPassword) {
       setPasswordError('Passwords do not match');
@@ -122,8 +145,8 @@ const Profile = () => {
     try {
       // 1. Upload profile picture if selected
       if (selectedProfilePic) {
-        const formData = new FormData();
-        formData.append('profile_pic', selectedProfilePic);
+        const formData = new FormData(); 
+        formData.append('profile_pic', selectedProfilePic); 
         const token = localStorage.getItem('token');
         const response = await fetch(`${config.API_BASE_URL}/api/upload-profile-pic`, {
           method: 'POST',
@@ -132,12 +155,12 @@ const Profile = () => {
           },
           body: formData
         });
-        const data = await response.json();
+        const data = await response.json(); //Parse the response as JSON
         if (response.ok && data.profile_pic_url) {
-          const isAbsolute = data.profile_pic_url.startsWith('http');
+          const isAbsolute = data.profile_pic_url.startsWith('http'); //Check if the profile picture url is an absolute path url
           let picUrl = isAbsolute
             ? data.profile_pic_url
-            : `${config.API_BASE_URL}${data.profile_pic_url}`;
+            : `${config.API_BASE_URL}${data.profile_pic_url}`; //If the profile picture url is not absolute, add the base url from netlify
           // Add cache-busting query string
           picUrl += `?t=${Date.now()}`;
           setProfilePic(picUrl);
@@ -152,10 +175,10 @@ const Profile = () => {
         username: form.username,
         email: form.email
       };
-      if (form.password) {
+      if (form.password) { //If the password is not empty, add it to the payload
         payload.password = form.password;
       }
-      
+      // 3. Send the payload to the server to update the user
       const token = localStorage.getItem('token');
       const updateResponse = await fetch(`${config.API_BASE_URL}/api/update-user`, {
         method: 'POST',
@@ -242,12 +265,6 @@ const Profile = () => {
     { value: 'Regular', description: '3 days / week' },
     { value: 'Unstoppable', description: '4+ days / week' },
     { value: 'Not sure yet', description: 'I\'ll decide later' }
-  ];
-
-  const genreOptions = [
-    'Rock', 'Pop', 'Blues', 'Funk', 'Jazz', 
-    'Metal', 'Hip-Hop', 'Electronic', 'Classical',
-    'Alternative & Indie', 'World', 'Country & Roots'
   ];
 
   return (
@@ -376,17 +393,23 @@ const Profile = () => {
             <div style={{ marginBottom: '2rem' }}>
               <div className="customization-label">Pick 1 or more you'd like to play</div>
               <div className="customizations-grid">
-                {genreOptions.map((genre) => (
-                  <button
-                    key={genre}
-                    type="button"
-                    className={`customization-option${customizations.favorite_genres.includes(genre) ? ' selected' : ''}`}
-                    onClick={() => handleCustomizationChange('genres', genre)}
-                  >
-                    {genre}
-                    {customizations.favorite_genres.includes(genre) && <span style={{ color: '#ff4f4f', marginLeft: '0.5rem' }}>✓</span>}
-                  </button>
-                ))}
+                {genreLoading ? (
+                  <div>Loading genres...</div>
+                ) : genreError ? (
+                  <div>{genreError}</div>
+                ) : (
+                  genres.map((genre) => (
+                    <button
+                      key={genre.id || genre.name}
+                      type="button"
+                      className={`customization-option${customizations.favorite_genres.includes(genre.name) ? ' selected' : ''}`}
+                      onClick={() => handleCustomizationChange('genres', genre.name)}
+                    >
+                      {genre.name}
+                      {customizations.favorite_genres.includes(genre.name) && <span style={{ color: '#ff4f4f', marginLeft: '0.5rem' }}>✓</span>}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>

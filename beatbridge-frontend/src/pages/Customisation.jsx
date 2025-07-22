@@ -27,6 +27,11 @@ const Customisation = () => {
   const [genres, setGenres] = useState([]);
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // Add state for genres
+  const [genresList, setGenresList] = useState([]);
+  const [genreLoading, setGenreLoading] = useState(true);
+  const [genreError, setGenreError] = useState('');
+
   // Check if user is logged in
   useEffect(() => {
     const userId = localStorage.getItem('user_id');
@@ -135,11 +140,25 @@ const Customisation = () => {
     { value: 'Not sure yet', description: 'I\'ll decide later' }
   ];
 
-  const genreOptions = [
-    'Rock', 'Pop', 'Blues', 'Funk', 'Jazz', 
-    'Metal', 'Hip-Hop', 'Electronic', 'Classical',
-    'Alternative & Indie', 'World', 'Country & Roots'
-  ];
+  useEffect(() => {
+    const fetchGenres = async () => {
+      setGenreLoading(true);
+      setGenreError('');
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/genres`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch genres');
+        }
+        setGenresList(data.genres);
+      } catch (err) {
+        setGenreError('Error fetching genres. Please try again later.');
+        setGenresList([]);
+      }
+      setGenreLoading(false);
+    };
+    fetchGenres();
+  }, []);
 
   useEffect(() => {
     const fetchCustomization = async () => {
@@ -211,17 +230,23 @@ const Customisation = () => {
           <h2>Pick 1 or more genres you'd like to play</h2>
           <p className="section-subtitle">You can choose more later.</p>
           <div className="genre-grid">
-            {genreOptions.map((genre) => (
-              <button
-                type="button"
-                key={genre}
-                className={`genre-option${genres.includes(genre) ? ' selected' : ''}`}
-                onClick={() => toggleGenre(genre)}
-              >
-                {genre}
-                {genres.includes(genre) && <span className="checkmark">✓</span>}
-              </button>
-            ))}
+            {genreLoading ? (
+              <div>Loading genres...</div>
+            ) : genreError ? (
+              <div>{genreError}</div>
+            ) : (
+              genresList.map((genre) => (
+                <button
+                  type="button"
+                  key={genre.id || genre.name}
+                  className={`genre-option${genres.includes(genre.name) ? ' selected' : ''}`}
+                  onClick={() => toggleGenre(genre.name)}
+                >
+                  {genre.name}
+                  {genres.includes(genre.name) && <span className="checkmark">✓</span>}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
