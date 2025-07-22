@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../styles/SongRecommendation.css';
 import config from '../config';
 
 function SongRecommendation() {
+  // Get navigation state (e.g., showFavorites) from router
+  const location = useLocation();
   // State for genres, selected genre, recommendation, loading, and errors
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -10,10 +13,23 @@ function SongRecommendation() {
   const [loading, setLoading] = useState(false);
   const [genreLoading, setGenreLoading] = useState(true);
   const [error, setError] = useState('');
+  const [favorites, setFavorites] = useState([]);
+  // showFavorites controls whether the favorites section is shown
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [userGenres, setUserGenres] = useState([]);
+  const [userGenresLoading, setUserGenresLoading] = useState(true);
+  const [userGenresError, setUserGenresError] = useState('');
 
-  // Fetch the static genre list from the backend on mount
+  // Fetch the static genre list and favorites from backend on mount
   useEffect(() => {
     fetchGenres();
+    fetchFavorites();
+    fetchUserGenres();
+    // If navigated with state.showFavorites, open the favorites section automatically
+    if (location.state && location.state.showFavorites) {
+      setShowFavorites(true);
+    }
   }, []);
 
   // Fetch genres from backend
@@ -34,38 +50,127 @@ function SongRecommendation() {
     setGenreLoading(false);
   };
 
+  // Fetch user's favorites
+  const fetchFavorites = async () => {
+    setFavoritesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/favorites`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch favorites');
+      }
+      const data = await response.json();
+      setFavorites(data.favorites);
+    } catch (err) {
+      console.error('Error fetching favorites:', err);
+    }
+    setFavoritesLoading(false);
+  };
+
+  const fetchUserGenres = async () => {
+    setUserGenresLoading(true);
+    setUserGenresError('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/get-customization`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Handle both array and comma-separated string
+        let favGenres = data.favorite_genres;
+        if (typeof favGenres === 'string') {
+          favGenres = favGenres.split(',').map(g => g.trim()).filter(Boolean);
+        }
+        setUserGenres(favGenres || []);
+      } else {
+        setUserGenres([]);
+      }
+    } catch (err) {
+      setUserGenresError('Error fetching your preferred genres.');
+      setUserGenres([]);
+    }
+    setUserGenresLoading(false);
+  };
+
   // Handle selecting a single genre
   const handleGenreSelect = (genreId) => {
     setSelectedGenre(genreId);
   };
 
-  // Fetch a song recommendation for the selected genre
-  const handleGetRecommendation = async () => {
-    if (!selectedGenre) {
-      setError('Please select a genre');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    setRecommendation(null);
+  // Add song to favorites
+  const handleAddToFavorites = async (song) => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/api/recommend-song`, {
+      console.log('Adding song to favorites:', song); // Debug log
+      const token = localStorage.getItem('token');
+
+      // Process tags to ensure they are strings
+      const processedTags = (song.tags || []).map(tag => 
+        typeof tag === 'object' ? tag.name : tag
+      );
+
+      const response = await fetch(`${config.API_BASE_URL}/api/favorites`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ genres: [selectedGenre] }),
+        body: JSON.stringify({
+          song_name: song.name || '',
+          artist_name: typeof song.artist === 'object' ? song.artist.name : song.artist || '',
+          album_name: song.album || '',
+          song_url: song.url || '',
+          duration: song.duration ? parseInt(song.duration, 10) : null,
+          album_image: song.album_image || null,
+          rhythm_complexity: recommendation.rhythm_complexity,
+          tempo_rating: recommendation.tempo_rating,
+          skill_level: recommendation.skill_level,
+          tags: processedTags
+        })
       });
-      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get recommendation');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add to favorites');
       }
-      setRecommendation(data);
+
+      // Refresh favorites list
+      fetchFavorites();
+      alert('Song added to favorites!');
     } catch (err) {
-      setError(err.message || 'Error getting recommendation. Please try again.');
-      console.error('Error getting recommendation:', err);
+      console.error('Error adding to favorites:', err);
+      alert(err.message || 'Failed to add to favorites');
     }
-    setLoading(false);
+  };
+
+  // Remove song from favorites
+  const handleRemoveFromFavorites = async (favoriteId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/favorites/${favoriteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove from favorites');
+      }
+
+      // Update favorites list
+      setFavorites(favorites.filter(f => f.id !== favoriteId));
+      alert('Song removed from favorites!');
+    } catch (err) {
+      console.error('Error removing from favorites:', err);
+      alert('Failed to remove from favorites');
+    }
   };
 
   // Format duration from ms to 'Xmin Ys'
@@ -77,6 +182,81 @@ function SongRecommendation() {
     return `${mins}min ${remSecs}s`;
   };
 
+  // Fetch a song recommendation for the selected genre
+  const handleGetRecommendation = async () => {
+    if (!selectedGenre) {
+      setError('Please select a genre');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setRecommendation(null);
+
+    const maxRetries = 2;
+    let retryCount = 0;
+
+    const fetchRecommendation = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Please log in to get recommendations');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
+        const response = await fetch(`${config.API_BASE_URL}/api/recommend-song`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ genres: [selectedGenre] }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to get recommendation');
+        }
+        return data;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          throw new Error('Request took too long. Retrying...');
+        }
+        throw err;
+      }
+    };
+
+    while (retryCount < maxRetries) {
+      try {
+        const data = await fetchRecommendation();
+        // Add artificial delay
+        await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+        setRecommendation(data);
+        break;
+      } catch (err) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          setError(err.message.replace('Retrying...', 'Please try again.'));
+          console.error('Error getting recommendation:', err);
+        } else {
+          console.log(`Retry ${retryCount}/${maxRetries}:`, err.message);
+          // Wait a short time before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    setLoading(false);
+  };
+
+  // Divide genres into preferred and others
+  const preferredGenres = genres.filter(g => userGenres.includes(g.name));
+  const otherGenres = genres.filter(g => !userGenres.includes(g.name));
+
   return (
     <div className="song-recommendation-container">
       <div className="song-recommendation-content">
@@ -86,125 +266,281 @@ function SongRecommendation() {
           Select your favorite genres and discover amazing new music!
         </p>
 
-        {/* Genre selection UI */}
-        {genreLoading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading genres...</p>
-          </div>
-        ) : error && !recommendation ? (
-          <div className="error-container">
-            <p className="error-message">{error}</p>
-            <button onClick={fetchGenres} className="retry-button">
-              Try Again
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="genre-selection-section">
-              <h2>Select Your Favorite Genres</h2>
-              <p>Choose one or more genres to get personalized recommendations:</p>
-              {/* Genre buttons grid */}
-              <div className="genres-grid">
-                {genres.map((genre) => (
-                  <button
-                    key={genre.id}
-                    className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
-                    onClick={() => handleGenreSelect(genre.id)}
-                  >
-                    {genre.name}
-                  </button>
-                ))}
+        {/* View Favorites Button */}
+        <button
+          onClick={() => setShowFavorites(!showFavorites)}
+          className="view-favorites-button"
+        >
+          {showFavorites ? 'Back to Recommendations' : 'View My Favorites'}
+        </button>
+
+        {/* Favorites List */}
+        {showFavorites ? (
+          <div className="favorites-section">
+            <h2>My Favorite Songs</h2>
+            {favoritesLoading ? (
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Loading favorites...</p>
               </div>
-              {/* Show selected genre and action button */}
-              {selectedGenre && (
-                <div className="selected-genres">
-                  <p>Selected: {genres.find(g => g.id === selectedGenre)?.name}</p>
-                  <button
-                    onClick={handleGetRecommendation}
-                    disabled={loading}
-                    className="get-recommendation-button"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="button-spinner"></div>
-                        Getting Recommendation...
-                      </>
-                    ) : (
-                      'Get Song Recommendation'
-                    )}
-                  </button>
+            ) : favorites.length === 0 ? (
+              <p className="no-favorites">No favorite songs yet. Start adding some!</p>
+            ) : (
+              <div className="favorites-list">
+                {favorites.map((favorite) => (
+                                <div key={favorite.id} className="song-card">
+                <div className="album-art-container">
+                  {favorite.album_image ? (
+                    <img 
+                      src={favorite.album_image} 
+                      alt={`${favorite.album_name || 'Album'} artwork`}
+                      className="album-art"
+                    />
+                  ) : (
+                    <div className="album-art-placeholder">
+                      <span>🎵</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+                <div className="song-info">
+                  <h3 className="song-title">{favorite.song_name}</h3>
+                  <p className="song-artist">by {favorite.artist_name}</p>
+                  {favorite.album_name && (
+                    <p className="song-album">Album: {favorite.album_name}</p>
+                  )}
+                  <p className="song-duration">
+                    Duration: {formatDuration(favorite.duration)}
+                  </p>
 
-            {/* Error message if recommendation fails */}
-            {error && recommendation && (
-              <div className="error-message">{error}</div>
-            )}
-
-            {/* Recommendation card */}
-            {recommendation && (
-              <div className="recommendation-section">
-                <div className="recommendation-header">
-                  <h2>Your Recommendation 🎶</h2>
-                  <p className="recommendation-message">{recommendation.message}</p>
-                </div>
-
-                <div className="song-card">
-                  <div className="song-info">
-                    <h3 className="song-title">{recommendation.recommendation.name}</h3>
-                    <p className="song-artist">by {recommendation.recommendation.artist}</p>
-                    
-                    {recommendation.recommendation.album && (
-                      <p className="song-album">
-                        <strong>Album:</strong> {recommendation.recommendation.album}
-                      </p>
-                    )}
-                    
-                    {recommendation.recommendation.duration && (
-                      <p className="song-duration">
-                        <strong>Duration:</strong> {formatDuration(recommendation.recommendation.duration)}
-                      </p>
-                    )}
-                    
-                    {recommendation.recommendation.listeners > 0 && (
-                      <p className="song-listeners">
-                        <strong>Listeners:</strong> {recommendation.recommendation.listeners.toLocaleString()}
-                      </p>
-                    )}
-
-                    {recommendation.recommendation.tags && recommendation.recommendation.tags.length > 0 && (
-                      <div className="song-tags">
-                        <strong>Tags:</strong>
-                        <div className="tags-container">
-                          {recommendation.recommendation.tags.slice(0, 5).map((tag, index) => (
-                            <span key={index} className="tag">{tag}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  {/* Rhythm and Tempo Ratings */}
+                  <div className="song-ratings">
+                    <div className="rating-item">
+                      <span className="rating-label">Rhythm Complexity: </span>
+                      <span className="rating-stars">
+                        {[...Array(4)].map((_, index) => (
+                          <span
+                            key={index}
+                            className={index < favorite.rhythm_complexity ? "filled-stars" : "empty-stars"}
+                          >
+                            {index < favorite.rhythm_complexity ? "★" : "☆"}
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+                    <div className="rating-item">
+                      <span className="rating-label">Tempo Challenge: </span>
+                      <span className="rating-stars">
+                        {[...Array(4)].map((_, index) => (
+                          <span
+                            key={index}
+                            className={index < favorite.tempo_rating ? "filled-stars" : "empty-stars"}
+                          >
+                            {index < favorite.tempo_rating ? "★" : "☆"}
+                          </span>
+                        ))}
+                      </span>
+                    </div>
                   </div>
-                  {/* Action buttons */}
+
+                  {/* Skill Level Context */}
+                  {favorite.skill_level && (
+                    <div className="skill-context">
+                      <div className="skill-header">
+                        <h4 className="skill-level">Recommended for {favorite.skill_level} drummers</h4>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  {favorite.tags && favorite.tags.length > 0 && (
+                    <div className="song-tags">
+                      {favorite.tags.map((tag, index) => (
+                        <span key={index} className="tag">
+                          {typeof tag === 'object' ? tag.name : tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="song-actions">
                     <a
-                      href={recommendation.recommendation.url}
+                      href={favorite.song_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="lastfm-link"
+                      className="listen-button"
                     >
-                      🎵 Listen on Last.fm
+                      Listen on Last.fm
                     </a>
-                    
                     <button
-                      onClick={handleGetRecommendation}
-                      disabled={loading}
-                      className="new-recommendation-button"
+                      onClick={() => handleRemoveFromFavorites(favorite.id)}
+                      className="remove-favorite-button"
                     >
-                      Get Another Recommendation
+                      Remove from Favorites
                     </button>
                   </div>
                 </div>
+              </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Recommendation Display */}
+            {!showFavorites && (
+              <div className="recommendation-section">
+                {/* Genre Selection */}
+                <div className="genre-selection">
+                  <h2>Select a Genre</h2>
+                  {genreLoading || userGenresLoading ? (
+                    <div className="loading-container">
+                      <div className="loading-spinner"></div>
+                      <p>Loading genres...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {userGenres.length > 0 && (
+                        <div className="genre-card">
+                          <h3 style={{marginTop: 0, color: '#fff', textAlign: 'center'}}>Your Preferred Genres</h3>
+                          <div className="genre-grid">
+                            {preferredGenres.map((genre) => (
+                              <button
+                                key={genre.id}
+                                onClick={() => handleGenreSelect(genre.id)}
+                                className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
+                              >
+                                {genre.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="genre-card">
+                        <h3 style={{marginTop: 0, color: '#fff', textAlign: 'center'}}>Other Genres</h3>
+                        <div className="genre-grid">
+                          {otherGenres.map((genre) => (
+                            <button
+                              key={genre.id}
+                              onClick={() => handleGenreSelect(genre.id)}
+                              className={`genre-button ${selectedGenre === genre.id ? 'selected' : ''}`}
+                            >
+                              {genre.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <button
+                    onClick={handleGetRecommendation}
+                    className="get-recommendation-button"
+                    disabled={!selectedGenre || loading}
+                  >
+                    {loading ? 'Getting Recommendation...' : 'Get Recommendation'}
+                  </button>
+                </div>
+
+                {/* Error Display */}
+                {error && <p className="error-message">{error}</p>}
+
+                {/* Recommendation Result */}
+                {recommendation && recommendation.recommendation && (
+                  <div className="recommendation-result">
+                    <div className="song-card">
+                      {recommendation.recommendation.album_image ? (
+                        <div className="album-art-container">
+                          <img 
+                            src={recommendation.recommendation.album_image} 
+                            alt={`${recommendation.recommendation.album} album art`}
+                            className="album-art"
+                          />
+                        </div>
+                      ) : (
+                        <div className="album-art-placeholder">
+                          <span>🎵</span>
+                        </div>
+                      )}
+                      <div className="song-info">
+                        <h3 className="song-title">{recommendation.recommendation.name}</h3>
+                        <p className="song-artist">
+                          by {typeof recommendation.recommendation.artist === 'object' 
+                              ? recommendation.recommendation.artist.name 
+                              : recommendation.recommendation.artist}
+                        </p>
+                        {recommendation.recommendation.album && (
+                          <p className="song-album">
+                            Album: {recommendation.recommendation.album}
+                          </p>
+                        )}
+                        <p className="song-duration">
+                          Duration: {formatDuration(recommendation.recommendation.duration)}
+                        </p>
+
+                        {/* Rhythm and Tempo Ratings */}
+                        <div className="song-ratings">
+                          <div className="rating-item">
+                            <span className="rating-label">Rhythm Complexity: </span>
+                            <span className="rating-stars">
+                              {[...Array(4)].map((_, index) => (
+                                <span
+                                  key={index}
+                                  className={index < recommendation.rhythm_complexity ? "filled-stars" : "empty-stars"}
+                                >
+                                  {index < recommendation.rhythm_complexity ? "★" : "☆"}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                          <div className="rating-item">
+                            <span className="rating-label">Tempo Challenge: </span>
+                            <span className="rating-stars">
+                              {[...Array(4)].map((_, index) => (
+                                <span
+                                  key={index}
+                                  className={index < recommendation.tempo_rating ? "filled-stars" : "empty-stars"}
+                                >
+                                  {index < recommendation.tempo_rating ? "★" : "☆"}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Skill Level Context */}
+                        <div className="skill-context">
+                          <div className="skill-header">
+                            <h4 className="skill-level">Recommended for {recommendation.skill_level} drummers</h4>
+                          </div>
+                          <p className="skill-description">{recommendation.skill_context}</p>
+                        </div>
+
+                        <div className="song-tags">
+                          {recommendation.recommendation.tags && recommendation.recommendation.tags.map((tag, index) => (
+                            <span key={index} className="tag">
+                              {typeof tag === 'object' ? tag.name : tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="song-actions">
+                          <a
+                            href={recommendation.recommendation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="listen-button"
+                          >
+                            Listen on Last.fm
+                          </a>
+                          <button
+                            onClick={() => handleAddToFavorites(recommendation.recommendation)}
+                            className="add-favorite-button"
+                          >
+                            Add to Favorites
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -215,3 +551,72 @@ function SongRecommendation() {
 }
 
 export default SongRecommendation; 
+
+// Helper function to determine rhythm complexity rating
+const getRhythmComplexityRating = (timeSignature, skillLevel) => {
+  if (skillLevel === 'Advanced') {
+    if (!timeSignature || timeSignature === '4/4' || timeSignature === '3/4') {
+      return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+    }
+    if (timeSignature === '2/4') {
+      return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+    }
+    if (timeSignature === '6/8') {
+      return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+    }
+    if (timeSignature === '5/4' || timeSignature === '7/8' || timeSignature === '12/8') {
+      return <><span className="filled-stars">★★★★</span></>;
+    }
+    return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+  }
+
+  // For other skill levels
+  if (!timeSignature || timeSignature === '4/4' || timeSignature === '3/4') {
+    return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+  }
+  if (timeSignature === '2/4') {
+    return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+  }
+  if (timeSignature === '6/8' || timeSignature === '12/8') {
+    return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+  }
+  return <><span className="filled-stars">★★★★</span></>;
+};
+
+// Helper function to determine tempo challenge rating
+const getTempoRating = (bpm, skillLevel) => {
+  if (!bpm) {
+    if (skillLevel === 'Advanced') {
+      return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+    }
+    if (skillLevel === 'First-timer') {
+      return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+    }
+    return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+  }
+
+  if (skillLevel === 'Advanced') {
+    if (bpm >= 160) return <><span className="filled-stars">★★★★</span></>;
+    if (bpm >= 140) return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+    if (bpm >= 120) return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+    return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+  }
+
+  // For other skill levels
+  if (skillLevel === 'First-timer') {
+    if (bpm <= 85) return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+    if (bpm <= 100) return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+    if (bpm <= 120) return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+    return <><span className="filled-stars">★★★★</span></>;
+  }
+  if (skillLevel === 'Beginner') {
+    if (bpm <= 85) return <><span className="filled-stars">★</span><span className="empty-stars">☆☆☆</span></>;
+    if (bpm <= 100) return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+    if (bpm <= 120) return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+    return <><span className="filled-stars">★★★★</span></>;
+  }
+  // Intermediate
+  if (bpm <= 100) return <><span className="filled-stars">★★</span><span className="empty-stars">☆☆</span></>;
+  if (bpm <= 120) return <><span className="filled-stars">★★★</span><span className="empty-stars">☆</span></>;
+  return <><span className="filled-stars">★★★★</span></>;
+}; 

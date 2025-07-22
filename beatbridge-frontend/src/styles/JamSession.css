@@ -1,0 +1,294 @@
+.jam-session-header {
+  margin: 2.5rem auto 1.5rem auto;
+  text-align: center;
+  max-width: 900px;
+}
+.jam-session-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: #ff4f4f;
+  margin-bottom: 1.5rem;
+  margin-top: -0.3rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 0 16px #ff4f4f55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.jam-session-emoji {
+  font-size: 2.3rem;
+  vertical-align: middle;
+  margin-right: 0.2em;
+  margin-bottom: 0.1em;
+}
+.jam-session-subtitle {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  font-weight: 400;
+}
+.jam-session-shortcuts {
+  font-size: 0.99rem;
+  color: #bbb;
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.jam-studio-container {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  background: #232323;
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  margin: 2rem auto;
+  max-width: 1450px;
+}
+
+.jam-studio-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: #181818;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border-bottom: 1px solid #333;
+}
+
+.jam-title-input {
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  width: 250px;
+  margin-right: 1rem;
+}
+
+.jam-studio-actions button {
+  margin-left: 1rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #ff4f4f;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.jam-studio-actions button:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+.jam-bpm-control {
+  display: inline-block;
+  margin: 0 1.5rem;
+  color: #fff;
+  font-size: 1rem;
+}
+.jam-bpm-control input[type=range] {
+  width: 120px;
+  accent-color: #ff4f4f;
+  vertical-align: middle;
+}
+.jam-bpm-control label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.jam-studio-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.jam-studio-sidebar {
+  width: 220px;
+  background: #191919;
+  padding: 1.5rem 1rem 1rem 1.5rem;
+  border-right: 1px solid #333;
+  overflow-y: auto;
+}
+.jam-loops-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.jam-loops-list li {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #282828;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.jam-loops-list li:hover {
+  background: #333;
+}
+
+.jam-studio-editor {
+  flex: 1 1 0;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.jam-sequencer-grid {
+  margin-top: 1.5rem;
+  background: #222;
+  border-radius: 10px;
+  padding: 1.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  min-width: 420px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.jam-sequencer-grid table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+.jam-sequencer-grid th,
+.jam-sequencer-grid td {
+  text-align: center;
+  padding: 0.3rem 0.5rem;
+}
+.jam-step-label {
+  color: #aaa;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.jam-inst-label {
+  font-weight: 600;
+  color: #ff4f4f;
+  position: relative;
+  min-width: 70px;
+}
+.jam-remove-inst {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.jam-remove-inst:hover {
+  color: #ffb7b7;
+}
+.jam-step-cell {
+  width: 44px;
+  height: 44px;
+  background: #333;
+  border-radius: 6px;
+  border: 2px solid #232323;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.15s, border 0.15s;
+}
+.jam-step-cell.active {
+  background: #ff4b4b;
+  box-sizing: border-box;
+}
+.jam-step-cell.playing {
+  border: 3px solid #fff !important;
+  box-sizing: border-box;
+  box-shadow: 0 0 8px #fff8;
+  z-index: 2;
+}
+.jam-step-cell:hover {
+  background: #ff7f7f;
+}
+
+.jam-studio-instruments {
+  width: 260px;
+  background: #191919;
+  padding: 1.5rem 1.5rem 1rem 1rem;
+  border-left: 1px solid #333;
+  overflow-y: auto;
+}
+.jam-instruments-panel {
+  margin-top: 1rem;
+}
+.jam-add-inst-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.jam-add-inst-row select {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+}
+.jam-add-inst-row button {
+  padding: 0.4rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  background: #ff4f4f;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.jam-add-inst-row button:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+.jam-instruments-placeholder {
+  background: #222;
+  border-radius: 10px;
+  padding: 2rem;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jam-studio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: #191919;
+  padding: 1rem 2rem 0.5rem 2rem;
+  border-bottom: 1px solid #333;
+  gap: 2rem;
+}
+.jam-studio-controls label {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+.jam-studio-controls select {
+  margin-left: 0.5rem;
+  padding: 0.3rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  background: #232323;
+  color: #fff;
+}
+
+.jam-clear-all-btn {
+  background: #ff4f4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.08rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.18s, box-shadow 0.18s;
+}
+.jam-clear-all-btn:hover {
+  background: #ff7f7f;
+  box-shadow: 0 4px 16px rgba(255,79,79,0.18);
+} 

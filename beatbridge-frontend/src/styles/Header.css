@@ -1,7 +1,117 @@
+header {
+  background: rgba(30, 30, 47, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.logo {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Navigation */
+nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dashboard-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Navigation Buttons */
+.dash-btn {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: transparent;
+}
+
+.dash-btn::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 50%;
+  background: linear-gradient(135deg, #ff4f4f 0%, #d63a3a 100%);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.dash-btn:hover {
+  color: #ffffff;
+  transform: translateY(-1px);
+  background: transparent;
+}
+
+.dash-btn:hover::after {
+  width: 100%;
+}
+
+.dash-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+/* Active Navigation Button */
+.dash-btn.active {
+  color: #fff;
+  font-weight: 700;
+  background: #18182a !important;
+  box-shadow: none;
+}
+.dash-btn.active:hover,
+.dash-btn.active:focus {
+  background: #18182a !important;
+  color: #fff;
+}
+
+.dash-btn.active::after {
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
+}
+
+.dash-btn.active:hover {
+  transform: translateY(-1px);
+  background: transparent;
+}
+
+/* Profile Section */
 .profile-dropdown-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  margin-left: 1rem;
 }
 
 .login-button {
@@ -19,9 +129,16 @@
   height: 38px;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid #fff;
-  background: #2a2a2a;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(42, 42, 42, 0.8);
   padding: 8px;
+  transition: all 0.3s ease;
+}
+
+.login-icon:hover {
+  border-color: #ff4f4f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 79, 79, 0.15);
 }
 
 .header-profile-icon {
@@ -29,12 +146,19 @@
   height: 38px;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid #fff;
-  background: #2a2a2a;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(42, 42, 42, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: all 0.3s ease;
+}
+
+.header-profile-icon:hover {
+  border-color: #ff4f4f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 79, 79, 0.15);
 }
 
 /* Style for SVG when used as header profile icon */
@@ -48,13 +172,39 @@
   left: auto;
   min-width: 180px;
   top: 44px;
-  background: #18181a;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  background: rgba(24, 24, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   padding: 0.7rem 0 0.5rem 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  border-top: 4px solid #00d084;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #ff4f4f;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  header {
+    padding: 1rem;
+  }
+
+  .dashboard-buttons {
+    gap: 0.5rem;
+  }
+
+  .dash-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .header-logo-img {
+    height: 32px;
+  }
 }
