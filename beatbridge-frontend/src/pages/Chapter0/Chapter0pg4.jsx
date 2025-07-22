@@ -262,7 +262,7 @@ export default function Chapter0pg4() {
         <Link to="/chapter0pg3" className="chapter0-back-link">
           ← Back
         </Link>
-        <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
+        <Link to="/chapter0pg5" className="chapter0-back-link">
           Next →
         </Link>
       </div>
