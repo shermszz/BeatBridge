@@ -70,6 +70,8 @@ const JamSession = () => {
   const audioCtx = useRef(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragMode, setDragMode] = useState(null); // 'activate' or 'deactivate'
+  // Store last unsaved session
+  const [lastSession, setLastSession] = useState(null);
 
   // Update steps and pattern when time signature or note resolution changes
   useEffect(() => {
@@ -86,16 +88,17 @@ const JamSession = () => {
     setIsPlaying(false);
   }, [timeSignature, noteResolution]);
 
-  // Fetch user's jam sessions
+  // Fetch user's jam sessions (refactor for reuse)
+  const fetchJams = async () => {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+    const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/user/${userId}`);
+    if (res.ok) {
+      setMyJams(await res.json());
+    }
+  };
+
   useEffect(() => {
-    const fetchJams = async () => {
-      const userId = localStorage.getItem('user_id');
-      if (!userId) return;
-      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/user/${userId}`);
-      if (res.ok) {
-        setMyJams(await res.json());
-      }
-    };
     fetchJams();
   }, []);
 
@@ -139,6 +142,24 @@ const JamSession = () => {
   // Save a new jam session
   const handleSave = async () => {
     setLoading(true);
+    // Ensure pattern and instruments are in sync
+    const safeInstruments = instruments && instruments.length > 0 ? instruments : [...DEFAULT_INSTRUMENTS];
+    const safePattern = Array.isArray(pattern) && pattern.length === safeInstruments.length
+      ? pattern
+      : Array(safeInstruments.length).fill().map(() => Array(steps).fill(0));
+    // Always ensure each row is correct length
+    const normalizedPattern = safePattern.map(row =>
+      Array.isArray(row) && row.length === steps ? row : Array(steps).fill(0)
+    );
+    console.log('DEBUG: Pattern before save:', JSON.stringify(normalizedPattern));
+    console.log('Saving jam:', {
+      title,
+      pattern_json: normalizedPattern,
+      instruments_json: safeInstruments,
+      time_signature: timeSignature.label,
+      note_resolution: noteResolution.label,
+      bpm
+    });
     const token = localStorage.getItem('token');
     const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions`, {
       method: 'POST',
@@ -148,17 +169,126 @@ const JamSession = () => {
       },
       body: JSON.stringify({
         title,
-        pattern_json: pattern,
-        is_public: true
+        pattern_json: normalizedPattern,
+        is_public: true,
+        instruments_json: safeInstruments,
+        time_signature: timeSignature.label,
+        note_resolution: noteResolution.label,
+        bpm
       })
     });
     setLoading(false);
     if (res.ok) {
       alert('Jam session saved!');
       setTitle('');
-      // Optionally, refresh jam list
+      fetchJams(); // Refresh the list after saving
     } else {
       alert('Failed to save jam session');
+    }
+  };
+
+  // Helper to normalize instruments
+  function normalizeInstruments(rawInstruments) {
+    if (!Array.isArray(rawInstruments) || rawInstruments.length === 0) {
+      return [...DEFAULT_INSTRUMENTS];
+    }
+    return rawInstruments;
+  }
+
+  // Helper to normalize pattern
+  function normalizePattern(rawPattern, numInstruments, numSteps) {
+    if (!Array.isArray(rawPattern)) {
+      return Array(numInstruments).fill().map(() => Array(numSteps).fill(0));
+    }
+    // Ensure each row is an array of correct length
+    return Array(numInstruments).fill().map((_, i) => {
+      const row = Array.isArray(rawPattern[i]) ? rawPattern[i] : [];
+      if (row.length === numSteps) return row;
+      if (row.length < numSteps) return [...row, ...Array(numSteps - row.length).fill(0)];
+      return row.slice(0, numSteps);
+    });
+  }
+
+  // Helper to set all session state at once
+  const setSessionState = ({
+    title,
+    instruments,
+    timeSignature,
+    noteResolution,
+    bpm,
+    steps,
+    pattern
+  }) => {
+    setTitle(title);
+    setInstruments(instruments);
+    setTimeSignature(timeSignature);
+    setNoteResolution(noteResolution);
+    setBpm(bpm);
+    setSteps(steps);
+    setPattern(pattern);
+  };
+
+  // Restore last unsaved session
+  const handleRestoreSession = () => {
+    if (!lastSession) return;
+    setTitle(lastSession.title);
+    setInstruments(lastSession.instruments);
+    setTimeSignature(lastSession.timeSignature);
+    setNoteResolution(lastSession.noteResolution);
+    setBpm(lastSession.bpm);
+    setSteps(lastSession.steps);
+    setPattern(lastSession.pattern);
+  };
+
+  // Load a jam into the editor
+  const handleLoadJam = (jam) => {
+    setLastSession({
+      title,
+      instruments,
+      timeSignature,
+      noteResolution,
+      bpm,
+      steps,
+      pattern
+    });
+    // Use the saved values directly
+    const jamTimeSig = TIME_SIGNATURES.find(ts => ts.label === jam.time_signature) || TIME_SIGNATURES[0];
+    const jamNoteRes = NOTE_RESOLUTIONS.find(nr => nr.label === jam.note_resolution) || NOTE_RESOLUTIONS[1];
+    const jamInstruments = Array.isArray(jam.instruments_json) && jam.instruments_json.length > 0 ? jam.instruments_json : [...DEFAULT_INSTRUMENTS];
+    let jamPattern = Array.isArray(jam.pattern_json) ? jam.pattern_json : [];
+    const jamSteps = jamPattern[0]?.length || (jamTimeSig.beats * jamNoteRes.stepsPerBeat);
+    // If pattern is empty, fill with zeros
+    if (!Array.isArray(jamPattern) || jamPattern.length === 0) {
+      jamPattern = Array(jamInstruments.length).fill().map(() => Array(jamSteps).fill(0));
+    }
+    setSessionState({
+      title: jam.title || '',
+      instruments: jamInstruments,
+      timeSignature: jamTimeSig,
+      noteResolution: jamNoteRes,
+      bpm: jam.bpm || 110,
+      steps: jamSteps,
+      pattern: jamPattern
+    });
+    console.log('DEBUG: Pattern after load:', JSON.stringify(jamPattern));
+  };
+
+  // Delete a jam session
+  const handleDeleteJam = async (jamId) => {
+    if (window.confirm('Are you sure you want to delete this jam session?')) {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${jamId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        alert('Jam session deleted!');
+        fetchJams(); // Refresh the list
+      } else {
+        alert('Failed to delete jam session');
+      }
     }
   };
 
@@ -301,9 +431,15 @@ const JamSession = () => {
         {/* Left: User's Loops */}
         <div className="jam-studio-sidebar">
           <h3>My Loops</h3>
+          {lastSession && (
+            <button style={{width:'100%',marginBottom:8}} onClick={handleRestoreSession}>Current Session</button>
+          )}
           <ul className="jam-loops-list">
             {myJams.map(jam => (
-              <li key={jam.id}>{jam.title}</li>
+              <li key={jam.id}>
+                <span style={{cursor:'pointer'}} onClick={() => handleLoadJam(jam)}>{jam.title}</span>
+                <button className="jam-delete-btn" onClick={() => handleDeleteJam(jam.id)} title="Delete">🗑️</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -362,7 +498,7 @@ const JamSession = () => {
                         <button className="jam-remove-inst" onClick={() => handleRemoveInstrument(rowIdx)} title="Remove">×</button>
                       )}
                     </td>
-                    {pattern[rowIdx].map((val, colIdx) => (
+                    {(pattern && pattern[rowIdx]) ? pattern[rowIdx].map((val, colIdx) => (
                       <td
                         key={colIdx}
                         className={`jam-step-cell${val ? ' active' : ''}${currentStep === colIdx ? ' playing' : ''}`}
@@ -397,7 +533,7 @@ const JamSession = () => {
                           toggleStep(rowIdx, colIdx);
                         }}
                       ></td>
-                    ))}
+                    )) : null}
                   </tr>
                 ))}
               </tbody>

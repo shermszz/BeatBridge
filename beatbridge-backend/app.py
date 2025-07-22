@@ -67,6 +67,8 @@ else:
     DB_NAME = os.environ.get('DB_NAME', 'flask_db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+print(f"DEBUG: Connecting to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -1013,24 +1015,55 @@ def create_jam_session():
     pattern_json = data.get('pattern_json')
     is_public = data.get('is_public', True)
     parent_jam_id = data.get('parent_jam_id')
+    instruments_json = data.get('instruments_json')
+    time_signature = data.get('time_signature')
+    note_resolution = data.get('note_resolution')
+    bpm = data.get('bpm')
 
     if not title or not pattern_json:
         return jsonify({'error': 'Title and pattern are required'}), 400
 
-    result = db.session.execute(text("""
-        INSERT INTO jam_sessions (user_id, title, pattern_json, is_public, parent_jam_id)
-        VALUES (:user_id, :title, :pattern_json, :is_public, :parent_jam_id)
-        RETURNING id
-    """), {
-        'user_id': user_id,
-        'title': title,
-        'pattern_json': json.dumps(pattern_json),
-        'is_public': is_public,
-        'parent_jam_id': parent_jam_id
-    })
-    db.session.commit()
-    jam_id = result.fetchone()[0]
-    return jsonify({'message': 'Jam session created', 'jam_id': jam_id}), 201
+    try:
+        print(f"DEBUG: pattern_json: {pattern_json}")
+        print(f"DEBUG: instruments_json: {instruments_json}")
+        result = db.session.execute(text("""
+            INSERT INTO jam_sessions (
+                user_id, title, pattern_json, is_public, parent_jam_id,
+                instruments_json, time_signature, note_resolution, bpm
+            )
+            VALUES (
+                :user_id, :title, :pattern_json, :is_public, :parent_jam_id,
+                :instruments_json, :time_signature, :note_resolution, :bpm
+            )
+            RETURNING id
+        """), {
+            'user_id': user_id,
+            'title': title,
+            'pattern_json': json.dumps(pattern_json),
+            'is_public': is_public,
+            'parent_jam_id': parent_jam_id,
+            'instruments_json': json.dumps(instruments_json) if instruments_json is not None else None,
+            'time_signature': time_signature,
+            'note_resolution': note_resolution,
+            'bpm': bpm
+        })
+        db.session.commit()
+        jam_id = result.fetchone()[0]
+        return jsonify({'message': 'Jam session created', 'jam_id': jam_id}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating jam session: {str(e)}")
+        return jsonify({'error': 'Failed to create jam session'}), 500
+
+def safe_json_load(value):
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return []
+    elif isinstance(value, list):
+        return value
+    return []
 
 @app.route('/api/jam-sessions/<int:jam_id>', methods=['GET'])
 def get_jam_session(jam_id):
@@ -1039,29 +1072,67 @@ def get_jam_session(jam_id):
     """), {'jam_id': jam_id}).first()
     if not result:
         return jsonify({'error': 'Jam session not found'}), 404
-    jam = dict(result)
-    jam['pattern_json'] = json.loads(jam['pattern_json'])
+    jam = dict(result._mapping)
+    jam['pattern_json'] = safe_json_load(jam.get('pattern_json'))
+    jam['instruments_json'] = safe_json_load(jam.get('instruments_json'))
     return jsonify(jam), 200
 
 @app.route('/api/jam-sessions/user/<int:user_id>', methods=['GET'])
 def get_user_jam_sessions(user_id):
-    results = db.session.execute(text("""
-        SELECT * FROM jam_sessions WHERE user_id = :user_id ORDER BY created_at DESC
-    """), {'user_id': user_id}).fetchall()
-    jams = [dict(row) for row in results]
-    for jam in jams:
-        jam['pattern_json'] = json.loads(jam['pattern_json'])
-    return jsonify(jams), 200
+    try:
+        results = db.session.execute(text("""
+            SELECT * FROM jam_sessions WHERE user_id = :user_id ORDER BY created_at DESC
+        """), {'user_id': user_id}).fetchall()
+        jams = []
+        for row in results:
+            jam = dict(row._mapping)
+            jam['pattern_json'] = safe_json_load(jam.get('pattern_json'))
+            jam['instruments_json'] = safe_json_load(jam.get('instruments_json'))
+            jams.append(jam)
+        return jsonify(jams), 200
+    except Exception as e:
+        print(f"Error fetching jams for user {user_id}: {e}")
+        return jsonify({'error': 'Failed to fetch jams'}), 500
 
 @app.route('/api/jam-sessions/explore', methods=['GET'])
 def explore_jam_sessions():
     results = db.session.execute(text("""
         SELECT * FROM jam_sessions WHERE is_public = TRUE ORDER BY created_at DESC LIMIT 20
     """)).fetchall()
-    jams = [dict(row) for row in results]
-    for jam in jams:
-        jam['pattern_json'] = json.loads(jam['pattern_json'])
+    jams = []
+    for row in results:
+        jam = dict(row._mapping)
+        try:
+            jam['pattern_json'] = jam.get('pattern_json') or []
+            jam['instruments_json'] = jam.get('instruments_json') or []
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"Error decoding JSON for jam {jam.get('id')}: {e}")
+            jam['pattern_json'] = []
+            jam['instruments_json'] = []
+        jams.append(jam)
     return jsonify(jams), 200
+
+@app.route('/api/jam-sessions/<int:jam_id>', methods=['DELETE'])
+@jwt_verified_required
+def delete_jam_session(jam_id):
+    user_id = request.user_id
+    try:
+        # Make sure the jam belongs to the user trying to delete it
+        result = db.session.execute(text("""
+            DELETE FROM jam_sessions
+            WHERE id = :jam_id AND user_id = :user_id
+            RETURNING id
+        """), {'jam_id': jam_id, 'user_id': user_id}).first()
+
+        if not result:
+            return jsonify({'error': 'Jam session not found or you do not have permission to delete it'}), 404
+
+        db.session.commit()
+        return jsonify({'message': 'Jam session deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting jam session {jam_id}: {e}")
+        return jsonify({'error': 'Failed to delete jam session'}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
