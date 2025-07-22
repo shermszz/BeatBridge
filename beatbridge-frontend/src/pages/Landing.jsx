@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: 'What devices can I use BeatBridge on?',
-    a: 'You can use BeatBridge on any device with a web browser—desktop, tablet, or mobile.'
+    a: 'You can use BeatBridge on a Desktop/Laptop.'
   },
 ];
 
