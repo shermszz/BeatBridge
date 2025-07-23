@@ -277,9 +277,12 @@ export default function Chapter0pg4() {
       </div>
       <div className={getFeedbackClass(feedback)}>{feedback}</div>
       <div className="chapter0-nav-container chapter0-practice-nav">
-        <Link to="/chapter0pg3" className="chapter0-back-link">
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter0pg3')}
+        >
           ← Back
-        </Link>
+        </button>
         <button
           className="chapter0-back-link"
           onClick={async () => {

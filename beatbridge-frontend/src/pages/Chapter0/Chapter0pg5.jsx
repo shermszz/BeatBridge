@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg5.css';
 import config from '../../config';
 
@@ -54,6 +54,7 @@ export default function Chapter0pg5() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [wrongAttempt, setWrongAttempt] = useState(false);
   const [answeredWrong, setAnsweredWrong] = useState(false);
+  const navigate = useNavigate();
 
   const handleOptionClick = (idx) => {
     if (selected !== null && !wrongAttempt) return; // Prevent further clicks after correct answer
@@ -76,9 +77,6 @@ export default function Chapter0pg5() {
   const updateProgress = async () => {
     console.log('Updating chapter progress...'); // Debug log
     try {
-      // Use a localStorage flag to prevent multiple increments
-      const progressKey = 'chapter0_quiz_completed';
-      if (localStorage.getItem(progressKey)) return;
       const token = localStorage.getItem('token');
       await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
         method: 'POST',
@@ -88,7 +86,6 @@ export default function Chapter0pg5() {
         },
         body: JSON.stringify({ chapter_progress: 2 }) // Set to the correct value as needed
       });
-      localStorage.setItem(progressKey, 'true');
     } catch (err) { console.error('Progress update failed:', err); }
   };
 
@@ -114,6 +111,16 @@ export default function Chapter0pg5() {
     setShowExplanation(false);
     setWrongAttempt(false);
     setAnsweredWrong(false);
+  };
+
+  // New handler for navigating to the congratulations page
+  const handleNextPage = async () => {
+    await updateProgress();
+    navigate('/chapter0pg6');
+  };
+
+  const handleBack = () => {
+    navigate('/chapter0pg4');
   };
 
   return (
@@ -191,13 +198,13 @@ export default function Chapter0pg5() {
         )}
       </div>
       <div className="chapter0-nav-container chapter0-quiz-nav">
-        <Link to="/chapter0pg4" className="chapter0-back-link">
+        <button className="chapter0-back-link" onClick={handleBack}>
           ← Back
-        </Link>
+        </button>
         {showResult && (
-          <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
+          <button className="chapter0-back-link" onClick={handleNextPage}>
             Next →
-          </Link>
+          </button>
         )}
       </div>
     </div>

@@ -455,9 +455,12 @@ export default function Chapter0pg3() {
       </div>
       {/* Navigation */}
       <div style={{ textAlign: 'center', marginTop: '-3rem', display: 'flex', justifyContent: 'center', gap: '2.5rem' }}>
-        <Link to="/chapter0pg2" className="chapter0-back-link">
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter0pg2')}
+        >
           ← Back
-        </Link>
+        </button>
         <button
           className="chapter0-back-link"
           onClick={async () => {

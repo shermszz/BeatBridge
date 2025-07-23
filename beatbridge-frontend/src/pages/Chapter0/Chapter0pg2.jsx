@@ -423,22 +423,6 @@ export default function Chapter0pg2() {
     }
   }, [noteCardIdx]);
 
-  // Add this function to update progress
-  const updateProgress = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      console.log('Calling updateProgress (chapter_progress=3)');
-      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ chapter_progress: 3 })
-      });
-    } catch (err) { console.error('updateProgress error:', err); }
-  };
-
   // Add this function to update page progress
   const updatePageProgress = async () => {
     try {
@@ -569,9 +553,12 @@ export default function Chapter0pg2() {
       
       {/* Navigation */}
       <div style={{ textAlign: 'center', marginTop: '-3rem', display: 'flex', justifyContent: 'center', gap: '2.5rem' }}>
-        <Link to="/chapter-0" className="chapter0-back-link">
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter-0')}
+        >
           ← Back
-        </Link>
+        </button>
         <button
           className="chapter0-back-link"
           onClick={async () => {

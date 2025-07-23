@@ -212,22 +212,6 @@ export default function Chapter0pg1() {
     return <div style={style}>{label}</div>;
   };
 
-  // Add this function to update progress
-  const updateProgress = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      console.log('Calling updateProgress (chapter_progress=2)');
-      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ chapter_progress: 2 })
-      });
-    } catch (err) { console.error('updateProgress error:', err); }
-  };
-
   // Add this function to update page progress
   const updatePageProgress = async () => {
     try {
@@ -281,28 +265,14 @@ export default function Chapter0pg1() {
           )}
         </div>
       </div>
-      {tourFinished && (
-          <div className="chapter0-fadein-message" style={{ marginTop: '2.5rem', marginBottom: '-2rem', textAlign: 'center', fontSize: '1.18rem', color: '#fff', background: '#2d3350', borderRadius: 12, padding: '1.5rem 2rem', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 2px 16px #0004' }}>
-            Now that you learn all the parts of the drums, it's time to learn some of the basics of drum notations!
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <button
-                className="chapter0-back-link"
-                onClick={async () => {
-                  console.log('Next button clicked!');
-                  await updatePageProgress();
-                  navigate('/chapter0pg2');
-                }}
-              >
-                Next →
-              </button>
-            </div>
-          </div>
-        )}
       <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
-          <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
+          <button
+            className="chapter0-back-link"
+            onClick={() => navigate('/rhythm-trainer-chapters')}
+          >
             ← Back
-          </Link>
+          </button>
           <button
             className="chapter0-back-link"
             onClick={async () => {
