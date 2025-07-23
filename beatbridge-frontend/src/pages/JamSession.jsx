@@ -72,6 +72,9 @@ const JamSession = () => {
   const [dragMode, setDragMode] = useState(null); // 'activate' or 'deactivate'
   // Store last unsaved session
   const [lastSession, setLastSession] = useState(null);
+  const titleInputRef = useRef(null);
+  const [activeJamId, setActiveJamId] = useState(null); // Track the active jam
+  const NEW_JAM_ID = '__new__';
 
   // Update steps and pattern when time signature or note resolution changes
   useEffect(() => {
@@ -102,6 +105,15 @@ const JamSession = () => {
     fetchJams();
   }, []);
 
+  // On initial jam list load, set activeJamId to the first jam if available and user hasn't interacted
+  useEffect(() => {
+    if (myJams.length > 0 && activeJamId == null) {
+      setActiveJamId(myJams[0].id);
+    }
+    // Do NOT reset activeJamId if user has already selected a track
+    // eslint-disable-next-line
+  }, [myJams]);
+
   // Load all sounds on mount
   useEffect(() => {
     audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -129,7 +141,9 @@ const JamSession = () => {
 
   useEffect(() => {
     const handleSpacebar = (e) => {
-      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+      const active = document.activeElement;
+      if ((e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') &&
+          (!titleInputRef.current || active !== titleInputRef.current)) {
         e.preventDefault();
         if (isPlaying) stopPlayback();
         else startPlayback();
@@ -147,43 +161,113 @@ const JamSession = () => {
     const safePattern = Array.isArray(pattern) && pattern.length === safeInstruments.length
       ? pattern
       : Array(safeInstruments.length).fill().map(() => Array(steps).fill(0));
-    // Always ensure each row is correct length
     const normalizedPattern = safePattern.map(row =>
       Array.isArray(row) && row.length === steps ? row : Array(steps).fill(0)
     );
-    console.log('DEBUG: Pattern before save:', JSON.stringify(normalizedPattern));
-    console.log('Saving jam:', {
-      title,
-      pattern_json: normalizedPattern,
-      instruments_json: safeInstruments,
-      time_signature: timeSignature.label,
-      note_resolution: noteResolution.label,
-      bpm
-    });
+
+    // Get all backend IDs (assume those in myJams that do not have isNew or have a numeric/short id)
+    const backendIds = myJams.filter(j => !j.isNew && (typeof j.id === 'number' || (typeof j.id === 'string' && j.id.length < 30))).map(j => j.id);
+    const isExisting = backendIds.includes(activeJamId);
+
+    // Check for duplicate name (other than current track)
+    const duplicate = myJams.find(jam => jam.title === title && jam.id !== activeJamId);
+    if (duplicate) {
+      const confirmOverwrite = window.confirm('A track with that name already exists. Do you want to overwrite the old file?');
+      if (!confirmOverwrite) {
+        setLoading(false);
+        return;
+      }
+      // Overwrite the old track (by ID) using PUT
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${duplicate.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          pattern_json: normalizedPattern,
+          is_public: true,
+          instruments_json: safeInstruments,
+          time_signature: timeSignature.label,
+          note_resolution: noteResolution.label,
+          bpm
+        })
+      });
+      setLoading(false);
+      if (res.ok) {
+        alert('Jam session overwritten!');
+        fetchJams();
+        setActiveJamId(duplicate.id);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to overwrite jam session' + (err.error ? `: ${err.error}` : ''));
+      }
+      return;
+    }
+
     const token = localStorage.getItem('token');
-    const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        title,
-        pattern_json: normalizedPattern,
-        is_public: true,
-        instruments_json: safeInstruments,
-        time_signature: timeSignature.label,
-        note_resolution: noteResolution.label,
-        bpm
-      })
-    });
-    setLoading(false);
-    if (res.ok) {
-      alert('Jam session saved!');
-      setTitle('');
-      fetchJams(); // Refresh the list after saving
+    if (isExisting) {
+      // Update existing jam (PUT with id)
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${activeJamId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          pattern_json: normalizedPattern,
+          is_public: true,
+          instruments_json: safeInstruments,
+          time_signature: timeSignature.label,
+          note_resolution: noteResolution.label,
+          bpm
+        })
+      });
+      setLoading(false);
+      if (res.ok) {
+        alert('Jam session updated!');
+        fetchJams();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to update jam session' + (err.error ? `: ${err.error}` : ''));
+      }
+      return;
     } else {
-      alert('Failed to save jam session');
+      // Create new jam (POST)
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          pattern_json: normalizedPattern,
+          is_public: true,
+          instruments_json: safeInstruments,
+          time_signature: timeSignature.label,
+          note_resolution: noteResolution.label,
+          bpm
+        })
+      });
+      setLoading(false);
+      if (res.ok) {
+        const newJam = await res.json();
+        alert('Jam session saved!');
+        // Replace the local-only jam in myJams with the backend jam (using returned ID)
+        setMyJams(jams => jams.map(jam =>
+          jam.id === activeJamId ? { ...newJam, title, isNew: false } : jam
+        ));
+        setActiveJamId(newJam.id);
+        fetchJams();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to save jam session' + (err.error ? `: ${err.error}` : ''));
+      }
+      return;
     }
   };
 
@@ -242,6 +326,7 @@ const JamSession = () => {
 
   // Load a jam into the editor
   const handleLoadJam = (jam) => {
+    setActiveJamId(jam.id);
     setLastSession({
       title,
       instruments,
@@ -273,21 +358,41 @@ const JamSession = () => {
     console.log('DEBUG: Pattern after load:', JSON.stringify(jamPattern));
   };
 
-  // Delete a jam session
+  // When deleting a track, if it's not a backend ID, just remove from myJams
   const handleDeleteJam = async (jamId) => {
+    const jam = myJams.find(j => j.id === jamId);
+    // Get all backend IDs (assume those in myJams that do not have isNew or have a numeric/short id)
+    const backendIds = myJams.filter(j => !j.isNew && (typeof j.id === 'number' || (typeof j.id === 'string' && j.id.length < 30))).map(j => j.id);
+    const isBackendId = backendIds.includes(jamId);
+    console.log('[Delete] jamId:', jamId, 'isBackendId:', isBackendId, 'jam:', jam, 'backendIds:', backendIds);
+    if (!isBackendId) {
+      setMyJams(jams => jams.filter(j => j.id !== jamId));
+      if (activeJamId === jamId) setActiveJamId(null);
+      console.log('[Delete] Removed local-only jam:', jamId);
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this jam session?')) {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${jamId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      try {
+        const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${jamId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const text = await res.text();
+        console.log('[Delete] API response:', res.status, text);
+        if (res.ok) {
+          alert('Jam session deleted!');
+          setMyJams(jams => jams.filter(j => j.id !== jamId));
+          if (activeJamId === jamId) setActiveJamId(null);
+          fetchJams();
+        } else {
+          alert('Failed to delete jam session: ' + text);
         }
-      });
-      if (res.ok) {
-        alert('Jam session deleted!');
-        fetchJams(); // Refresh the list
-      } else {
-        alert('Failed to delete jam session');
+      } catch (err) {
+        console.error('[Delete] API error:', err);
+        alert('Failed to delete jam session: ' + err.message);
       }
     }
   };
@@ -379,6 +484,68 @@ const JamSession = () => {
     setCurrentStep(-1);
   };
 
+  // Initialize lastSession with current state on mount
+  useEffect(() => {
+    setLastSession({
+      title: '',
+      instruments: [...DEFAULT_INSTRUMENTS],
+      timeSignature: TIME_SIGNATURES[0],
+      noteResolution: NOTE_RESOLUTIONS[1],
+      bpm: 110,
+      steps: TIME_SIGNATURES[0].beats * NOTE_RESOLUTIONS[1].stepsPerBeat,
+      pattern: Array(DEFAULT_INSTRUMENTS.length).fill().map(() => Array(TIME_SIGNATURES[0].beats * NOTE_RESOLUTIONS[1].stepsPerBeat).fill(0))
+    });
+  }, []);
+
+  // Auto-save current session when any relevant state changes
+  useEffect(() => {
+    if (title || pattern.some(row => row.some(cell => cell === 1))) {
+      setLastSession({
+        title,
+        instruments,
+        timeSignature,
+        noteResolution,
+        bpm,
+        steps,
+        pattern
+      });
+    }
+  }, [title, instruments, timeSignature, noteResolution, bpm, steps, pattern]);
+
+  const handleNewTrack = () => {
+    // Create a new jam object
+    const newJam = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      title: 'Untitled',
+      pattern_json: Array(instruments.length).fill().map(() => Array(steps).fill(0)),
+      instruments_json: [...instruments],
+      time_signature: timeSignature.label,
+      note_resolution: noteResolution.label,
+      bpm,
+      isNew: true
+    };
+    setMyJams(jams => [newJam, ...jams]);
+    setActiveJamId(newJam.id);
+    setSessionState({
+      title: newJam.title,
+      instruments: newJam.instruments_json,
+      timeSignature: TIME_SIGNATURES.find(ts => ts.label === newJam.time_signature),
+      noteResolution: NOTE_RESOLUTIONS.find(nr => nr.label === newJam.note_resolution),
+      bpm: newJam.bpm,
+      steps: steps,
+      pattern: newJam.pattern_json
+    });
+  };
+
+  // When editing the title, update the jam in myJams if it's the active one
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    setMyJams(jams => jams.map(jam =>
+      jam.id === activeJamId ? { ...jam, title: newTitle || 'Untitled' } : jam
+    ));
+  };
+
   return (
     <div className="jam-studio-container">
       {/* Jam Session Header and Description - styled like Song Recommendation */}
@@ -398,8 +565,9 @@ const JamSession = () => {
         <input
           className="jam-title-input"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={handleTitleChange}
           placeholder="Jam Title"
+          ref={titleInputRef}
         />
         <div className="jam-studio-actions">
           <button onClick={handleSave} disabled={loading || !title}>
@@ -431,14 +599,22 @@ const JamSession = () => {
         {/* Left: User's Loops */}
         <div className="jam-studio-sidebar">
           <h3>My Loops</h3>
-          {lastSession && (
-            <button style={{width:'100%',marginBottom:8}} onClick={handleRestoreSession}>Current Session</button>
-          )}
+          <button className="jam-current-session-btn" onClick={handleNewTrack}>
+            <span className="jam-current-session-label">New Track</span>
+          </button>
           <ul className="jam-loops-list">
             {myJams.map(jam => (
-              <li key={jam.id}>
-                <span style={{cursor:'pointer'}} onClick={() => handleLoadJam(jam)}>{jam.title}</span>
-                <button className="jam-delete-btn" onClick={() => handleDeleteJam(jam.id)} title="Delete">🗑️</button>
+              <li key={jam.id} className={`jam-loop-item${activeJamId === jam.id ? ' active' : ''}`}>
+                <span className="jam-loop-title" onClick={() => handleLoadJam(jam)}>{jam.title}</span>
+                <button className="jam-delete-jam-btn" onClick={() => handleDeleteJam(jam.id)} title="Delete">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="jam-delete-icon">
+                    <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M10 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M14 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M5 6L6 20H18L19 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M8 6L9 3H15L16 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
               </li>
             ))}
           </ul>
