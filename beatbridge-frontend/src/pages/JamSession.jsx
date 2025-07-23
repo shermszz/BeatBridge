@@ -177,16 +177,15 @@ const JamSession = () => {
         setLoading(false);
         return;
       }
-      // Overwrite the old track (by ID) using POST
+      // Overwrite the old track (by ID) using PUT
       const token = localStorage.getItem('token');
-      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions`, {
-        method: 'POST',
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${duplicate.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          id: duplicate.id,
           title,
           pattern_json: normalizedPattern,
           is_public: true,
@@ -202,22 +201,22 @@ const JamSession = () => {
         fetchJams();
         setActiveJamId(duplicate.id);
       } else {
-        alert('Failed to overwrite jam session');
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to overwrite jam session' + (err.error ? `: ${err.error}` : ''));
       }
       return;
     }
 
     const token = localStorage.getItem('token');
     if (isExisting) {
-      // Update existing jam (POST with id)
-      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions`, {
-        method: 'POST',
+      // Update existing jam (PUT with id)
+      const res = await fetch(`${config.API_BASE_URL}/api/jam-sessions/${activeJamId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          id: activeJamId,
           title,
           pattern_json: normalizedPattern,
           is_public: true,
@@ -232,7 +231,8 @@ const JamSession = () => {
         alert('Jam session updated!');
         fetchJams();
       } else {
-        alert('Failed to update jam session');
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to update jam session' + (err.error ? `: ${err.error}` : ''));
       }
       return;
     } else {
@@ -264,7 +264,8 @@ const JamSession = () => {
         setActiveJamId(newJam.id);
         fetchJams();
       } else {
-        alert('Failed to save jam session');
+        const err = await res.json().catch(() => ({}));
+        alert('Failed to save jam session' + (err.error ? `: ${err.error}` : ''));
       }
       return;
     }

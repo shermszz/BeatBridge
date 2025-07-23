@@ -1027,6 +1027,13 @@ def create_jam_session():
     if not title or not pattern_json:
         return jsonify({'error': 'Title and pattern are required'}), 400
 
+    # Check for duplicate title for this user
+    existing = db.session.execute(text("""
+        SELECT id FROM jam_sessions WHERE user_id = :user_id AND title = :title
+    """), {'user_id': user_id, 'title': title}).first()
+    if existing:
+        return jsonify({'error': 'Jam session with this title already exists', 'jam_id': existing.id}), 409
+
     try:
         print(f"DEBUG: pattern_json: {pattern_json}")
         print(f"DEBUG: instruments_json: {instruments_json}")
@@ -1058,6 +1065,68 @@ def create_jam_session():
         db.session.rollback()
         print(f"Error creating jam session: {str(e)}")
         return jsonify({'error': 'Failed to create jam session'}), 500
+
+# Add PUT endpoint for updating jam session by ID
+@app.route('/api/jam-sessions/<int:jam_id>', methods=['PUT'])
+@jwt_verified_required
+def update_jam_session(jam_id):
+    data = request.get_json()
+    user_id = request.user_id
+    title = data.get('title')
+    pattern_json = data.get('pattern_json')
+    is_public = data.get('is_public', True)
+    parent_jam_id = data.get('parent_jam_id')
+    instruments_json = data.get('instruments_json')
+    time_signature = data.get('time_signature')
+    note_resolution = data.get('note_resolution')
+    bpm = data.get('bpm')
+
+    if not title or not pattern_json:
+        return jsonify({'error': 'Title and pattern are required'}), 400
+
+    # Check for duplicate title for this user (excluding this jam_id)
+    existing = db.session.execute(text("""
+        SELECT id FROM jam_sessions WHERE user_id = :user_id AND title = :title AND id != :jam_id
+    """), {'user_id': user_id, 'title': title, 'jam_id': jam_id}).first()
+    if existing:
+        return jsonify({'error': 'Jam session with this title already exists', 'jam_id': existing.id}), 409
+
+    try:
+        result = db.session.execute(text("""
+            UPDATE jam_sessions SET
+                title = :title,
+                pattern_json = :pattern_json,
+                is_public = :is_public,
+                parent_jam_id = :parent_jam_id,
+                instruments_json = :instruments_json,
+                time_signature = :time_signature,
+                note_resolution = :note_resolution,
+                bpm = :bpm,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :jam_id AND user_id = :user_id
+            RETURNING id
+        """), {
+            'jam_id': jam_id,
+            'user_id': user_id,
+            'title': title,
+            'pattern_json': json.dumps(pattern_json),
+            'is_public': is_public,
+            'parent_jam_id': parent_jam_id,
+            'instruments_json': json.dumps(instruments_json) if instruments_json is not None else None,
+            'time_signature': time_signature,
+            'note_resolution': note_resolution,
+            'bpm': bpm
+        })
+        updated = result.fetchone()
+        if not updated:
+            db.session.rollback()
+            return jsonify({'error': 'Jam session not found or you do not have permission to update it'}), 404
+        db.session.commit()
+        return jsonify({'message': 'Jam session updated', 'jam_id': jam_id}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating jam session: {str(e)}")
+        return jsonify({'error': 'Failed to update jam session'}), 500
 
 def safe_json_load(value):
     if isinstance(value, str):
