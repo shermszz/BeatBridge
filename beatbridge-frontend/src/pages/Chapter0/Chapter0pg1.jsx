@@ -265,14 +265,8 @@ export default function Chapter0pg1() {
           )}
         </div>
       </div>
-      <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+      <div style={{ textAlign: 'center', marginTop: '2.5rem'}}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
-          <button
-            className="chapter0-back-link"
-            onClick={() => navigate('/rhythm-trainer-chapters')}
-          >
-            ← Back
-          </button>
           <button
             className="chapter0-back-link"
             onClick={async () => {
