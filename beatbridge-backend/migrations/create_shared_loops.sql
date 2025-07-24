@@ -1,3 +1,7 @@
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS shared_loop_notifications;
+DROP TABLE IF EXISTS shared_loops;
+
 CREATE TABLE IF NOT EXISTS shared_loops (
     id SERIAL PRIMARY KEY,
     share_id VARCHAR(255) NOT NULL UNIQUE,
