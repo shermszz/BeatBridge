@@ -285,6 +285,12 @@ export default function Chapter0pg4() {
         </button>
         <button
           className="chapter0-back-link"
+          onClick={() => navigate('/chapter0-dashboard')}
+        >
+          Back to Dashboard
+        </button>
+        <button
+          className="chapter0-back-link"
           onClick={async () => {
             await updatePageProgress();
             navigate('/chapter0pg5');

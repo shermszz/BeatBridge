@@ -1,6 +1,6 @@
 import pytest
 import json
-from app_factory import User, db
+from app import User, db
 
 @pytest.mark.usefixtures('test_db')
 class TestJamSessions:

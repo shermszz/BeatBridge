@@ -471,6 +471,14 @@ export default function Chapter0pg3() {
           Next →
         </button>
       </div>
+      <div style={{ textAlign: 'center', marginTop: '-3rem', display: 'flex', justifyContent: 'center', marginTop: '0rem'}}>
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter0-dashboard')}
+        >
+          Back to Dashboard
+        </button>
+      </div>
     </div>
   );
 } 
