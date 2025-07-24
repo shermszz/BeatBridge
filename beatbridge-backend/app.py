@@ -64,7 +64,7 @@ else:
     DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
     DB_HOST = os.environ.get('DB_HOST', 'localhost')
     DB_PORT = os.environ.get('DB_PORT', '5432')
-    DB_NAME = os.environ.get('DB_NAME', 'flask_db')
+    DB_NAME = os.environ.get('DB_NAME', 'beatbridge')
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 print(f"DEBUG: Connecting to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
@@ -215,6 +215,14 @@ class UserCustomization(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     chapter_progress = db.Column(db.Integer, default=1) # New field for chapter progress
     chapter0_page_progress = db.Column(db.Integer, default=1) # New field for chapter 0 page progress
+
+class SharedLoop(db.Model):
+    __tablename__ = 'shared_loops'
+    id = db.Column(db.Integer, primary_key=True)
+    share_id = db.Column(db.String(255), unique=True, nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    jam_session_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.current_timestamp())
 
 # Create tables
 def init_db():
@@ -1263,10 +1271,11 @@ def create_shared_loops():
         # Generate a unique share ID
         share_id = f"{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"
 
-        # Create shared loops record
-        db.session.execute(text("""
+        # Create shared loops record with explicit array casting
+        result = db.session.execute(text("""
             INSERT INTO shared_loops (share_id, sender_id, jam_session_ids)
-            VALUES (:share_id, :sender_id, :jam_session_ids)
+            VALUES (:share_id, :sender_id, :jam_session_ids::integer[])
+            RETURNING id
         """), {
             'share_id': share_id,
             'sender_id': user_id,
