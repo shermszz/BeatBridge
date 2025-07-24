@@ -169,7 +169,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    hash = db.Column(db.String(200), nullable=False)
+    hash = db.Column(db.String(255), nullable=False)
     profile_pic_url = db.Column(db.String(255))  # Profile picture URL
     customization = db.relationship('UserCustomization', backref='user', uselist=False)
     is_verified = db.Column(db.Boolean, default=False)  # Track email verification status

@@ -1,24 +1,45 @@
 import pytest
-from unittest.mock import patch, MagicMock
 import json
-from app import app
+from unittest.mock import patch, MagicMock
+from app_factory import User, db
 
 @pytest.mark.usefixtures('test_db')
-class TestLastFmIntegration:
-    def test_genre_endpoint_success(self, test_client):
-        """Test successful genre list retrieval"""
+class TestLastFMIntegration:
+    """
+    Test suite for Last.fm API integration features:
+    - Genre listing
+    - Song recommendations
+    - API error handling
+    - Response processing
+    """
+
+    def test_get_genres_success(self, test_client):
+        """Test successful retrieval of genre list"""
         response = test_client.get('/api/genres')
+        assert response.status_code == 200
         data = json.loads(response.data)
         
-        assert response.status_code == 200
         assert 'genres' in data
-        assert len(data['genres']) > 0
-        assert all(isinstance(g, dict) for g in data['genres'])
+        genres = data['genres']
+        assert len(genres) > 0
         
+        # Check genre format
+        for genre in genres:
+            assert 'id' in genre
+            assert 'name' in genre
+            assert isinstance(genre['id'], str)
+            assert isinstance(genre['name'], str)
+        
+        # Check for common genres
+        genre_ids = [g['id'] for g in genres]
+        assert 'rock' in genre_ids
+        assert 'jazz' in genre_ids
+        assert 'pop' in genre_ids
+
     @patch('requests.get')
-    def test_song_recommendation_success(self, mock_get, test_client):
+    def test_recommend_song_success(self, mock_get, test_client):
         """Test successful song recommendation"""
-        # Mock Last.fm API responses
+        # Mock Last.fm API response
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -27,47 +48,145 @@ class TestLastFmIntegration:
                     {
                         'name': 'Test Song',
                         'artist': {'name': 'Test Artist'},
-                        'url': 'http://test.url',
-                        'listeners': '1000'
+                        'url': 'http://test.url'
                     }
                 ]
             }
         }
         mock_get.return_value = mock_response
+
+        # Register and login a user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
         
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+
+        # Save user customization (required for recommendations)
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Beginner',
+                            'practice_frequency': 'Daily',
+                            'favorite_genres': ['rock']
+                        })
+
+        # Get recommendation
         response = test_client.post('/api/recommend-song',
-                                  json={'genres': ['rock']},
-                                  content_type='application/json')
-        data = json.loads(response.data)
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'genres': ['rock']})
         
         assert response.status_code == 200
+        data = json.loads(response.data)
         assert 'recommendation' in data
         assert 'name' in data['recommendation']
         assert 'artist' in data['recommendation']
+        assert 'url' in data['recommendation']
+
+    def test_recommend_song_no_genres(self, test_client):
+        """Test recommendation request with no genres"""
+        # Setup user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
         
-    def test_song_recommendation_no_genre(self, test_client):
-        """Test recommendation with no genre selected"""
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+
+        # Test with empty genres list
         response = test_client.post('/api/recommend-song',
-                                  json={'genres': []},
-                                  content_type='application/json')
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'genres': []})
         
         assert response.status_code == 400
-        
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert data['error'] == 'Please select at least one genre'
+
     @patch('requests.get')
-    def test_song_recommendation_api_error(self, mock_get, test_client):
+    def test_recommend_song_api_error(self, mock_get, test_client):
         """Test handling of Last.fm API errors"""
-        mock_get.side_effect = Exception('API Error')
+        # Mock API error
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_get.return_value = mock_response
+
+        # Setup user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
         
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+
+        # Save customization
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Beginner',
+                            'practice_frequency': 'Daily',
+                            'favorite_genres': ['rock']
+                        })
+
+        # Test recommendation with API error
         response = test_client.post('/api/recommend-song',
-                                  json={'genres': ['rock']},
-                                  content_type='application/json')
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'genres': ['rock']})
         
         assert response.status_code == 500
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert data['error'] == 'Failed to fetch recommendations'
+
+    def test_recommend_song_invalid_genre_format(self, test_client):
+        """Test recommendation with invalid genre format"""
+        # Setup user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
         
-    def test_invalid_genre_format(self, test_client):
-        """Test handling of invalid genre format"""
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+
+        # Test with invalid genre format (string instead of list)
         response = test_client.post('/api/recommend-song',
-                                  json={'genres': 'invalid'},
-                                  content_type='application/json')
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'genres': 'rock'})
         
-        assert response.status_code == 400 
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert data['error'] == 'Invalid genre format' 
