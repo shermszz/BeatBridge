@@ -228,3 +228,13 @@
 .modal-link-btn:hover {
   background: #217dbb;
 } 
+
+.chapter-card.locked {
+  background: #232946;
+  color: #888;
+  border: 2px solid #444;
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}

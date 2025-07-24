@@ -225,6 +225,15 @@
   font-weight: 500;
   transition: all 0.2s;
   margin-top: 2.5rem;
+  border: none;           
+  outline: none;          
+  box-shadow: none;       
+}
+.chapter0-back-link:focus,
+.chapter0-back-link:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 .chapter0-back-link:hover {
   background: #2c3e50;
@@ -238,19 +247,6 @@
 }
 
 @keyframes chapter0-fadein {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-} 
-
-.chapter0-fadein-message {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: chapter0-fadein-message 0.8s ease-out forwards;
-}
-
-@keyframes chapter0-fadein-message {
   to {
     opacity: 1;
     transform: translateY(0);
@@ -271,3 +267,5 @@
   0% { opacity: 1; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(80px); }
 } 
+
+/* Removed quiz-specific styles for Chapter0pg5, now in Chapter0pg5.css */ 

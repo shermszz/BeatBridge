@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../../styles/Chapter0pg1-3.css';
+import { Link, useNavigate } from 'react-router-dom';
+import '../../styles/Chapter0/Chapter0pg1-3.css';
+import config from '../../config';
 
 const notes = [
   { name: 'Whole Note', type: 'whole' },
@@ -422,6 +423,24 @@ export default function Chapter0pg2() {
     }
   }, [noteCardIdx]);
 
+  // Add this function to update page progress
+  const updatePageProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Calling updatePageProgress (chapter0_page_progress=3)');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter0_page_progress: 3 })
+      });
+    } catch (err) { console.error('updatePageProgress error:', err); }
+  };
+
+  const navigate = useNavigate();
+
   return (
     <div className="chapter0-container">
       <h1 className="chapter0-title" style={{ marginBottom: '1.2rem' }}>Introduction to Drum Notation</h1>
@@ -479,12 +498,23 @@ export default function Chapter0pg2() {
             </div>
             <span style={{ fontSize: '1rem', color: '#eebebe', minWidth: 48, textAlign: 'center' }}>{noteCardIdx + 1} / {noteDescriptions.length}</span>
             <div style={{ width: 48, display: 'flex', justifyContent: 'center' }}>
-              {noteCardIdx < noteDescriptions.length - 1 && (
+              {noteCardIdx < noteDescriptions.length - 1 ? (
                 <button
                   className="chapter0-nav-button"
                   onClick={handleNext}
                 >
                   →
+                </button>
+              ) : (
+                <button
+                  className="chapter0-back-link"
+                  onClick={async () => {
+                    console.log('Next button clicked!');
+                    await updatePageProgress();
+                    navigate('/chapter0pg3');
+                  }}
+                >
+                  Next →
                 </button>
               )}
             </div>
@@ -523,12 +553,21 @@ export default function Chapter0pg2() {
       
       {/* Navigation */}
       <div style={{ textAlign: 'center', marginTop: '-3rem', display: 'flex', justifyContent: 'center', gap: '2.5rem' }}>
-        <Link to="/chapter-0" className="chapter0-back-link">
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter-0')}
+        >
           ← Back
-        </Link>
-        <Link to="/chapter0pg3" className="chapter0-back-link">
+        </button>
+        <button
+          className="chapter0-back-link"
+          onClick={async () => {
+            await updatePageProgress();
+            navigate('/chapter0pg3');
+          }}
+        >
           Next →
-        </Link>
+        </button>
       </div>
     </div>
   );

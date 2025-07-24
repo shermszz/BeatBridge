@@ -17,7 +17,11 @@ import Chapter0pg1 from './pages/Chapter0/Chapter0pg1';
 import Chapter0pg2 from './pages/Chapter0/Chapter0pg2';
 import Chapter0pg3 from './pages/Chapter0/Chapter0pg3';
 import Chapter0pg4 from './pages/Chapter0/Chapter0pg4';
+import Chapter0pg5 from './pages/Chapter0/Chapter0pg5';
+import Chapter0pg6 from './pages/Chapter0/Chapter0pg6';
+import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
+import ProgressProtectedRoute from './components/ProgressProtectedRoute';
 import './styles/App.css';
 
 function App() {
@@ -77,18 +81,33 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/chapter0pg2" element={
-            <ProtectedRoute requireVerification={true}>
+            <ProgressProtectedRoute requiredProgress={2}>
               <Chapter0pg2 />
-            </ProtectedRoute>
+            </ProgressProtectedRoute>
           } />
           <Route path="/chapter0pg3" element={
-            <ProtectedRoute requireVerification={true}>
+            <ProgressProtectedRoute requiredProgress={3}>
               <Chapter0pg3 />
+            </ProgressProtectedRoute>
+          } />
+          <Route path="/chapter0pg4" element={
+            <ProgressProtectedRoute requiredProgress={4}>
+              <Chapter0pg4 />
+            </ProgressProtectedRoute>
+          } />
+          <Route path="/chapter0pg5" element={
+            <ProgressProtectedRoute requiredProgress={5}>
+              <Chapter0pg5 />
+            </ProgressProtectedRoute>
+          } />
+          <Route path="/chapter0-dashboard" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter0Dashboard />
             </ProtectedRoute>
           } />
-          <Route path="/Chapter0/Chapter0pg4" element={
+          <Route path="/chapter0pg6" element={
             <ProtectedRoute requireVerification={true}>
-              <Chapter0pg4 />
+              <Chapter0pg6 />
             </ProtectedRoute>
           } />
           <Route path="/jam-session" element={
@@ -96,6 +115,7 @@ function App() {
               <JamSession />
             </ProtectedRoute>
           } />
+          
         </Routes>
       </Layout>
     </Router>

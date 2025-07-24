@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../../styles/Chapter0pg4.css';
+import { Link, useNavigate } from 'react-router-dom';
+import '../../styles/Chapter0/Chapter0pg4.css';
+import config from '../../config';
 
 // Define multiple rhythm patterns
 const rhythms = [
@@ -132,6 +133,7 @@ export default function Chapter0pg4() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [highlightStates, setHighlightStates] = useState(Array(pattern.length).fill(''));
   const [completed, setCompleted] = useState(false);
+  const navigate = useNavigate();
 
   // Reset state when rhythm changes
   useEffect(() => {
@@ -206,6 +208,22 @@ export default function Chapter0pg4() {
     }
   }, [userHits, pattern, completed]);
 
+  // Add this function to update page progress
+  const updatePageProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Calling updatePageProgress (chapter0_page_progress=5)');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter0_page_progress: 5 })
+      });
+    } catch (err) { console.error('updatePageProgress error:', err); }
+  };
+
   // Helper to determine feedback class
   function getFeedbackClass(feedback) {
     if (feedback === 'Good!') return 'chapter0-feedback good';
@@ -259,12 +277,21 @@ export default function Chapter0pg4() {
       </div>
       <div className={getFeedbackClass(feedback)}>{feedback}</div>
       <div className="chapter0-nav-container chapter0-practice-nav">
-        <Link to="/chapter0pg3" className="chapter0-back-link">
+        <button
+          className="chapter0-back-link"
+          onClick={() => navigate('/chapter0pg3')}
+        >
           ← Back
-        </Link>
-        <Link to="/chapter0pg5" className="chapter0-back-link">
+        </button>
+        <button
+          className="chapter0-back-link"
+          onClick={async () => {
+            await updatePageProgress();
+            navigate('/chapter0pg5');
+          }}
+        >
           Next →
-        </Link>
+        </button>
       </div>
     </div>
   );

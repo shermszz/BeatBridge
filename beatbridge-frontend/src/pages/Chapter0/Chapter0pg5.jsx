@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../../styles/Chapter0pg1-3.css';
+import { Link, useNavigate } from 'react-router-dom';
+import '../../styles/Chapter0/Chapter0pg5.css';
+import config from '../../config';
 
 const quizQuestions = [
   {
@@ -51,13 +52,41 @@ export default function Chapter0pg5() {
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [wrongAttempt, setWrongAttempt] = useState(false);
+  const [answeredWrong, setAnsweredWrong] = useState(false);
+  const navigate = useNavigate();
 
   const handleOptionClick = (idx) => {
-    setSelected(idx);
-    setShowExplanation(true);
+    if (selected !== null && !wrongAttempt) return; // Prevent further clicks after correct answer
     if (idx === quizQuestions[current].answer) {
-      setScore(score + 1);
+      setSelected(idx);
+      setShowExplanation(true);
+      if (!answeredWrong) {
+        setScore(score + 1);
+      }
+      setWrongAttempt(false);
+    } else {
+      setSelected(idx);
+      setWrongAttempt(true);
+      setShowExplanation(false);
+      setAnsweredWrong(true);
     }
+  };
+
+  // Add this function to update chapter progress, only once per user (per session)
+  const updateProgress = async () => {
+    console.log('Updating chapter progress...'); // Debug log
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter_progress: 2 }) // Set to the correct value as needed
+      });
+    } catch (err) { console.error('Progress update failed:', err); }
   };
 
   const handleNext = () => {
@@ -65,7 +94,11 @@ export default function Chapter0pg5() {
       setCurrent(current + 1);
       setSelected(null);
       setShowExplanation(false);
+      setWrongAttempt(false);
+      setAnsweredWrong(false);
     } else {
+      // User is finishing the last question, so update progress now
+      updateProgress();
       setShowResult(true);
     }
   };
@@ -76,66 +109,103 @@ export default function Chapter0pg5() {
     setScore(0);
     setShowResult(false);
     setShowExplanation(false);
+    setWrongAttempt(false);
+    setAnsweredWrong(false);
+  };
+
+  // New handler for navigating to the congratulations page
+  const handleNextPage = async () => {
+    await updateProgress();
+    navigate('/chapter0pg6');
+  };
+
+  const handleBack = () => {
+    navigate('/chapter0pg4');
   };
 
   return (
     <div className="chapter0-container">
-      <h1 className="chapter0-title">Chapter 0 Quiz: Notes & Rests</h1>
+      <h1 className="chapter0-title" style={{marginBottom:'2.5rem'}}>Chapter 0 Quiz: Notes & Rests</h1>
       <div className="chapter0-quiz-card">
         {!showResult ? (
-          <>
+          <div className="chapter0-quiz-main-card">
+            <div className="chapter0-quiz-progress">
+              {current + 1} / {quizQuestions.length}
+            </div>
             <div className="chapter0-quiz-question">
               <b>Q{current + 1}:</b> {quizQuestions[current].question}
             </div>
-            <div className="chapter0-quiz-options">
-              {quizQuestions[current].options.map((opt, idx) => (
-                <button
-                  key={idx}
-                  className={`chapter0-quiz-option${selected === idx ? (idx === quizQuestions[current].answer ? ' correct' : ' wrong') : ''}`}
-                  onClick={() => handleOptionClick(idx)}
-                  disabled={selected !== null}
-                >
-                  {opt}
-                </button>
-              ))}
+            <div className="chapter0-quiz-options-grid">
+              <div className="chapter0-quiz-options-row">
+                {quizQuestions[current].options.slice(0, 2).map((opt, idx) => (
+                  <button
+                    key={idx}
+                    className={`chapter0-quiz-option${selected === idx ? (idx === quizQuestions[current].answer ? ' correct' : wrongAttempt && selected === idx ? ' wrong' : '') : ''}`}
+                    onClick={() => handleOptionClick(idx)}
+                    disabled={selected !== null && !wrongAttempt}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <div className="chapter0-quiz-options-row">
+                {quizQuestions[current].options.slice(2, 4).map((opt, idx) => (
+                  <button
+                    key={idx+2}
+                    className={`chapter0-quiz-option${selected === idx+2 ? (idx+2 === quizQuestions[current].answer ? ' correct' : wrongAttempt && selected === idx+2 ? ' wrong' : '') : ''}`}
+                    onClick={() => handleOptionClick(idx+2)}
+                    disabled={selected !== null && !wrongAttempt}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
             </div>
+            {wrongAttempt && (
+              <div className="chapter0-quiz-explanation try-again">
+                Try Again
+              </div>
+            )}
             {showExplanation && (
               <div className="chapter0-quiz-explanation">
-                {selected === quizQuestions[current].answer ? 'Correct! ' : 'Incorrect. '}
-                {quizQuestions[current].explanation}
+                Correct! {quizQuestions[current].explanation}
               </div>
             )}
             <div className="chapter0-quiz-nav">
-              <button
-                className="chapter0-nav-button"
-                onClick={handleNext}
-                disabled={selected === null}
-              >
-                {current === quizQuestions.length - 1 ? 'Finish' : 'Next'}
-              </button>
+              {showExplanation && (
+                <button
+                  className={`chapter0-nav-button${current === quizQuestions.length - 1 ? ' finish' : ''}`}
+                  onClick={handleNext}
+                  disabled={!showExplanation}
+                >
+                  {current === quizQuestions.length - 1 ? 'Finish' : '→'}
+                </button>
+              )}
             </div>
-          </>
+          </div>
         ) : (
           <div className="chapter0-quiz-result">
-            <h2>Your Score: {score} / {quizQuestions.length}</h2>
-            <div style={{margin: '1rem 0'}}>
+            <h2 style={{textAlign:'center'}}>Your Score: {score} / {quizQuestions.length}</h2>
+            <div style={{margin: '1rem 0', textAlign:'center', fontSize:'1.1rem'}}>
               {score === quizQuestions.length
-                ? 'Excellent! You mastered notes and rests.'
+                ? 'Excellent! You mastered the basics of notes and rests.'
                 : score >= 3
                 ? 'Good job! Review any mistakes and try again.'
                 : 'Keep practicing! Review the material and try again.'}
             </div>
-            <button className="chapter0-nav-button" onClick={handleRestart}>Retry Quiz</button>
+            <button className="chapter0-nav-button retry" onClick={handleRestart}>Retry Quiz</button>
           </div>
         )}
       </div>
       <div className="chapter0-nav-container chapter0-quiz-nav">
-        <Link to="/chapter0pg4" className="chapter0-back-link">
+        <button className="chapter0-back-link" onClick={handleBack}>
           ← Back
-        </Link>
-        <Link to="/rhythm-trainer-chapters" className="chapter0-back-link">
-          Next →
-        </Link>
+        </button>
+        {showResult && (
+          <button className="chapter0-back-link" onClick={handleNextPage}>
+            Next →
+          </button>
+        )}
       </div>
     </div>
   );
