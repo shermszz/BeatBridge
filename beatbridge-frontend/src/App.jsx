@@ -21,6 +21,7 @@ import Chapter0pg5 from './pages/Chapter0/Chapter0pg5';
 import Chapter0pg6 from './pages/Chapter0/Chapter0pg6';
 import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
+import SharedLoops from './pages/SharedLoops';
 import ProgressProtectedRoute from './components/ProgressProtectedRoute';
 import './styles/App.css';
 
@@ -115,6 +116,7 @@ function App() {
               <JamSession />
             </ProtectedRoute>
           } />
+          <Route path="/shared-loops/:shareId" element={<SharedLoops />} />
           
         </Routes>
       </Layout>

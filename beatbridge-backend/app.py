@@ -1238,6 +1238,182 @@ def update_chapter_progress():
         'chapter0_page_progress': customization.chapter0_page_progress
     }), 200
 
+# --- Shared Loops Endpoints ---
+
+@app.route('/api/shared-loops', methods=['POST'])
+@jwt_verified_required
+def create_shared_loops():
+    """Create a new shared loops link"""
+    try:
+        data = request.get_json()
+        user_id = request.user_id
+        jam_session_ids = data.get('jam_session_ids', [])
+
+        if not jam_session_ids:
+            return jsonify({'error': 'No loops selected to share'}), 400
+
+        # Verify all jam sessions belong to the user
+        for jam_id in jam_session_ids:
+            jam = db.session.execute(text("""
+                SELECT id FROM jam_sessions WHERE id = :jam_id AND user_id = :user_id
+            """), {'jam_id': jam_id, 'user_id': user_id}).first()
+            if not jam:
+                return jsonify({'error': f'Jam session {jam_id} not found or does not belong to you'}), 404
+
+        # Generate a unique share ID
+        share_id = f"{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"
+
+        # Create shared loops record
+        db.session.execute(text("""
+            INSERT INTO shared_loops (share_id, sender_id, jam_session_ids)
+            VALUES (:share_id, :sender_id, :jam_session_ids)
+        """), {
+            'share_id': share_id,
+            'sender_id': user_id,
+            'jam_session_ids': jam_session_ids
+        })
+        db.session.commit()
+
+        return jsonify({'share_id': share_id}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to create shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>', methods=['GET'])
+def get_shared_loops(share_id):
+    """Get shared loops by share ID"""
+    try:
+        # Get the shared loops record
+        shared = db.session.execute(text("""
+            SELECT sl.*, u.username as sender_name
+            FROM shared_loops sl
+            JOIN users u ON sl.sender_id = u.id
+            WHERE sl.share_id = :share_id
+        """), {'share_id': share_id}).first()
+
+        if not shared:
+            return jsonify({'error': 'Shared loops not found'}), 404
+
+        # Get all the jam sessions
+        jams = db.session.execute(text("""
+            SELECT * FROM jam_sessions WHERE id = ANY(:jam_ids)
+        """), {'jam_ids': shared.jam_session_ids}).fetchall()
+
+        loops = []
+        for jam in jams:
+            jam_dict = dict(jam._mapping)
+            jam_dict['pattern_json'] = safe_json_load(jam_dict.get('pattern_json'))
+            jam_dict['instruments_json'] = safe_json_load(jam_dict.get('instruments_json'))
+            loops.append(jam_dict)
+
+        return jsonify({
+            'sender_name': shared.sender_name,
+            'loops': loops
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to fetch shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>/accept', methods=['POST'])
+@jwt_verified_required
+def accept_shared_loops(share_id):
+    """Accept shared loops and add them to user's collection"""
+    try:
+        user_id = request.user_id
+
+        # Get the shared loops record
+        shared = db.session.execute(text("""
+            SELECT * FROM shared_loops WHERE share_id = :share_id
+        """), {'share_id': share_id}).first()
+
+        if not shared:
+            return jsonify({'error': 'Shared loops not found'}), 404
+
+        # Get all the original jam sessions
+        jams = db.session.execute(text("""
+            SELECT * FROM jam_sessions WHERE id = ANY(:jam_ids)
+        """), {'jam_ids': shared.jam_session_ids}).fetchall()
+
+        # Create copies of the jam sessions for the recipient
+        for jam in jams:
+            # Check for title conflicts
+            base_title = jam.title
+            counter = 1
+            while True:
+                title = f"{base_title}{' ' + str(counter) if counter > 1 else ''}"
+                existing = db.session.execute(text("""
+                    SELECT id FROM jam_sessions WHERE user_id = :user_id AND title = :title
+                """), {'user_id': user_id, 'title': title}).first()
+                if not existing:
+                    break
+                counter += 1
+
+            # Create new jam session
+            db.session.execute(text("""
+                INSERT INTO jam_sessions (
+                    user_id, title, pattern_json, is_public, parent_jam_id,
+                    instruments_json, time_signature, note_resolution, bpm
+                )
+                VALUES (
+                    :user_id, :title, :pattern_json, :is_public, :parent_jam_id,
+                    :instruments_json, :time_signature, :note_resolution, :bpm
+                )
+            """), {
+                'user_id': user_id,
+                'title': title,
+                'pattern_json': jam.pattern_json,
+                'is_public': jam.is_public,
+                'parent_jam_id': jam.id,  # Reference the original jam
+                'instruments_json': jam.instruments_json,
+                'time_signature': jam.time_signature,
+                'note_resolution': jam.note_resolution,
+                'bpm': jam.bpm
+            })
+
+        # Create notification record
+        db.session.execute(text("""
+            INSERT INTO shared_loop_notifications (recipient_id, share_id, status)
+            VALUES (:recipient_id, :share_id, 'accepted')
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        })
+
+        db.session.commit()
+        return jsonify({'message': 'Shared loops accepted successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error accepting shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to accept shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>/reject', methods=['POST'])
+@jwt_verified_required
+def reject_shared_loops(share_id):
+    """Reject shared loops"""
+    try:
+        user_id = request.user_id
+
+        # Create rejection notification
+        db.session.execute(text("""
+            INSERT INTO shared_loop_notifications (recipient_id, share_id, status)
+            VALUES (:recipient_id, :share_id, 'rejected')
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        })
+
+        db.session.commit()
+        return jsonify({'message': 'Shared loops rejected'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error rejecting shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to reject shared loops'}), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, port=port, host='0.0.0.0')
