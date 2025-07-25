@@ -3,6 +3,7 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 import os
 #Only for local development on http://localhost
@@ -51,6 +52,10 @@ app.config['SESSION_COOKIE_NAME'] = 'session'
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 is_local = os.environ.get("FLASK_ENV") == "development" or os.environ.get("LOCAL_DEV") == "1"
 app.config['SESSION_COOKIE_SECURE'] = not is_local
+# Trust one layer of proxy for the X-Forwarded headers
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# ensure external URLs are built with https://
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
