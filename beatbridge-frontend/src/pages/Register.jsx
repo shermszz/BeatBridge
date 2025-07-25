@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Register.css';
 import config from '../config';
+import googleIcon from '../styles/images/googleIcon.png';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -141,6 +142,33 @@ const Register = () => {
         <button className="btn btn-primary buttondeco" type="submit">
           Register
         </button>
+        <div style={{ margin: '24px 0 0 0', textAlign: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-google-auth"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              background: 'linear-gradient(90deg, #fff 0%, #f5f5f5 100%)',
+              color: '#444',
+              border: '1.5px solid #e0e0e0',
+              borderRadius: '7px',
+              fontWeight: 600,
+              fontSize: '1.08em',
+              padding: '12px 0',
+              margin: '0 auto',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(44,62,80,0.06)',
+              gap: '10px',
+            }}
+            onClick={() => window.location.href = `${config.API_BASE_URL}/api/google-login`}
+          >
+            <img src={googleIcon} alt="Google" style={{ width: 22, height: 22, marginRight: 8 }} />
+            Sign up with Google
+          </button>
+        </div>
         <hr className="register-divider" />
         <div className="login-redirect">
           <p>Already have an account?</p>

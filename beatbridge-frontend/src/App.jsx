@@ -26,6 +26,7 @@ import ProgressProtectedRoute from './components/ProgressProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
 import VerifyOTP from './pages/VerifyOTP';
 import ResetPassword from './pages/ResetPassword';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import './styles/App.css';
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
 
           {/* Page to gather user preferences after registration and email verification */}
           <Route path="/customisation" element={

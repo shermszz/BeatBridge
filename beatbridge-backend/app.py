@@ -634,30 +634,24 @@ If you did not create a BeatBridge account, please ignore this email.
 '''
     mail.send(msg) #Send the email
 
+FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:3000')
+
 @app.route('/api/google-login')
 def google_login():
-    # Find out what URL to hit for Google login
     google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
-
-    # Use library to construct the request for Google login
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
         scope=["openid", "email", "profile"],
     )
-    return jsonify({"auth_url": request_uri})
+    return redirect(request_uri)
 
 @app.route('/api/google-login/callback')
 def google_callback():
-    # Get authorization code Google sent back
     code = request.args.get("code")
-    
-    # Find out what URL to hit to get tokens
     google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
     token_endpoint = google_provider_cfg["token_endpoint"]
-
-    # Get tokens
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -670,52 +664,33 @@ def google_callback():
         data=body,
         auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
     ).json()
-
-    # Parse the tokens
     id_token_jwt = token_response['id_token']
-    
-    # Verify the token
     try:
         idinfo = id_token.verify_oauth2_token(
             id_token_jwt, google_requests.Request(), GOOGLE_CLIENT_ID
         )
     except ValueError:
-        return jsonify({"error": "Invalid Google token"}), 401
-
+        return redirect(f"{FRONTEND_BASE_URL}/login?error=google_auth_failed")
     google_id = idinfo['sub']
     email = idinfo['email']
     name = idinfo['name']
     picture = idinfo.get('picture')
-
-    # Check if user exists
     user = User.query.filter_by(google_id=google_id).first()
     if not user:
-        # Create new user
         user = User(
             username=name,
             email=email,
             google_id=google_id,
             profile_pic_url=picture,
-            is_verified=True,  # Google users are pre-verified
-            hash=generate_password_hash('google-oauth-user')  # Placeholder password
+            is_verified=True,
+            hash=generate_password_hash('google-oauth-user')
         )
         db.session.add(user)
         db.session.commit()
-
-    # Log in the user
     login_user(user)
     session['user_id'] = user.id
-
-    return jsonify({
-        "message": "Google login successful",
-        "token": user.generate_jwt_token(),
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "profile_pic_url": user.profile_pic_url
-        }
-    }), 200
+    token = user.generate_jwt_token()
+    return redirect(f"{FRONTEND_BASE_URL}/google-auth-success?token={token}")
 
 # --- Song Recommendation System (Last.fm Integration) ---
 
