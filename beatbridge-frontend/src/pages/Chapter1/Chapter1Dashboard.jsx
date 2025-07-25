@@ -27,7 +27,7 @@ export default function Chapter1Dashboard() {
   }, []);
 
   const links = [
-    { to: '/chapter1pg1', label: '1. Stick Control 1 (Quarter Notes)' },
+    { to: '/chapter1pg1', label: '1. Introduction to Stick Control 1 (Quarter Notes)' },
     { to: '/chapter1pg2', label: '2. Stick Control 1 Exercises' },
     { to: '/chapter1pg3', label: '3. Stick Control 2 (Eighth Notes)' },
     { to: '/chapter1pg4', label: '4. Stick Control 2 Exercises' },
