@@ -1,0 +1,108 @@
+/* AuthFlow.css - for Forgot Password, Verify OTP, and Reset Password pages */
+
+.authflow-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #23243a 0%, #3a3b5a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.authflow-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12), 0 1.5px 8px rgba(44, 62, 80, 0.08);
+  padding: 40px 32px 32px 32px;
+  max-width: 400px;
+  width: 100%;
+  margin: 32px auto;
+  text-align: center;
+  position: relative;
+}
+
+.authflow-card h1 {
+  color: #ff6f6f;
+  font-weight: 700;
+  margin-bottom: 18px;
+  font-size: 2.1em;
+  letter-spacing: 0.5px;
+}
+
+.authflow-card form {
+  margin-top: 12px;
+}
+
+.authflow-card .mb-3 {
+  margin-bottom: 22px;
+}
+
+.authflow-card input[type="email"],
+.authflow-card input[type="text"],
+.authflow-card input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-size: 1.08em;
+  background: #f8f9fa;
+  transition: border 0.2s, box-shadow 0.2s;
+  margin-bottom: 0;
+}
+.authflow-card input:focus {
+  border-color: #7b61ff;
+  outline: none;
+  box-shadow: 0 0 0 2px #e0e7ff;
+}
+
+.authflow-card .error-message, .authflow-card .success-message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  font-weight: 500;
+  text-align: center;
+  font-size: 1em;
+}
+.authflow-card .error-message {
+  color: #d32f2f;
+  background: #ffd6d6;
+}
+.authflow-card .success-message {
+  color: #388e3c;
+  background: #d0ffd6;
+}
+
+.authflow-card .btn {
+  width: 100%;
+  font-weight: 600;
+  font-size: 1.1em;
+  padding: 12px 0;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #7b61ff 0%, #5a4fff 100%);
+  border: none;
+  color: #fff;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(123, 97, 255, 0.08);
+  margin-bottom: 8px;
+}
+.authflow-card .btn:disabled {
+  background: #bdbdbd;
+  color: #fff;
+  cursor: not-allowed;
+}
+.authflow-card .btn:hover:not(:disabled),
+.authflow-card .btn:focus:not(:disabled) {
+  background: linear-gradient(90deg, #5a4fff 0%, #7b61ff 100%);
+  box-shadow: 0 4px 16px rgba(123, 97, 255, 0.13);
+}
+
+.authflow-card .authflow-link {
+  color: #7b61ff;
+  text-decoration: underline;
+  font-size: 0.98em;
+  margin-top: 18px;
+  display: inline-block;
+  transition: color 0.2s;
+}
+.authflow-card .authflow-link:hover {
+  color: #5a4fff;
+} 

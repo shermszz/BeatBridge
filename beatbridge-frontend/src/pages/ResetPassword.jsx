@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import '../styles/AuthFlow.css';
 import config from '../config';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
 
   if (!email) {
-    return <div>Email not provided. Please restart the password reset process.</div>;
+    return <div className="authflow-bg"><div className="authflow-card">Email not provided. Please restart the password reset process.</div></div>;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -31,7 +34,10 @@ const ResetPassword = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        navigate('/login', { state: { message: 'Password reset successful. Please log in.' } });
+        setSuccess('Password reset successful! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login', { state: { message: 'Password reset successful. Please log in.' } });
+        }, 1200);
       } else {
         setError(data.error || 'Failed to reset password.');
       }
@@ -42,35 +48,41 @@ const ResetPassword = () => {
   };
 
   return (
-    <section className="reset-password-section">
-      <h2>Reset Password</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <input
-            type="password"
-            className="form-control mx-auto w-auto inputdeco my-input"
-            placeholder="New password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <input
-            type="password"
-            className="form-control mx-auto w-auto inputdeco my-input"
-            placeholder="Confirm new password"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <div className="error-message">{error}</div>}
-        <button className="btn btn-primary buttondeco" type="submit" disabled={loading}>
-          {loading ? 'Resetting...' : 'Reset Password'}
-        </button>
-      </form>
-    </section>
+    <div className="authflow-bg">
+      <section className="authflow-card">
+        <h1>Reset Password</h1>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <input
+              type="password"
+              className="form-control mx-auto w-auto inputdeco my-input"
+              placeholder="New password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <input
+              type="password"
+              className="form-control mx-auto w-auto inputdeco my-input"
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
+          <button className="btn btn-primary buttondeco" type="submit" disabled={loading}>
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </button>
+          <div>
+            <a href="/login" className="authflow-link">Back to Login</a>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 };
 
