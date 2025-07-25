@@ -387,7 +387,7 @@ def login():
         user = User.query.filter((User.username == username) | (User.email == username)).first()
 
         # If user exists and is a Google user, block password login only if hash is the placeholder
-        if user and user.google_id and check_password_hash(user.hash, GOOGLE_PLACEHOLDER_PASSWORD):
+        if user and user.google_id and check_password_hash(user.hash, 'google-oauth-user'):
             return jsonify({"errors": {"general": "This account was created with Google. Please use 'Sign in with Google' to log in or set a password."}}), 403
 
         # Ensure username exists and password is correct
