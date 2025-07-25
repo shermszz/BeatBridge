@@ -253,6 +253,35 @@ const Profile = () => {
     }
   };
 
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    setSetPasswordMsg('');
+    if (newPassword !== confirmPassword) {
+      setSetPasswordMsg('Passwords do not match.');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/set-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ password: newPassword })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSetPasswordMsg('Password set successfully! You can now log in with your password.');
+        setShowSetPassword(false);
+      } else {
+        setSetPasswordMsg(data.error || 'Failed to set password.');
+      }
+    } catch (err) {
+      setSetPasswordMsg('Network error. Please try again.');
+    }
+  };
+
   const skillOptions = [
     { value: 'First-timer', description: 'I\'m new to my instrument' },
     { value: 'Beginner', description: 'I only know some basics' },

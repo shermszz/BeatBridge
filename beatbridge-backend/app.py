@@ -386,9 +386,9 @@ def login():
         # Query database for username or email
         user = User.query.filter((User.username == username) | (User.email == username)).first()
 
-        # If user exists and is a Google user, block password login
-        if user and user.google_id:
-            return jsonify({"errors": {"general": "This account was created with Google. Please use 'Sign in with Google' to log in."}}), 403
+        # If user exists and is a Google user, block password login only if hash is the placeholder
+        if user and user.google_id and check_password_hash(user.hash, GOOGLE_PLACEHOLDER_PASSWORD):
+            return jsonify({"errors": {"general": "This account was created with Google. Please use 'Sign in with Google' to log in or set a password."}}), 403
 
         # Ensure username exists and password is correct
         if user is None or not check_password_hash(user.hash, password):
@@ -1487,6 +1487,20 @@ def reset_password():
     # Clear OTP after successful reset
     user_otps.pop(email, None)
     return jsonify({'message': 'Password reset successful.'}), 200
+
+@app.route('/api/set-password', methods=['POST'])
+@jwt_required
+def set_password():
+    data = request.get_json()
+    new_password = data.get('password')
+    if not new_password:
+        return jsonify({'error': 'Password is required.'}), 400
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+    user.hash = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({'message': 'Password set successfully.'}), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
