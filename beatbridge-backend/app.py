@@ -51,6 +51,8 @@ app.config['SESSION_COOKIE_NAME'] = 'session'
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 is_local = os.environ.get("FLASK_ENV") == "development" or os.environ.get("LOCAL_DEV") == "1"
 app.config['SESSION_COOKIE_SECURE'] = not is_local
+# ensure external URLs are built with https://
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
