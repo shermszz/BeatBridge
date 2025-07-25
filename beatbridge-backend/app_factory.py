@@ -48,6 +48,21 @@ class User(UserMixin, db.Model):
         db.session.commit()
         return token
 
+class UserFavorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    song_name = db.Column(db.String(255), nullable=False)
+    artist_name = db.Column(db.String(255), nullable=False)
+    album_name = db.Column(db.String(255))
+    song_url = db.Column(db.String(255), nullable=False)
+    duration = db.Column(db.Integer)
+    album_image = db.Column(db.String(255))
+    rhythm_complexity = db.Column(db.Integer)
+    tempo_rating = db.Column(db.Integer)
+    skill_level = db.Column(db.String(50))
+    tags = db.Column(db.String(255))  # Comma-separated
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 def create_app():
     app = Flask(__name__)
     
@@ -72,7 +87,22 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Routes
+    def get_current_user():
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None, jsonify({'error': 'No token provided'}), 401
+        token = auth_header.split(' ')[1]
+        try:
+            data = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+            user = User.query.get(data['user_id'])
+            if not user:
+                return None, jsonify({'error': 'User not found'}), 404
+            return user, None, None
+        except jwt.ExpiredSignatureError:
+            return None, jsonify({'error': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return None, jsonify({'error': 'Invalid token'}), 401
+
     @app.route('/api/register', methods=['POST'])
     def register():
         data = request.get_json()
@@ -167,6 +197,71 @@ def create_app():
             return jsonify({'error': 'Token has expired'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'error': 'Invalid token'}), 401
+
+    @app.route('/api/favorites', methods=['POST'])
+    def add_favorite():
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        data = request.get_json()
+        required_fields = ['song_name', 'artist_name', 'song_url']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+        # Check for duplicate
+        existing = UserFavorite.query.filter_by(user_id=user.id, song_name=data['song_name'], artist_name=data['artist_name']).first()
+        if existing:
+            return jsonify({'error': 'Song already in favorites'}), 409
+        fav = UserFavorite(
+            user_id=user.id,
+            song_name=data['song_name'],
+            artist_name=data['artist_name'],
+            album_name=data.get('album_name'),
+            song_url=data['song_url'],
+            duration=data.get('duration'),
+            album_image=data.get('album_image'),
+            rhythm_complexity=data.get('rhythm_complexity'),
+            tempo_rating=data.get('tempo_rating'),
+            skill_level=data.get('skill_level'),
+            tags=','.join(data.get('tags', [])) if isinstance(data.get('tags'), list) else data.get('tags')
+        )
+        db.session.add(fav)
+        db.session.commit()
+        return jsonify({'id': fav.id}), 200
+
+    @app.route('/api/favorites', methods=['GET'])
+    def get_favorites():
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        favorites = UserFavorite.query.filter_by(user_id=user.id).order_by(UserFavorite.created_at.desc()).all()
+        return jsonify({'favorites': [
+            {
+                'id': f.id,
+                'song_name': f.song_name,
+                'artist_name': f.artist_name,
+                'album_name': f.album_name,
+                'song_url': f.song_url,
+                'duration': f.duration,
+                'album_image': f.album_image,
+                'rhythm_complexity': f.rhythm_complexity,
+                'tempo_rating': f.tempo_rating,
+                'skill_level': f.skill_level,
+                'tags': f.tags.split(',') if f.tags else [],
+                'created_at': f.created_at.isoformat()
+            } for f in favorites
+        ]}), 200
+
+    @app.route('/api/favorites/<int:favorite_id>', methods=['DELETE'])
+    def remove_favorite(favorite_id):
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        fav = UserFavorite.query.filter_by(id=favorite_id, user_id=user.id).first()
+        if not fav:
+            return jsonify({'error': 'Favorite not found'}), 404
+        db.session.delete(fav)
+        db.session.commit()
+        return jsonify({'message': 'Song removed from favorites'}), 200
 
     @app.route('/api/genres')
     def get_genres():
