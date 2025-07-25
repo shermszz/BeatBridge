@@ -4,4 +4,26 @@
   border: none;
   border-top: 1.5px solid #fff;
   opacity: 0.3;
+}
+.btn-google-auth {
+  background: #fff !important;
+  color: #444 !important;
+  border: 1.5px solid #e0e0e0 !important;
+  border-radius: 7px !important;
+  font-weight: 600 !important;
+  font-size: 1.08em !important;
+  padding: 12px 0 !important;
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.06) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-google-auth:hover, .btn-google-auth:focus {
+  background: #f5f5f5 !important;
+  color: #222 !important;
+  box-shadow: 0 4px 16px rgba(44,62,80,0.13) !important;
 } 

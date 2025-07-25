@@ -383,8 +383,12 @@ def login():
         if not password:
             return jsonify({"errors": {"password": "Must provide password"}}), 400
 
-        # Query database for username
-        user = User.query.filter_by(username=username).first()
+        # Query database for username or email
+        user = User.query.filter((User.username == username) | (User.email == username)).first()
+
+        # If user exists and is a Google user, block password login
+        if user and user.google_id:
+            return jsonify({"errors": {"general": "This account was created with Google. Please use 'Sign in with Google' to log in."}}), 403
 
         # Ensure username exists and password is correct
         if user is None or not check_password_hash(user.hash, password):
@@ -691,7 +695,6 @@ def google_callback():
         )
         db.session.add(user)
         db.session.commit()
-    login_user(user)
     session['user_id'] = user.id
     token = user.generate_jwt_token()
     return redirect(f"{FRONTEND_BASE_URL}/google-auth-success?token={token}")

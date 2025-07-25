@@ -142,27 +142,10 @@ const Register = () => {
         <button className="btn btn-primary buttondeco" type="submit">
           Register
         </button>
-        <div style={{ margin: '24px 0 0 0', textAlign: 'center' }}>
+        <div className="google-auth-center">
           <button
             type="button"
             className="btn btn-google-auth"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              background: 'linear-gradient(90deg, #fff 0%, #f5f5f5 100%)',
-              color: '#444',
-              border: '1.5px solid #e0e0e0',
-              borderRadius: '7px',
-              fontWeight: 600,
-              fontSize: '1.08em',
-              padding: '12px 0',
-              margin: '0 auto',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(44,62,80,0.06)',
-              gap: '10px',
-            }}
             onClick={() => window.location.href = `${config.API_BASE_URL}/api/google-login`}
           >
             <img src={googleIcon} alt="Google" style={{ width: 22, height: 22, marginRight: 8 }} />
