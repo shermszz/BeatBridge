@@ -184,7 +184,7 @@ const Login = () => {
         </a>
       </div>
       <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '16px' }}>
-        <a href="/forgot-password" style={{ textDecoration: 'underline', color: '#007bff', cursor: 'pointer' }}>
+        <a href="/forgot-password" style={{ textDecoration: 'underline', color: '#17a2b8', cursor: 'pointer' }}>
           Forgot password?
         </a>
       </div>

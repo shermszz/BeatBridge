@@ -654,6 +654,21 @@ def google_login():
     )
     return redirect(request_uri)
 
+def make_unique_username(desired_name):
+    """
+    Turn "Sherman Tan" → "ShermanTan", then if that already exists
+    try "ShermanTan1", "ShermanTan2", … until it's unique.
+    """
+    base = desired_name.replace(" ", "")
+    candidate = base
+    suffix = 1
+
+    while User.query.filter_by(username=candidate).first():
+        candidate = f"{base}{suffix}"
+        suffix += 1
+
+    return candidate
+
 @app.route('/api/google-login/callback')
 def google_callback():
     code = request.args.get("code")
@@ -679,14 +694,26 @@ def google_callback():
         )
     except ValueError:
         return redirect(f"{FRONTEND_BASE_URL}/login?error=google_auth_failed")
+    
     google_id = idinfo['sub']
     email = idinfo['email']
     name = idinfo['name']
     picture = idinfo.get('picture')
+
     user = User.query.filter_by(google_id=google_id).first()
+
     if not user:
+        # Try to find user by email first
+        user = User.query.filter_by(email=email).first()
+    if user:
+        #If we found their email, link their Google ID to that account
+        if not user.google_id:
+            user.google_id = google_id
+    else:
+        # Brand new user, pick a unique username from their name
+        unique_username = make_unique_username(name or email.split('@')[0])
         user = User(
-            username=name,
+            username=unique_username,
             email=email,
             google_id=google_id,
             profile_pic_url=picture,
@@ -694,8 +721,8 @@ def google_callback():
             hash=generate_password_hash('google-oauth-user')
         )
         db.session.add(user)
-        db.session.commit()
-    session['user_id'] = user.id
+    db.session.commit()
+    login_user(user)
     token = user.generate_jwt_token()
     return redirect(f"{FRONTEND_BASE_URL}/google-auth-success?token={token}")
 
