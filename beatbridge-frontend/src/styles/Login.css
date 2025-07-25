@@ -4,4 +4,28 @@
   border: none;
   border-top: 1.5px solid #fff;
   opacity: 0.3;
+}
+
+.forgot-password-section,
+.verify-otp-section,
+.reset-password-section {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.forgot-password-link a {
+  text-decoration: underline;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin-bottom: 12px;
+  font-size: 0.95em;
 } 

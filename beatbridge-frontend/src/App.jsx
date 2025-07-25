@@ -23,6 +23,9 @@ import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
 import SharedLoops from './pages/SharedLoops';
 import ProgressProtectedRoute from './components/ProgressProtectedRoute';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyOTP from './pages/VerifyOTP';
+import ResetPassword from './pages/ResetPassword';
 import './styles/App.css';
 
 function App() {
@@ -47,6 +50,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailVerification />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Page to gather user preferences after registration and email verification */}
           <Route path="/customisation" element={

@@ -155,6 +155,11 @@ const Login = () => {
           Sign up
         </a>
       </div>
+      <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '16px' }}>
+        <a href="/forgot-password" style={{ textDecoration: 'underline', color: '#007bff', cursor: 'pointer' }}>
+          Forgot password?
+        </a>
+      </div>
     </form>
   </section>
   );

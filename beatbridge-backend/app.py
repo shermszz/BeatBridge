@@ -204,6 +204,9 @@ class User(db.Model):
         }
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
 
+    def set_password(self, password):
+        self.hash = generate_password_hash(password, method='pbkdf2:sha256')
+
 class UserCustomization(db.Model):
     __tablename__ = 'user_customizations'
     id = db.Column(db.Integer, primary_key=True)
@@ -1422,6 +1425,59 @@ def reject_shared_loops(share_id):
         db.session.rollback()
         print(f"Error rejecting shared loops: {str(e)}")
         return jsonify({'error': 'Failed to reject shared loops'}), 500
+
+# In-memory store for OTPs (for demo; use persistent store in production)
+user_otps = {}
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'This email address does not exist. Try signing up instead.'}), 404
+    # Generate OTP
+    otp = str(random.randint(100000, 999999))
+    user_otps[email] = otp
+    # Send OTP email
+    msg = Message('Your BeatBridge Password Reset OTP', sender=app.config['MAIL_USERNAME'], recipients=[email])
+    msg.body = f'Your OTP for password reset is: {otp}\nIf you did not request this, please ignore this email.'
+    mail.send(msg)
+    return jsonify({'message': 'OTP sent to your email.'}), 200
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    email = data.get('email')
+    otp = data.get('otp')
+    if not email or not otp:
+        return jsonify({'error': 'Email and OTP are required'}), 400
+    if user_otps.get(email) == otp:
+        # Mark OTP as verified (could set a flag or just allow password reset)
+        user_otps[email] = 'VERIFIED'
+        return jsonify({'message': 'OTP verified. You may now reset your password.'}), 200
+    else:
+        return jsonify({'error': 'Invalid OTP'}), 400
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    email = data.get('email')
+    new_password = data.get('password')
+    if not email or not new_password:
+        return jsonify({'error': 'Email and new password are required'}), 400
+    if user_otps.get(email) != 'VERIFIED':
+        return jsonify({'error': 'OTP not verified for this email.'}), 403
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    user.set_password(new_password)
+    db.session.commit()
+    # Clear OTP after successful reset
+    user_otps.pop(email, None)
+    return jsonify({'message': 'Password reset successful.'}), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
