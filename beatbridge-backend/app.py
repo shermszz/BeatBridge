@@ -5,6 +5,8 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 import os
+#Only for local development on http://localhost
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from datetime import datetime, timedelta
 from tempfile import mkdtemp
@@ -638,11 +640,12 @@ FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:3000')
 
 @app.route('/api/google-login')
 def google_login():
-    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+    redirect_uri = url_for('google_callback', _external=True)
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
-        redirect_uri=request.base_url + "/callback",
+        redirect_uri=redirect_uri,
         scope=["openid", "email", "profile"],
     )
     return redirect(request_uri)
@@ -650,15 +653,16 @@ def google_login():
 @app.route('/api/google-login/callback')
 def google_callback():
     code = request.args.get("code")
-    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     token_endpoint = google_provider_cfg["token_endpoint"]
+    redirect_uri = url_for('google_callback', _external=True)
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
-        redirect_url=request.base_url,
+        redirect_url=redirect_uri,
         code=code
     )
-    token_response = google_requests.post(
+    token_response = requests.post(
         token_url,
         headers=headers,
         data=body,
