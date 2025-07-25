@@ -39,14 +39,17 @@
 .authflow-card input[type="email"],
 .authflow-card input[type="text"],
 .authflow-card input[type="password"] {
+  display: block;
+  margin: 0 auto 0 auto;
   width: 100%;
+  max-width: 100%;
   padding: 12px 14px;
   border: 1.5px solid #e0e0e0;
   border-radius: 7px;
   font-size: 1.08em;
   background: #f8f9fa;
   transition: border 0.2s, box-shadow 0.2s;
-  margin-bottom: 0;
+  box-sizing: border-box;
 }
 .authflow-card input:focus {
   border-color: #7b61ff;
