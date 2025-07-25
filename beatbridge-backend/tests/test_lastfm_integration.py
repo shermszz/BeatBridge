@@ -118,7 +118,7 @@ class TestLastFMIntegration:
         assert response.status_code == 400
         data = json.loads(response.data)
         assert 'error' in data
-        assert data['error'] == 'Please select at least one genre'
+        assert data['error'] == 'No genres selected'
 
     @patch('requests.get')
     def test_recommend_song_api_error(self, mock_get, test_client):
