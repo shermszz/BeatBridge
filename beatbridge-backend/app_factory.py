@@ -63,6 +63,15 @@ class UserFavorite(db.Model):
     tags = db.Column(db.String(255))  # Comma-separated
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class UserCustomization(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    skill_level = db.Column(db.String(50), nullable=False)
+    practice_frequency = db.Column(db.String(50), nullable=False)
+    favorite_genres = db.Column(db.String(500), nullable=False)  # Comma-separated
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 def create_app():
     app = Flask(__name__)
     
@@ -262,6 +271,52 @@ def create_app():
         db.session.delete(fav)
         db.session.commit()
         return jsonify({'message': 'Song removed from favorites'}), 200
+
+    @app.route('/api/save-customization', methods=['POST'])
+    def save_customization():
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        data = request.get_json()
+        errors = {}
+        if not data.get('skill_level'):
+            errors['skill'] = 'Please select your skill level'
+        if not data.get('practice_frequency'):
+            errors['practice'] = 'Please select your practice frequency'
+        if not data.get('favorite_genres') or not isinstance(data.get('favorite_genres'), list) or len(data.get('favorite_genres')) == 0:
+            errors['genres'] = 'Please select at least one genre'
+        if errors:
+            return jsonify({'errors': errors}), 400
+        # Update or create customization
+        customization = UserCustomization.query.filter_by(user_id=user.id).first()
+        if customization:
+            customization.skill_level = data['skill_level']
+            customization.practice_frequency = data['practice_frequency']
+            customization.favorite_genres = ','.join(data['favorite_genres'])
+        else:
+            customization = UserCustomization(
+                user_id=user.id,
+                skill_level=data['skill_level'],
+                practice_frequency=data['practice_frequency'],
+                favorite_genres=','.join(data['favorite_genres'])
+            )
+            db.session.add(customization)
+        db.session.commit()
+        return jsonify({'message': 'Customization saved successfully'}), 200
+
+    @app.route('/api/get-customization', methods=['GET'])
+    def get_customization():
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        customization = UserCustomization.query.filter_by(user_id=user.id).first()
+        if not customization:
+            return jsonify({'error': 'No customization found'}), 404
+        return jsonify({
+            'skill_level': customization.skill_level,
+            'practice_frequency': customization.practice_frequency,
+            'favorite_genres': customization.favorite_genres.split(',')
+        }), 200
 
     @app.route('/api/genres')
     def get_genres():
