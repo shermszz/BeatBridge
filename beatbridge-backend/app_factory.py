@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, UTC
 import os
 from dotenv import load_dotenv
 import requests
+import json as _json
 
 # Load environment variables
 load_dotenv()
@@ -69,6 +70,19 @@ class UserCustomization(db.Model):
     skill_level = db.Column(db.String(50), nullable=False)
     practice_frequency = db.Column(db.String(50), nullable=False)
     favorite_genres = db.Column(db.String(500), nullable=False)  # Comma-separated
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class JamSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    pattern_json = db.Column(db.Text, nullable=False)  # Store as JSON string
+    is_public = db.Column(db.Boolean, default=True)
+    instruments_json = db.Column(db.Text)  # Store as JSON string
+    time_signature = db.Column(db.String(20))
+    note_resolution = db.Column(db.String(20))
+    bpm = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -380,5 +394,121 @@ def create_app():
             
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/jam-sessions', methods=['POST'])
+    def create_jam_session():
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        data = request.get_json()
+        title = data.get('title')
+        pattern_json = data.get('pattern_json')
+        if not title or pattern_json is None:
+            return jsonify({'error': 'Title and pattern are required'}), 400
+        jam = JamSession(
+            user_id=user.id,
+            title=title,
+            pattern_json=_json.dumps(pattern_json),
+            is_public=data.get('is_public', True),
+            instruments_json=_json.dumps(data.get('instruments_json')) if data.get('instruments_json') is not None else None,
+            time_signature=data.get('time_signature'),
+            note_resolution=data.get('note_resolution'),
+            bpm=data.get('bpm')
+        )
+        db.session.add(jam)
+        db.session.commit()
+        return jsonify({'message': 'Jam session created', 'jam_id': jam.id}), 201
+
+    @app.route('/api/jam-sessions/<int:jam_id>', methods=['PUT'])
+    def update_jam_session(jam_id):
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        data = request.get_json()
+        jam = JamSession.query.filter_by(id=jam_id, user_id=user.id).first()
+        if not jam:
+            return jsonify({'error': 'Jam session not found or you do not have permission to update it'}), 404
+        title = data.get('title')
+        pattern_json = data.get('pattern_json')
+        if not title or pattern_json is None:
+            return jsonify({'error': 'Title and pattern are required'}), 400
+        jam.title = title
+        jam.pattern_json = _json.dumps(pattern_json)
+        jam.is_public = data.get('is_public', True)
+        jam.instruments_json = _json.dumps(data.get('instruments_json')) if data.get('instruments_json') is not None else None
+        jam.time_signature = data.get('time_signature')
+        jam.note_resolution = data.get('note_resolution')
+        jam.bpm = data.get('bpm')
+        db.session.commit()
+        return jsonify({'message': 'Jam session updated'}), 200
+
+    @app.route('/api/jam-sessions/<int:jam_id>', methods=['GET'])
+    def get_jam_session(jam_id):
+        jam = JamSession.query.get(jam_id)
+        if not jam:
+            return jsonify({'error': 'Jam session not found'}), 404
+        return jsonify({
+            'id': jam.id,
+            'user_id': jam.user_id,
+            'title': jam.title,
+            'pattern_json': _json.loads(jam.pattern_json),
+            'is_public': jam.is_public,
+            'instruments_json': _json.loads(jam.instruments_json) if jam.instruments_json else None,
+            'time_signature': jam.time_signature,
+            'note_resolution': jam.note_resolution,
+            'bpm': jam.bpm,
+            'created_at': jam.created_at.isoformat(),
+            'updated_at': jam.updated_at.isoformat() if jam.updated_at else None
+        }), 200
+
+    @app.route('/api/jam-sessions/<int:jam_id>', methods=['DELETE'])
+    def delete_jam_session(jam_id):
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+        jam = JamSession.query.filter_by(id=jam_id, user_id=user.id).first()
+        if not jam:
+            return jsonify({'error': 'Jam session not found or you do not have permission to delete it'}), 404
+        db.session.delete(jam)
+        db.session.commit()
+        return jsonify({'message': 'Jam session deleted successfully'}), 200
+
+    @app.route('/api/jam-sessions/user/<int:user_id>', methods=['GET'])
+    def get_user_jam_sessions(user_id):
+        jams = JamSession.query.filter_by(user_id=user_id).order_by(JamSession.created_at.desc()).all()
+        return jsonify([
+            {
+                'id': jam.id,
+                'user_id': jam.user_id,
+                'title': jam.title,
+                'pattern_json': _json.loads(jam.pattern_json),
+                'is_public': jam.is_public,
+                'instruments_json': _json.loads(jam.instruments_json) if jam.instruments_json else None,
+                'time_signature': jam.time_signature,
+                'note_resolution': jam.note_resolution,
+                'bpm': jam.bpm,
+                'created_at': jam.created_at.isoformat(),
+                'updated_at': jam.updated_at.isoformat() if jam.updated_at else None
+            } for jam in jams
+        ]), 200
+
+    @app.route('/api/jam-sessions/explore', methods=['GET'])
+    def explore_jam_sessions():
+        jams = JamSession.query.filter_by(is_public=True).order_by(JamSession.created_at.desc()).all()
+        return jsonify([
+            {
+                'id': jam.id,
+                'user_id': jam.user_id,
+                'title': jam.title,
+                'pattern_json': _json.loads(jam.pattern_json),
+                'is_public': jam.is_public,
+                'instruments_json': _json.loads(jam.instruments_json) if jam.instruments_json else None,
+                'time_signature': jam.time_signature,
+                'note_resolution': jam.note_resolution,
+                'bpm': jam.bpm,
+                'created_at': jam.created_at.isoformat(),
+                'updated_at': jam.updated_at.isoformat() if jam.updated_at else None
+            } for jam in jams
+        ]), 200
 
     return app 
