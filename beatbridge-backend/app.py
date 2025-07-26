@@ -1225,6 +1225,13 @@ def explore_jam_sessions():
 def delete_jam_session(jam_id):
     user_id = request.user_id
     try:
+        # Prevent deletion if this jam session is referenced as a parent by any other jam session
+        child = db.session.execute(text("""
+            SELECT id FROM jam_sessions WHERE parent_jam_id = :jam_id
+        """), {'jam_id': jam_id}).first()
+        if child:
+            return jsonify({'error': 'This jam session is referenced by other users and cannot be deleted.'}), 400
+
         # Make sure the jam belongs to the user trying to delete it
         result = db.session.execute(text("""
             DELETE FROM jam_sessions
