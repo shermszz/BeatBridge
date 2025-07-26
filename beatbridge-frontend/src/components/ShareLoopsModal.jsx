@@ -3,6 +3,8 @@ import config from '../config';
 import '../styles/ShareLoopsModal.css';
 
 const ShareLoopsModal = ({ isOpen, onClose, myJams, onShare }) => {
+  //filter out any “new” or string IDs; only keep actual numeric PKs
+  const realJams = myJams.filter(j => Number.isInteger(j.id));
   const [selectedLoops, setSelectedLoops] = useState([]);
   const [shareLink, setShareLink] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -83,7 +85,7 @@ const ShareLoopsModal = ({ isOpen, onClose, myJams, onShare }) => {
         </p>
         
         <div className="loops-list">
-          {myJams.map(jam => (
+          {realJams.map(jam => (
             <div key={jam.id} className="loop-item">
               <label className="loop-checkbox">
                 <input

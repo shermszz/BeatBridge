@@ -1291,7 +1291,7 @@ def create_shared_loops():
         # Create shared loops record with explicit array casting
         result = db.session.execute(text("""
             INSERT INTO shared_loops (share_id, sender_id, jam_session_ids)
-            VALUES (:share_id, :sender_id, :jam_session_ids::integer[])
+            VALUES (:share_id, :sender_id, :jam_session_ids)
             RETURNING id
         """), {
             'share_id': share_id,
