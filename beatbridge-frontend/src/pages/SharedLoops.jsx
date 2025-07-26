@@ -140,13 +140,19 @@ const SharedLoops = () => {
       <div className="shared-loops-container">
         <div className="shared-loops-card">
           <h2 className="shared-loops-title">Shared Loops</h2>
-          <p>Please log in to view and accept these shared loops.</p>
+          <p className="login-info">
+            Someone has shared some amazing drum loops with you! To view and accept these shared loops, 
+            you'll need to log in to your BeatBridge account first.
+          </p>
           <button 
             className="login-button"
             onClick={() => navigate('/login', { state: { redirectTo: `/shared-loops/${shareId}` } })}
           >
             Log In
           </button>
+          <p className="signup-prompt">
+            Don't have an account yet? <span className="signup-link" onClick={() => navigate('/register')}>Sign up here</span>
+          </p>
         </div>
       </div>
     );
