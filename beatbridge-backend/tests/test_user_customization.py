@@ -10,6 +10,8 @@ class TestUserCustomization:
     - Managing practice frequency preferences
     - Handling favorite genres
     - Error cases and validation
+    - Authentication and security
+    - Data integrity and edge cases
     """
     
     def test_save_customization_success(self, test_client):
@@ -205,4 +207,203 @@ class TestUserCustomization:
         assert data['skill_level'] == 'Intermediate'
         assert data['practice_frequency'] == 'Weekly'
         assert 'jazz' in data['favorite_genres']
-        assert 'classical' in data['favorite_genres'] 
+        assert 'classical' in data['favorite_genres']
+
+    def test_save_customization_authentication_required(self, test_client):
+        """Test that saving customization requires proper authentication"""
+        # Test without authentication
+        response = test_client.post('/api/save-customization',
+                                  json={
+                                      'skill_level': 'Beginner',
+                                      'practice_frequency': 'Daily',
+                                      'favorite_genres': ['rock']
+                                  })
+        
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert data['error'] == 'No token provided'
+
+        # Test with invalid token
+        response = test_client.post('/api/save-customization',
+                                  headers={'Authorization': 'Bearer invalid_token'},
+                                  json={
+                                      'skill_level': 'Beginner',
+                                      'practice_frequency': 'Daily',
+                                      'favorite_genres': ['rock']
+                                  })
+        
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'Invalid token' in data['error']
+
+    def test_get_customization_authentication_required(self, test_client):
+        """Test that getting customization requires proper authentication"""
+        # Test without authentication
+        response = test_client.get('/api/get-customization')
+        
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert data['error'] == 'No token provided'
+
+        # Test with invalid token
+        response = test_client.get('/api/get-customization',
+                                 headers={'Authorization': 'Bearer invalid_token'})
+        
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'Invalid token' in data['error']
+
+    def test_save_customization_invalid_data_types(self, test_client):
+        """Test handling of invalid data types in customization requests"""
+        # Setup user and get token
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+        
+        # Test with genres as string instead of array
+        response = test_client.post('/api/save-customization',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'skill_level': 'Beginner',
+                                      'practice_frequency': 'Daily',
+                                      'favorite_genres': 'rock'  # Should be array
+                                  })
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'genres' in data['errors']
+
+        # Test with null values
+        response = test_client.post('/api/save-customization',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'skill_level': None,
+                                      'practice_frequency': 'Daily',
+                                      'favorite_genres': ['rock']
+                                  })
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'skill' in data['errors']
+
+    def test_save_customization_multiple_genres(self, test_client):
+        """Test saving customization with multiple genres and verify data integrity"""
+        # Setup user and get token
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+        
+        # Save customization with multiple genres
+        genres = ['rock', 'jazz', 'classical', 'electronic', 'hip-hop']
+        response = test_client.post('/api/save-customization',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'skill_level': 'Advanced',
+                                      'practice_frequency': 'Daily',
+                                      'favorite_genres': genres
+                                  })
+        
+        assert response.status_code == 200
+        
+        # Verify all genres are saved correctly
+        get_response = test_client.get('/api/get-customization',
+                                     headers={'Authorization': f'Bearer {token}'})
+        data = json.loads(get_response.data)
+        assert data['skill_level'] == 'Advanced'
+        assert data['practice_frequency'] == 'Daily'
+        assert len(data['favorite_genres']) == len(genres)
+        for genre in genres:
+            assert genre in data['favorite_genres']
+
+    def test_customization_data_persistence(self, test_client):
+        """Test that customization data persists across multiple operations"""
+        # Setup user and get token
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+        
+        # Initial customization
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Beginner',
+                            'practice_frequency': 'Weekly',
+                            'favorite_genres': ['rock']
+                        })
+        
+        # Verify initial data
+        response = test_client.get('/api/get-customization',
+                                 headers={'Authorization': f'Bearer {token}'})
+        data = json.loads(response.data)
+        assert data['skill_level'] == 'Beginner'
+        assert data['practice_frequency'] == 'Weekly'
+        assert data['favorite_genres'] == ['rock']
+        
+        # Update only skill level
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Intermediate',
+                            'practice_frequency': 'Weekly',
+                            'favorite_genres': ['rock']
+                        })
+        
+        # Verify skill level updated, others unchanged
+        response = test_client.get('/api/get-customization',
+                                 headers={'Authorization': f'Bearer {token}'})
+        data = json.loads(response.data)
+        assert data['skill_level'] == 'Intermediate'
+        assert data['practice_frequency'] == 'Weekly'
+        assert data['favorite_genres'] == ['rock']
+        
+        # Update only genres
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Intermediate',
+                            'practice_frequency': 'Weekly',
+                            'favorite_genres': ['jazz', 'classical']
+                        })
+        
+        # Verify genres updated, others unchanged
+        response = test_client.get('/api/get-customization',
+                                 headers={'Authorization': f'Bearer {token}'})
+        data = json.loads(response.data)
+        assert data['skill_level'] == 'Intermediate'
+        assert data['practice_frequency'] == 'Weekly'
+        assert data['favorite_genres'] == ['jazz', 'classical'] 
