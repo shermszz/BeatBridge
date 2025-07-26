@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
@@ -23,6 +23,15 @@ cors = CORS()
 # JWT Configuration
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
 JWT_EXPIRATION_DELTA = timedelta(days=1)
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'test-client-id')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', 'test-client-secret')
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')
+GOOGLE_PLACEHOLDER_PASSWORD = 'google-oauth-user'
+
+# In-memory OTP storage for password reset
+user_otps = {}
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -160,9 +169,19 @@ def create_app():
     @app.route('/api/login', methods=['POST'])
     def login():
         data = request.get_json()
-        user = User.query.filter_by(username=data['username']).first()
+        username_or_email = data.get('username')
+        password = data.get('password')
         
-        if user and user.check_password(data['password']):
+        # Try to find user by username or email
+        user = User.query.filter_by(username=username_or_email).first()
+        if not user:
+            user = User.query.filter_by(email=username_or_email).first()
+        
+        if user and user.check_password(password):
+            # Check if this is a Google user with placeholder password
+            if user.google_id and user.check_password(GOOGLE_PLACEHOLDER_PASSWORD):
+                return jsonify({'error': 'This account was created with Google. Please "Sign in with Google" to log in.'}), 401
+            
             login_user(user)
             
             # Generate JWT token
@@ -510,5 +529,171 @@ def create_app():
                 'updated_at': jam.updated_at.isoformat() if jam.updated_at else None
             } for jam in jams
         ]), 200
+
+    # Helper function to make unique usernames for Google users
+    def make_unique_username(base_name):
+        """Generate a unique username by appending numbers if needed"""
+        username = base_name
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_name}{counter}"
+            counter += 1
+        return username
+
+    @app.route('/api/forgot-password', methods=['POST'])
+    def forgot_password():
+        """Send OTP to user's email for password reset"""
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'Email not found. Please sign up instead.'}), 404
+            
+        # Generate OTP
+        import random
+        otp = str(random.randint(100000, 999999))
+        user_otps[email] = otp
+        
+        # Send email with OTP (mock for testing)
+        try:
+            msg = Message('Password Reset OTP',
+                         sender='noreply@beatbridge.com',
+                         recipients=[email])
+            msg.body = f'Your OTP for password reset is: {otp}'
+            mail.send(msg)
+            return jsonify({'message': 'OTP sent to your email'}), 200
+        except Exception as e:
+            return jsonify({'error': 'Failed to send OTP'}), 500
+
+    @app.route('/api/verify-otp', methods=['POST'])
+    def verify_otp():
+        """Verify OTP for password reset"""
+        data = request.get_json()
+        email = data.get('email')
+        otp = data.get('otp')
+        
+        if not email or not otp:
+            return jsonify({'error': 'Email and OTP are required'}), 400
+            
+        stored_otp = user_otps.get(email)
+        if not stored_otp or stored_otp != otp:
+            return jsonify({'error': 'Invalid OTP'}), 400
+            
+        # Remove OTP after successful verification
+        del user_otps[email]
+        return jsonify({'message': 'OTP verified successfully'}), 200
+
+    @app.route('/api/reset-password', methods=['POST'])
+    def reset_password():
+        """Reset user password after OTP verification"""
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password are required'}), 400
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        user.set_password(password)
+        db.session.commit()
+        return jsonify({'message': 'Password reset successfully'}), 200
+
+    @app.route('/api/google-login')
+    def google_login():
+        """Redirect to Google OAuth"""
+        from oauthlib.oauth2 import WebApplicationClient
+        client = WebApplicationClient(GOOGLE_CLIENT_ID)
+        request_uri = client.prepare_request_uri(
+            'https://accounts.google.com/o/oauth2/v2/auth',
+            redirect_uri=f'{FRONTEND_BASE_URL}/api/google-login/callback',
+            scope=['openid', 'email', 'profile'],
+        )
+        return redirect(request_uri)
+
+    @app.route('/api/google-login/callback')
+    def google_login_callback():
+        """Handle Google OAuth callback"""
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        
+        # Get authorization code from request
+        code = request.args.get('code')
+        if not code:
+            return redirect(f'{FRONTEND_BASE_URL}/login?error=google_auth_failed')
+            
+        try:
+            # Mock Google token verification for testing
+            # In production, this would exchange code for tokens and verify with Google
+            mock_user_info = {
+                'sub': 'google_user_123',
+                'email': 'test@gmail.com',
+                'name': 'Test User',
+                'given_name': 'Test',
+                'family_name': 'User'
+            }
+            
+            google_id = mock_user_info['sub']
+            email = mock_user_info['email']
+            name = mock_user_info['name']
+            
+            # Check if user exists by google_id
+            user = User.query.filter_by(google_id=google_id).first()
+            
+            if not user:
+                # Check if user exists by email
+                user = User.query.filter_by(email=email).first()
+                
+                if user:
+                    # Link existing user with Google
+                    user.google_id = google_id
+                    db.session.commit()
+                else:
+                    # Create new user
+                    username = make_unique_username(name.replace(' ', '').lower())
+                    user = User(
+                        username=username,
+                        email=email,
+                        google_id=google_id,
+                        is_verified=True
+                    )
+                    user.set_password(GOOGLE_PLACEHOLDER_PASSWORD)
+                    db.session.add(user)
+                    db.session.commit()
+            
+            # Generate JWT token
+            token = jwt.encode(
+                {'user_id': user.id, 'exp': datetime.now(UTC) + JWT_EXPIRATION_DELTA},
+                JWT_SECRET_KEY,
+                algorithm='HS256'
+            )
+            
+            return redirect(f'{FRONTEND_BASE_URL}/google-auth-success?token={token}')
+            
+        except Exception as e:
+            return redirect(f'{FRONTEND_BASE_URL}/login?error=google_auth_failed')
+
+    @app.route('/api/set-password', methods=['POST'])
+    def set_password():
+        """Allow authenticated users to set a new password"""
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+            
+        data = request.get_json()
+        new_password = data.get('new_password')
+        
+        if not new_password:
+            return jsonify({'error': 'New password is required'}), 400
+            
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({'message': 'Password set successfully'}), 200
 
     return app 
