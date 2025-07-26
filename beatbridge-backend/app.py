@@ -1225,6 +1225,13 @@ def explore_jam_sessions():
 def delete_jam_session(jam_id):
     user_id = request.user_id
     try:
+        # Prevent deletion if this jam session is referenced as a parent by any other jam session
+        child = db.session.execute(text("""
+            SELECT id FROM jam_sessions WHERE parent_jam_id = :jam_id
+        """), {'jam_id': jam_id}).first()
+        if child:
+            return jsonify({'error': 'This jam session is referenced by other users and cannot be deleted.'}), 400
+
         # Make sure the jam belongs to the user trying to delete it
         result = db.session.execute(text("""
             DELETE FROM jam_sessions
@@ -1385,7 +1392,7 @@ def accept_shared_loops(share_id):
         # Check if user has already accepted this share
         existing = db.session.execute(text("""
             SELECT id FROM shared_loop_notifications 
-            WHERE recipient_id = :user_id AND share_id = :share_id
+            WHERE recipient_id = :recipient_id AND share_id = :share_id
         """), {
             'recipient_id': user_id,
             'share_id': share_id
