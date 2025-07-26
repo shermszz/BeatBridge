@@ -3,7 +3,7 @@ import config from '../config';
 import '../styles/ShareLoopsModal.css';
 
 const ShareLoopsModal = ({ isOpen, onClose, myJams, onShare }) => {
-  //filter out any “new” or string IDs; only keep actual numeric PKs
+  //filter out any "new" or string IDs; only keep actual numeric PKs
   const realJams = myJams.filter(j => Number.isInteger(j.id));
   const [selectedLoops, setSelectedLoops] = useState([]);
   const [shareLink, setShareLink] = useState('');
@@ -11,6 +11,9 @@ const ShareLoopsModal = ({ isOpen, onClose, myJams, onShare }) => {
   const [error, setError] = useState('');
 
   const handleToggleLoop = (jamId) => {
+    // Don't allow selection if a link has already been generated
+    if (shareLink) return;
+    
     setSelectedLoops(prev => {
       if (prev.includes(jamId)) {
         return prev.filter(id => id !== jamId);
@@ -72,56 +75,79 @@ const ShareLoopsModal = ({ isOpen, onClose, myJams, onShare }) => {
       });
   };
 
+  const handleClose = () => {
+    // Reset state when closing
+    setSelectedLoops([]);
+    setShareLink('');
+    setError('');
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="share-modal-overlay">
       <div className="share-modal">
-        <button className="close-button" onClick={onClose}>&times;</button>
+        <button className="close-button" onClick={handleClose}>&times;</button>
         <h2>Share Loops</h2>
-        <p className="description-text">
-          Share your beats with others! You can select one or more tracks below to generate a shareable link. 
-          Recipients will be able to view and play your selected tracks.
-        </p>
         
-        <div className="loops-list">
-          {realJams.map(jam => (
-            <div key={jam.id} className="loop-item">
-              <label className="loop-checkbox">
-                <input
-                  type="checkbox"
-                  checked={selectedLoops.includes(jam.id)}
-                  onChange={() => handleToggleLoop(jam.id)}
-                />
-                <span className="loop-title">{jam.title}</span>
-              </label>
-            </div>
-          ))}
-        </div>
-
-        {error && <p className="error-message">{error}</p>}
-
         {!shareLink ? (
-          <button 
-            className="generate-link-button"
-            onClick={handleGenerateLink}
-            disabled={isGenerating || selectedLoops.length === 0}
-          >
-            {isGenerating ? 'Generating...' : 'Generate Share Link'}
-          </button>
-        ) : (
-          <div className="share-link-container">
-            <input
-              id="share-link"
-              type="text"
-              value={shareLink}
-              readOnly
-              className="share-link-input"
-            />
-            <button className="copy-link-button" onClick={handleCopyLink}>
-              Copy Link
+          <>
+            <p className="description-text">
+              Share your beats with others! You can select one or more tracks below to generate a shareable link. 
+              Recipients will be able to view and play your selected tracks.
+            </p>
+            
+            <div className="loops-list">
+              {realJams.map(jam => (
+                <div key={jam.id} className="loop-item">
+                  <label className="loop-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedLoops.includes(jam.id)}
+                      onChange={() => handleToggleLoop(jam.id)}
+                    />
+                    <span className="loop-title">{jam.title}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {error && <p className="error-message">{error}</p>}
+
+            <button 
+              className="generate-link-button"
+              onClick={handleGenerateLink}
+              disabled={isGenerating || selectedLoops.length === 0}
+            >
+              {isGenerating ? 'Generating...' : 'Generate Share Link'}
             </button>
-          </div>
+          </>
+        ) : (
+          <>
+            <p className="description-text">
+              Your share link has been generated successfully! Copy the link below to share with others.
+            </p>
+            
+            <div className="share-link-container">
+              <input
+                id="share-link"
+                type="text"
+                value={shareLink}
+                readOnly
+                className="share-link-input"
+              />
+              <button className="copy-link-button" onClick={handleCopyLink}>
+                Copy Link
+              </button>
+            </div>
+            
+            <div className="share-actions">
+              <button className="new-share-button" onClick={handleClose}>
+                Create New Share Link
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

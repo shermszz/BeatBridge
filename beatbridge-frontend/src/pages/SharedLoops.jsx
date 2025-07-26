@@ -11,6 +11,7 @@ const SharedLoops = () => {
   const [sharedLoops, setSharedLoops] = useState(null);
   const [senderName, setSenderName] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasAccepted, setHasAccepted] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,6 +37,11 @@ const SharedLoops = () => {
         const data = await response.json();
         setSharedLoops(data.loops);
         setSenderName(data.sender_name);
+        
+        // Check if user has already accepted these loops
+        if (token) {
+          checkIfAlreadyAccepted();
+        }
       } catch (err) {
         setError(err.message || 'Failed to load shared loops');
       } finally {
@@ -46,7 +52,30 @@ const SharedLoops = () => {
     fetchSharedLoops();
   }, [shareId, navigate]);
 
+  const checkIfAlreadyAccepted = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.API_BASE_URL}/api/shared-loops/${shareId}/check-accepted`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setHasAccepted(data.has_accepted);
+      }
+    } catch (err) {
+      console.error('Failed to check acceptance status:', err);
+    }
+  };
+
   const handleAcceptLoops = async () => {
+    if (hasAccepted) {
+      alert('You have already accepted these loops. You cannot accept them again.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${config.API_BASE_URL}/api/shared-loops/${shareId}/accept`, {
@@ -57,9 +86,15 @@ const SharedLoops = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 409) {
+          alert('You have already accepted these loops. You cannot accept them again.');
+          setHasAccepted(true);
+          return;
+        }
         throw new Error('Failed to accept shared loops');
       }
 
+      setHasAccepted(true);
       alert('Loops have been added to your collection!');
       navigate('/jam-session');
     } catch (err) {
@@ -103,38 +138,49 @@ const SharedLoops = () => {
   if (!isLoggedIn) {
     return (
       <div className="shared-loops-container">
-        <h2>Shared Loops</h2>
-        <p>Please log in to view and accept these shared loops.</p>
-        <button onClick={() => navigate('/login', { state: { redirectTo: `/shared-loops/${shareId}` } })}>
-          Log In
-        </button>
+        <div className="shared-loops-card">
+          <h2 className="shared-loops-title">Shared Loops</h2>
+          <p>Please log in to view and accept these shared loops.</p>
+          <button 
+            className="login-button"
+            onClick={() => navigate('/login', { state: { redirectTo: `/shared-loops/${shareId}` } })}
+          >
+            Log In
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="shared-loops-container">
-      <h2>Shared Loops</h2>
-      <p className="sender-info">{senderName} has shared {sharedLoops?.length} loop(s) with you:</p>
-      
-      <div className="shared-loops-list">
-        {sharedLoops?.map(loop => (
-          <div key={loop.id} className="shared-loop-item">
-            <h3>{loop.title}</h3>
-            <p>BPM: {loop.bpm}</p>
-            <p>Time Signature: {loop.time_signature}</p>
-            <p>Note Resolution: {loop.note_resolution}</p>
-          </div>
-        ))}
-      </div>
+      <div className="shared-loops-card">
+        <h2 className="shared-loops-title">Shared Loops</h2>
+        <p className="sender-info">{senderName} has shared {sharedLoops?.length} loop(s) with you:</p>
+        
+        <div className="shared-loops-list">
+          {sharedLoops?.map(loop => (
+            <div key={loop.id} className="shared-loop-item">
+              <h3>{loop.title}</h3>
+              <p>BPM: {loop.bpm}</p>
+              <p>Time Signature: {loop.time_signature}</p>
+              <p>Note Resolution: {loop.note_resolution}</p>
+            </div>
+          ))}
+        </div>
 
-      <div className="action-buttons">
-        <button className="accept-button" onClick={handleAcceptLoops}>
-          Add to My Loops
-        </button>
-        <button className="reject-button" onClick={handleRejectLoops}>
-          No Thanks
-        </button>
+        <div className="action-buttons">
+          <button 
+            className={`accept-button ${hasAccepted ? 'disabled' : ''}`} 
+            onClick={handleAcceptLoops}
+            disabled={hasAccepted}
+          >
+            {hasAccepted ? 'Already Accepted' : 'Add to My Loops'}
+          </button>
+          <button className="reject-button" onClick={handleRejectLoops}>
+            No Thanks
+          </button>
+        </div>
       </div>
     </div>
   );

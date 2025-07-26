@@ -234,6 +234,14 @@ class SharedLoop(db.Model):
     jam_session_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.current_timestamp())
 
+class SharedLoopNotification(db.Model):
+    __tablename__ = 'shared_loop_notifications'
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    share_id = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), nullable=False)  # 'accepted' or 'rejected'
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.current_timestamp())
+
 # Create tables
 def init_db():
     try:
@@ -1343,12 +1351,48 @@ def get_shared_loops(share_id):
         print(f"Error fetching shared loops: {str(e)}")
         return jsonify({'error': 'Failed to fetch shared loops'}), 500
 
+@app.route('/api/shared-loops/<share_id>/check-accepted', methods=['GET'])
+@jwt_required
+def check_shared_loops_accepted(share_id):
+    """Check if user has already accepted these shared loops"""
+    try:
+        user_id = request.user_id
+
+        # Check if user has already accepted this share
+        result = db.session.execute(text("""
+            SELECT id FROM shared_loop_notifications 
+            WHERE recipient_id = :user_id AND share_id = :share_id
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        }).first()
+
+        has_accepted = result is not None
+
+        return jsonify({'has_accepted': has_accepted}), 200
+
+    except Exception as e:
+        print(f"Error checking shared loops acceptance: {str(e)}")
+        return jsonify({'error': 'Failed to check acceptance status'}), 500
+
 @app.route('/api/shared-loops/<share_id>/accept', methods=['POST'])
 @jwt_verified_required
 def accept_shared_loops(share_id):
     """Accept shared loops and add them to user's collection"""
     try:
         user_id = request.user_id
+
+        # Check if user has already accepted this share
+        existing = db.session.execute(text("""
+            SELECT id FROM shared_loop_notifications 
+            WHERE recipient_id = :user_id AND share_id = :share_id
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        }).first()
+
+        if existing:
+            return jsonify({'error': 'You have already accepted these shared loops'}), 409
 
         # Get the shared loops record
         shared = db.session.execute(text("""
