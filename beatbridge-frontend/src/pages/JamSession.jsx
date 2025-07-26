@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import config from '../config';
+import ShareLoopsModal from '../components/ShareLoopsModal';
 import '../styles/JamSession.css';
 
 // Dynamically generate instrument list from sounds folder
@@ -74,6 +75,7 @@ const JamSession = () => {
   const [lastSession, setLastSession] = useState(null);
   const titleInputRef = useRef(null);
   const [activeJamId, setActiveJamId] = useState(null); // Track the active jam
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const NEW_JAM_ID = '__new__';
 
   // Update steps and pattern when time signature or note resolution changes
@@ -570,6 +572,7 @@ const JamSession = () => {
           ref={titleInputRef}
         />
         <div className="jam-studio-actions">
+          <button onClick={() => setIsShareModalOpen(true)} disabled={myJams.length === 0}>Share</button>
           <button onClick={handleSave} disabled={loading || !title}>
             {loading ? 'Saving...' : 'Save'}
           </button>
@@ -588,11 +591,12 @@ const JamSession = () => {
               style={{ verticalAlign: 'middle', marginLeft: 8 }}
             />
           </div>
-          <button onClick={() => setMetronomeMuted(m => !m)}>
+          <button
+            onClick={() => setMetronomeMuted(prev => !prev)}
+            className={metronomeMuted ? 'muted' : ''}
+          >
             {metronomeMuted ? 'Unmute Metronome' : 'Mute Metronome'}
           </button>
-          <button disabled>Export</button>
-          <button disabled>Share</button>
         </div>
       </div>
       <div className="jam-studio-main">
@@ -747,6 +751,15 @@ const JamSession = () => {
           </div>
         </div>
       </div>
+      <ShareLoopsModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        myJams={myJams}
+        onShare={(link) => {
+          setIsShareModalOpen(false);
+          // You could add additional handling here if needed
+        }}
+      />
     </div>
   );
 };

@@ -21,6 +21,7 @@ import Chapter0pg5 from './pages/Chapter0/Chapter0pg5';
 import Chapter0pg6 from './pages/Chapter0/Chapter0pg6';
 import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
+import SharedLoops from './pages/SharedLoops';
 import ProgressProtectedRoute from './components/ProgressProtectedRoute';
 import Chapter1ProgressProtectedRoute from './components/Chapter1ProgressProtectedRoute';
 import Chapter1pg1 from './pages/Chapter1/Chapter1pg1';
@@ -31,6 +32,10 @@ import Chapter1pg5 from './pages/Chapter1/Chapter1pg5';
 import Chapter1pg6 from './pages/Chapter1/Chapter1pg6';
 import Chapter3pg1 from './pages/Chapter3/Chapter3pg1';
 import Chapter1Dashboard from './pages/Chapter1/Chapter1Dashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyOTP from './pages/VerifyOTP';
+import ResetPassword from './pages/ResetPassword';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import './styles/App.css';
 
 function App() {
@@ -55,6 +60,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailVerification />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
 
           {/* Page to gather user preferences after registration and email verification */}
           <Route path="/customisation" element={
@@ -164,6 +173,7 @@ function App() {
               <Chapter3pg1 />
             </ProtectedRoute>
           } />
+          <Route path="/shared-loops/:shareId" element={<SharedLoops />} />
           
         </Routes>
       </Layout>

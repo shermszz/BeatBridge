@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Register.css';
 import config from '../config';
+import googleIcon from '../styles/images/googleIcon.png';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -141,6 +142,16 @@ const Register = () => {
         <button className="btn btn-primary buttondeco" type="submit">
           Register
         </button>
+        <div className="google-auth-center">
+          <button
+            type="button"
+            className="btn btn-google-auth"
+            onClick={() => window.location.href = `${config.API_BASE_URL}/api/google-login`}
+          >
+            <img src={googleIcon} alt="Google" style={{ width: 22, height: 22, marginRight: 8 }} />
+            Sign up with Google
+          </button>
+        </div>
         <hr className="register-divider" />
         <div className="login-redirect">
           <p>Already have an account?</p>

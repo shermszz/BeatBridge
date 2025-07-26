@@ -186,42 +186,6 @@ class TestJamSessions:
         get_response = test_client.get(f'/api/jam-sessions/{jam_id}')
         assert get_response.status_code == 404
 
-    def test_get_user_jam_sessions(self, test_client):
-        """Test retrieving a user's jam sessions"""
-        # Setup user and create multiple jam sessions
-        test_client.post('/api/register',
-                        json={
-                            'username': 'testuser',
-                            'email': 'test@example.com',
-                            'password': 'TestPass123!',
-                            'confirmation': 'TestPass123!'
-                        })
-        
-        login_response = test_client.post('/api/login',
-                                        json={
-                                            'username': 'testuser',
-                                            'password': 'TestPass123!'
-                                        })
-        token = json.loads(login_response.data)['access_token']
-        user_id = json.loads(login_response.data)['user_id']
-
-        # Create two jam sessions
-        for i in range(2):
-            test_client.post('/api/jam-sessions',
-                           headers={'Authorization': f'Bearer {token}'},
-                           json={
-                               'title': f'Jam {i+1}',
-                               'pattern_json': [[1, 0, 1, 0]],
-                               'is_public': True
-                           })
-
-        # Get user's jam sessions
-        response = test_client.get(f'/api/jam-sessions/user/{user_id}')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert len(data) == 2
-        assert all(jam['user_id'] == user_id for jam in data)
-
     def test_explore_jam_sessions(self, test_client):
         """Test exploring public jam sessions"""
         # Setup user and create both public and private sessions

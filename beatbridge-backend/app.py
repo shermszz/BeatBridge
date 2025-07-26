@@ -3,8 +3,11 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 import os
+#Only for local development on http://localhost
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from datetime import datetime, timedelta
 from tempfile import mkdtemp
@@ -49,6 +52,10 @@ app.config['SESSION_COOKIE_NAME'] = 'session'
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 is_local = os.environ.get("FLASK_ENV") == "development" or os.environ.get("LOCAL_DEV") == "1"
 app.config['SESSION_COOKIE_SECURE'] = not is_local
+# Trust one layer of proxy for the X-Forwarded headers
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# ensure external URLs are built with https://
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Database configuration
@@ -64,7 +71,7 @@ else:
     DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
     DB_HOST = os.environ.get('DB_HOST', 'localhost')
     DB_PORT = os.environ.get('DB_PORT', '5432')
-    DB_NAME = os.environ.get('DB_NAME', 'flask_db')
+    DB_NAME = os.environ.get('DB_NAME', 'beatbridge')
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 print(f"DEBUG: Connecting to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
@@ -204,6 +211,9 @@ class User(db.Model):
         }
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
 
+    def set_password(self, password):
+        self.hash = generate_password_hash(password, method='pbkdf2:sha256')
+
 class UserCustomization(db.Model):
     __tablename__ = 'user_customizations'
     id = db.Column(db.Integer, primary_key=True)
@@ -216,6 +226,14 @@ class UserCustomization(db.Model):
     chapter_progress = db.Column(db.Integer, default=1) # New field for chapter progress
     chapter0_page_progress = db.Column(db.Integer, default=1) # New field for chapter 0 page progress
     chapter1_page_progress = db.Column(db.Integer, default=1) # New field for chapter 1 page progress
+
+class SharedLoop(db.Model):
+    __tablename__ = 'shared_loops'
+    id = db.Column(db.Integer, primary_key=True)
+    share_id = db.Column(db.String(255), unique=True, nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    jam_session_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.current_timestamp())
 
 # Create tables
 def init_db():
@@ -371,8 +389,12 @@ def login():
         if not password:
             return jsonify({"errors": {"password": "Must provide password"}}), 400
 
-        # Query database for username
-        user = User.query.filter_by(username=username).first()
+        # Query database for username or email
+        user = User.query.filter((User.username == username) | (User.email == username)).first()
+
+        # If user exists and is a Google user, block password login only if hash is the placeholder
+        if user and user.google_id and check_password_hash(user.hash, 'google-oauth-user'):
+            return jsonify({"errors": {"general": "This account was created with Google. Please use 'Sign in with Google' to log in or set a password."}}), 403
 
         # Ensure username exists and password is correct
         if user is None or not check_password_hash(user.hash, password):
@@ -624,88 +646,91 @@ If you did not create a BeatBridge account, please ignore this email.
 '''
     mail.send(msg) #Send the email
 
+FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:3000')
+
 @app.route('/api/google-login')
 def google_login():
-    # Find out what URL to hit for Google login
-    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
-
-    # Use library to construct the request for Google login
+    redirect_uri = url_for('google_callback', _external=True)
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
-        redirect_uri=request.base_url + "/callback",
+        redirect_uri=redirect_uri,
         scope=["openid", "email", "profile"],
     )
-    return jsonify({"auth_url": request_uri})
+    return redirect(request_uri)
+
+def make_unique_username(desired_name):
+    """
+    Turn "Sherman Tan" → "ShermanTan", then if that already exists
+    try "ShermanTan1", "ShermanTan2", … until it's unique.
+    """
+    base = desired_name.replace(" ", "")
+    candidate = base
+    suffix = 1
+
+    while User.query.filter_by(username=candidate).first():
+        candidate = f"{base}{suffix}"
+        suffix += 1
+
+    return candidate
 
 @app.route('/api/google-login/callback')
 def google_callback():
-    # Get authorization code Google sent back
     code = request.args.get("code")
-    
-    # Find out what URL to hit to get tokens
-    google_provider_cfg = google_requests.get(GOOGLE_DISCOVERY_URL).json()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     token_endpoint = google_provider_cfg["token_endpoint"]
-
-    # Get tokens
+    redirect_uri = url_for('google_callback', _external=True)
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
-        redirect_url=request.base_url,
+        redirect_url=redirect_uri,
         code=code
     )
-    token_response = google_requests.post(
+    token_response = requests.post(
         token_url,
         headers=headers,
         data=body,
         auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
     ).json()
-
-    # Parse the tokens
     id_token_jwt = token_response['id_token']
-    
-    # Verify the token
     try:
         idinfo = id_token.verify_oauth2_token(
             id_token_jwt, google_requests.Request(), GOOGLE_CLIENT_ID
         )
     except ValueError:
-        return jsonify({"error": "Invalid Google token"}), 401
-
+        return redirect(f"{FRONTEND_BASE_URL}/login?error=google_auth_failed")
+    
     google_id = idinfo['sub']
     email = idinfo['email']
     name = idinfo['name']
     picture = idinfo.get('picture')
 
-    # Check if user exists
     user = User.query.filter_by(google_id=google_id).first()
+
     if not user:
-        # Create new user
+        # Try to find user by email first
+        user = User.query.filter_by(email=email).first()
+    if user:
+        #If we found their email, link their Google ID to that account
+        if not user.google_id:
+            user.google_id = google_id
+    else:
+        # Brand new user, pick a unique username from their name
+        unique_username = make_unique_username(name or email.split('@')[0])
         user = User(
-            username=name,
+            username=unique_username,
             email=email,
             google_id=google_id,
             profile_pic_url=picture,
-            is_verified=True,  # Google users are pre-verified
-            hash=generate_password_hash('google-oauth-user')  # Placeholder password
+            is_verified=True,
+            hash=generate_password_hash('google-oauth-user')
         )
         db.session.add(user)
-        db.session.commit()
-
-    # Log in the user
+    db.session.commit()
     login_user(user)
-    session['user_id'] = user.id
-
-    return jsonify({
-        "message": "Google login successful",
-        "token": user.generate_jwt_token(),
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "profile_pic_url": user.profile_pic_url
-        }
-    }), 200
+    token = user.generate_jwt_token()
+    return redirect(f"{FRONTEND_BASE_URL}/google-auth-success?token={token}")
 
 # --- Song Recommendation System (Last.fm Integration) ---
 
@@ -1243,6 +1268,250 @@ def update_chapter_progress():
         'chapter0_page_progress': customization.chapter0_page_progress,
         'chapter1_page_progress': customization.chapter1_page_progress
     }), 200
+
+# --- Shared Loops Endpoints ---
+
+@app.route('/api/shared-loops', methods=['POST'])
+@jwt_verified_required
+def create_shared_loops():
+    """Create a new shared loops link"""
+    try:
+        data = request.get_json()
+        user_id = request.user_id
+        jam_session_ids = data.get('jam_session_ids', [])
+
+        if not jam_session_ids:
+            return jsonify({'error': 'No loops selected to share'}), 400
+
+        # Verify all jam sessions belong to the user
+        for jam_id in jam_session_ids:
+            jam = db.session.execute(text("""
+                SELECT id FROM jam_sessions WHERE id = :jam_id AND user_id = :user_id
+            """), {'jam_id': jam_id, 'user_id': user_id}).first()
+            if not jam:
+                return jsonify({'error': f'Jam session {jam_id} not found or does not belong to you'}), 404
+
+        # Generate a unique share ID
+        share_id = f"{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"
+
+        # Create shared loops record with explicit array casting
+        result = db.session.execute(text("""
+            INSERT INTO shared_loops (share_id, sender_id, jam_session_ids)
+            VALUES (:share_id, :sender_id, :jam_session_ids::integer[])
+            RETURNING id
+        """), {
+            'share_id': share_id,
+            'sender_id': user_id,
+            'jam_session_ids': jam_session_ids
+        })
+        db.session.commit()
+
+        return jsonify({'share_id': share_id}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to create shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>', methods=['GET'])
+def get_shared_loops(share_id):
+    """Get shared loops by share ID"""
+    try:
+        # Get the shared loops record
+        shared = db.session.execute(text("""
+            SELECT sl.*, u.username as sender_name
+            FROM shared_loops sl
+            JOIN users u ON sl.sender_id = u.id
+            WHERE sl.share_id = :share_id
+        """), {'share_id': share_id}).first()
+
+        if not shared:
+            return jsonify({'error': 'Shared loops not found'}), 404
+
+        # Get all the jam sessions
+        jams = db.session.execute(text("""
+            SELECT * FROM jam_sessions WHERE id = ANY(:jam_ids)
+        """), {'jam_ids': shared.jam_session_ids}).fetchall()
+
+        loops = []
+        for jam in jams:
+            jam_dict = dict(jam._mapping)
+            jam_dict['pattern_json'] = safe_json_load(jam_dict.get('pattern_json'))
+            jam_dict['instruments_json'] = safe_json_load(jam_dict.get('instruments_json'))
+            loops.append(jam_dict)
+
+        return jsonify({
+            'sender_name': shared.sender_name,
+            'loops': loops
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to fetch shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>/accept', methods=['POST'])
+@jwt_verified_required
+def accept_shared_loops(share_id):
+    """Accept shared loops and add them to user's collection"""
+    try:
+        user_id = request.user_id
+
+        # Get the shared loops record
+        shared = db.session.execute(text("""
+            SELECT * FROM shared_loops WHERE share_id = :share_id
+        """), {'share_id': share_id}).first()
+
+        if not shared:
+            return jsonify({'error': 'Shared loops not found'}), 404
+
+        # Get all the original jam sessions
+        jams = db.session.execute(text("""
+            SELECT * FROM jam_sessions WHERE id = ANY(:jam_ids)
+        """), {'jam_ids': shared.jam_session_ids}).fetchall()
+
+        # Create copies of the jam sessions for the recipient
+        for jam in jams:
+            # Check for title conflicts
+            base_title = jam.title
+            counter = 1
+            while True:
+                title = f"{base_title}{' ' + str(counter) if counter > 1 else ''}"
+                existing = db.session.execute(text("""
+                    SELECT id FROM jam_sessions WHERE user_id = :user_id AND title = :title
+                """), {'user_id': user_id, 'title': title}).first()
+                if not existing:
+                    break
+                counter += 1
+
+            # Create new jam session
+            db.session.execute(text("""
+                INSERT INTO jam_sessions (
+                    user_id, title, pattern_json, is_public, parent_jam_id,
+                    instruments_json, time_signature, note_resolution, bpm
+                )
+                VALUES (
+                    :user_id, :title, :pattern_json, :is_public, :parent_jam_id,
+                    :instruments_json, :time_signature, :note_resolution, :bpm
+                )
+            """), {
+                'user_id': user_id,
+                'title': title,
+                'pattern_json': jam.pattern_json,
+                'is_public': jam.is_public,
+                'parent_jam_id': jam.id,  # Reference the original jam
+                'instruments_json': jam.instruments_json,
+                'time_signature': jam.time_signature,
+                'note_resolution': jam.note_resolution,
+                'bpm': jam.bpm
+            })
+
+        # Create notification record
+        db.session.execute(text("""
+            INSERT INTO shared_loop_notifications (recipient_id, share_id, status)
+            VALUES (:recipient_id, :share_id, 'accepted')
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        })
+
+        db.session.commit()
+        return jsonify({'message': 'Shared loops accepted successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error accepting shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to accept shared loops'}), 500
+
+@app.route('/api/shared-loops/<share_id>/reject', methods=['POST'])
+@jwt_verified_required
+def reject_shared_loops(share_id):
+    """Reject shared loops"""
+    try:
+        user_id = request.user_id
+
+        # Create rejection notification
+        db.session.execute(text("""
+            INSERT INTO shared_loop_notifications (recipient_id, share_id, status)
+            VALUES (:recipient_id, :share_id, 'rejected')
+        """), {
+            'recipient_id': user_id,
+            'share_id': share_id
+        })
+
+        db.session.commit()
+        return jsonify({'message': 'Shared loops rejected'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error rejecting shared loops: {str(e)}")
+        return jsonify({'error': 'Failed to reject shared loops'}), 500
+
+# In-memory store for OTPs (for demo; use persistent store in production)
+user_otps = {}
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'This email address does not exist. Try signing up instead.'}), 404
+    # Generate OTP
+    otp = str(random.randint(100000, 999999))
+    user_otps[email] = otp
+    # Send OTP email
+    msg = Message('Your BeatBridge Password Reset OTP', sender=app.config['MAIL_USERNAME'], recipients=[email])
+    msg.body = f'Your OTP for password reset is: {otp}\nIf you did not request this, please ignore this email.'
+    mail.send(msg)
+    return jsonify({'message': 'OTP sent to your email.'}), 200
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    email = data.get('email')
+    otp = data.get('otp')
+    if not email or not otp:
+        return jsonify({'error': 'Email and OTP are required'}), 400
+    if user_otps.get(email) == otp:
+        # Mark OTP as verified (could set a flag or just allow password reset)
+        user_otps[email] = 'VERIFIED'
+        return jsonify({'message': 'OTP verified. You may now reset your password.'}), 200
+    else:
+        return jsonify({'error': 'Invalid OTP'}), 400
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    email = data.get('email')
+    new_password = data.get('password')
+    if not email or not new_password:
+        return jsonify({'error': 'Email and new password are required'}), 400
+    if user_otps.get(email) != 'VERIFIED':
+        return jsonify({'error': 'OTP not verified for this email.'}), 403
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    user.set_password(new_password)
+    db.session.commit()
+    # Clear OTP after successful reset
+    user_otps.pop(email, None)
+    return jsonify({'message': 'Password reset successful.'}), 200
+
+@app.route('/api/set-password', methods=['POST'])
+@jwt_required
+def set_password():
+    data = request.get_json()
+    new_password = data.get('password')
+    if not new_password:
+        return jsonify({'error': 'Password is required.'}), 400
+    user = User.query.get(request.user_id)
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+    user.hash = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({'message': 'Password set successfully.'}), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))

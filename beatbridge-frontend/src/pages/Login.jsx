@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Login.css';
 import config from '../config';
 import defaultProfileImage from '../styles/images/loginIcon.svg';
+import googleIcon from '../styles/images/googleIcon.png';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -148,11 +149,43 @@ const Login = () => {
       <button className="btn btn-primary buttondeco" type="submit">
         Log in
       </button>
+      <div style={{ margin: '18px 0 0 0', textAlign: 'center' }}>
+        <button
+          type="button"
+          className="btn btn-google-auth"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            background: 'linear-gradient(90deg, #fff 0%, #f5f5f5 100%)',
+            color: '#444',
+            border: '1.5px solid #e0e0e0',
+            borderRadius: '7px',
+            fontWeight: 600,
+            fontSize: '1.08em',
+            padding: '12px 0',
+            margin: '0 auto',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(44,62,80,0.06)',
+            gap: '10px',
+          }}
+          onClick={() => window.location.href = `${config.API_BASE_URL}/api/google-login`}
+        >
+          <img src={googleIcon} alt="Google" style={{ width: 22, height: 22, marginRight: 8 }} />
+          Sign in with Google
+        </button>
+      </div>
       <hr className="login-divider" />
       <div className="login-redirect">
         <p>Don't have an account yet?</p>
         <a href="/register" className="login-btn">
           Sign up
+        </a>
+      </div>
+      <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '16px' }}>
+        <a href="/forgot-password" style={{ textDecoration: 'underline', color: '#17a2b8', cursor: 'pointer' }}>
+          Forgot password?
         </a>
       </div>
     </form>
