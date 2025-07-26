@@ -1,8 +1,19 @@
+/**
+ * Chapter0pg2 - Drum Notation: Music Notes
+ * 
+ * This component teaches users about musical note values and their durations.
+ * It provides an interactive learning experience with visual examples,
+ * audio demonstrations, and comprehensive explanations of note types.
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg1-3.css';
 import config from '../../config';
 
+/**
+ * Note types configuration
+ * Defines the different musical note types with their names and identifiers
+ */
 const notes = [
   { name: 'Whole Note', type: 'whole' },
   { name: 'Half Note', type: 'half' },
@@ -12,6 +23,11 @@ const notes = [
   { name: '32nd Note', type: 'thirtysecond' },
 ];
 
+/**
+ * Note comparison table
+ * Provides American and British terminology for each note type
+ * along with their beat values for educational reference
+ */
 const noteTable = [
   {
     american: 'Whole note',
@@ -45,6 +61,11 @@ const noteTable = [
   },
 ];
 
+/**
+ * Detailed note descriptions
+ * Comprehensive explanations of each note type including
+ * visual characteristics, duration, and musical context
+ */
 const noteDescriptions = [
   {
     title: 'Introduction to Music Notes!',

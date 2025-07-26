@@ -1,3 +1,9 @@
+/**
+ * Chapter1pg4 - Stick Control 3: Eighth Notes Patterns
+ * 
+ * This component provides interactive stick control exercises focusing on eighth note patterns.
+ * Users practice various R/L hand combinations with rest notes at a faster tempo.
+ */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg3.css';

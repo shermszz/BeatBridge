@@ -39,6 +39,9 @@
   width: 100%;
 }
 
+/**
+ * Animated rocket icon 
+ */
 .coming-soon-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
@@ -124,6 +127,7 @@
   transition: all 0.3s ease;
   text-decoration: none;
   display: inline-block;
+  margin-top: -6rem;
 }
 
 .chapter3-back-link:hover {

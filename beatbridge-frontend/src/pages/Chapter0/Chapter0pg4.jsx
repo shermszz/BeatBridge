@@ -1,9 +1,20 @@
+/**
+ * Chapter0pg4 - Interactive Rhythm Patterns
+ * 
+ * This component provides interactive rhythm pattern exercises where users
+ * can practice reading and playing various combinations of notes and rests.
+ * It features visual pattern displays and keyboard input for rhythm practice.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg4.css';
 import config from '../../config';
 
-// Define multiple rhythm patterns
+/**
+ * Rhythm patterns configuration
+ * Contains 9 progressive rhythm patterns with increasing complexity
+ * Each pattern is an array of note/rest objects with type and label
+ */
 const rhythms = [
   // 1. pink pink pink pink
   [

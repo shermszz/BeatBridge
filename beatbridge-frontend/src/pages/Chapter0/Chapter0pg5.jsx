@@ -1,8 +1,21 @@
+/**
+ * Chapter0pg5 - Chapter 0 Quiz
+ * 
+ * This component provides a comprehensive quiz to test users' understanding
+ * of the concepts learned in Chapter 0, including note values, rest notes,
+ * and basic music notation fundamentals.
+
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg5.css';
 import config from '../../config';
 
+/**
+ * Quiz questions configuration
+ * Contains 5 multiple-choice questions covering Chapter 0 concepts
+ * Each question has options, correct answer, and explanation
+ */
 const quizQuestions = [
   {
     question: 'What is the duration of a Whole Note (Semibreve)?',

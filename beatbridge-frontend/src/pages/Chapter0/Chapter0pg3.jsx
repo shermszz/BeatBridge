@@ -1,8 +1,18 @@
+/**
+ * Chapter0pg3 - Drum Notation: Rest Notes
+ * 
+ * This component teaches users about rest notes and their role in music notation.
+ * It provides interactive learning with visual examples and comprehensive
+ * explanations of different rest types and their durations.
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg1-3.css';
 import config from '../../config';
 
+/**
+ * Rest descriptions
+ */
 const restDescriptions = [
   {
     title: 'Introduction to Rests!',
@@ -94,6 +104,12 @@ const restTable = [
   },
 ];
 
+/**
+ * RestDemoGrid Component
+ * Creates a visual grid representation of rest durations
+ * Shows how rests fit into a 4-beat measure with visual blocks
+ * @param {string} type - The type of rest to demonstrate
+ */
 function RestDemoGrid({ type }) {
   // Map rest type to duration in beats (out of 4)
   const boxCounts = {

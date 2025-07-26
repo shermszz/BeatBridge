@@ -1,3 +1,10 @@
+/**
+ * Chapter1pg3 - Introduction to Rest Notes
+ * 
+ * This component introduces users to rest notes in stick control patterns.
+ * It demonstrates how to incorporate silence (rests) into rhythmic patterns
+ * and provides an interactive demonstration of R L R rest pattern.
+ */
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg1.css';

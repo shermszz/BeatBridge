@@ -1,5 +1,9 @@
 /**
- * Drum Kit Guided Tour for Chapter 0 (Start Tour below drum kit)
+ * Chapter0pg1 - Virtual Drum Kit Introduction
+ * 
+ * This component provides an interactive guided tour of a virtual drum kit.
+ * Users can explore each drum component, learn about its function, and hear
+ * its sound through an interactive overlay system.
  */
 import React, { useRef, useState } from 'react';
 import '../../styles/Chapter0/Chapter0pg1-3.css';
@@ -7,6 +11,11 @@ import VirtualDrumKit from '../../styles/images/virtualDrumKit.jpg';
 import { Link, useNavigate } from 'react-router-dom';
 import config from '../../config';
 
+/**
+ * Drum kit components configuration
+ * Contains all drum parts with their positions, sounds, and descriptions
+ * Each drum has a name, audio file, positioning style, and educational description
+ */
 const DRUMS = [
   { name: 'Crash Cymbal', file: '/sounds/Crash.mp3', style: { top: '8.5%', left: '20%', width: '13%' }, description: 'The crash cymbal is medium to large cymbal designed to be struck hard, and it produces a loud, explosive accent, usually marking transitions between song sections or dramatic moments.' },
   { name: 'Ride Cymbal', file: '/sounds/Ride.mp3', style: { top: '9%', right: '8%', width: '13%' }, description: 'The ride cymbal is a large, heavy cymbal placed to the drummer’s right. It provides a steady rhythmic pattern, often used in jazz and rock.' },
@@ -20,16 +29,23 @@ const DRUMS = [
 ];
 
 export default function Chapter0pg1() {
+  // Audio references for each drum component
   const audioRefs = useRef([]);
-  const [tourStep, setTourStep] = useState(null); // null = not started, 0+ = current drum
-  const [activeDrumIdx, setActiveDrumIdx] = useState(null);
-  const drumKitRef = useRef(null);
-  // Track if the user has finished the tour
-  const [tourFinished, setTourFinished] = useState(false);
-  const [tourStarted, setTourStarted] = useState(false);
-  const navigate = useNavigate();
+  
+  // Tour state management
+  const [tourStep, setTourStep] = useState(null); // null = not started, 0+ = current drum index
+  const [activeDrumIdx, setActiveDrumIdx] = useState(null); // Currently highlighted drum
+  const [tourFinished, setTourFinished] = useState(false); // Whether tour is completed
+  const [tourStarted, setTourStarted] = useState(false); // Whether tour has been initiated
+  
+  // References and navigation
+  const drumKitRef = useRef(null); // Reference to drum kit container
+  const navigate = useNavigate(); // Hook for programmatic navigation
 
-  // When tourStep changes to null after the last drum, set tourFinished
+  /**
+   * Monitors tour progress and sets completion state
+   * Tracks when tour starts and when it finishes after the last drum
+   */
   React.useEffect(() => {
     if (tourStep !== null) setTourStarted(true);
     if (tourStarted && tourStep === null && activeDrumIdx === null) {
@@ -37,6 +53,11 @@ export default function Chapter0pg1() {
     }
   }, [tourStep, activeDrumIdx, tourStarted]);
 
+  /**
+   * Plays the audio for a specific drum component
+   * Resets audio to beginning, plays sound, and triggers visual feedback
+   * @param {number} idx - Index of the drum to play
+   */
   const playDrum = idx => {
     const audio = audioRefs.current[idx];
     if (audio) {
@@ -67,10 +88,11 @@ export default function Chapter0pg1() {
     return { x, y };
   };
 
-  // Overlay and tour logic
+  // Tour overlay and information box logic
   let overlay = null;
   let tourBox = null;
-  // Arrow removed
+  
+  // Generate tour overlay when a tour step is active
   if (tourStep !== null) {
     // Get drum position
     const drum = DRUMS[tourStep];

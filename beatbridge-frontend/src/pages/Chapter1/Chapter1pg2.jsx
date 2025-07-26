@@ -1,9 +1,19 @@
+/**
+ * Chapter1pg2 - Stick Control 1: Quarter Notes Patterns
+ * 
+ * This component provides interactive stick control exercises focusing on quarter note patterns.
+ * Users practice various R/L hand combinations with real-time feedback and metronome guidance.
+ */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg2.css';
 import config from '../../config';
 
-// SVG components copied from Chapter1pg1
+/**
+ * SnareSVG Component - Visual representation of a snare drum
+ * Renders a detailed snare drum with visual feedback when hit
+ * @param {boolean} snareHit - Whether the drum is currently being hit
+ */
 const SnareSVG = ({ snareHit }) => (
   <svg width="180" height="120" viewBox="0 0 180 150" style={{ display: 'block', margin: '0 auto' }}>
     <rect cx="90" cy="90" rx="60" ry="22" fill="#444" stroke="#222" strokeWidth="3" />
@@ -30,6 +40,12 @@ const SnareSVG = ({ snareHit }) => (
     })}
   </svg>
 );
+/**
+ * StickSVG Component - Visual representation of drum sticks
+ * Renders animated drum sticks that show which hand is active
+ * @param {string} side - 'left' or 'right' to indicate which stick
+ * @param {boolean} active - Whether this stick is currently hitting the drum
+ */
 const StickSVG = ({ side, active }) => {
   const isLeft = side === 'left';
   const baseX = isLeft ? 60 : 120;
@@ -45,7 +61,11 @@ const StickSVG = ({ side, active }) => {
   );
 };
 
-// 4 stick control exercises (quarter notes)
+/**
+ * Stick control exercises array
+ * Contains 9 progressive exercises with increasing complexity
+ * Each exercise has a name and pattern of R/L hand combinations
+ */
 const exercises = [
   { name: 'Exercise 1', pattern: ['R', 'L', 'R', 'L'] },
   { name: 'Exercise 2', pattern: ['R', 'R', 'L', 'L'] },
@@ -59,22 +79,35 @@ const exercises = [
 ];
 
 export default function Chapter1pg2() {
+  // Hook for programmatic navigation
   const navigate = useNavigate();
-  const [exerciseIdx, setExerciseIdx] = useState(0);
-  const [stepIdx, setStepIdx] = useState(0);
-  const [userHits, setUserHits] = useState([]); // 'R', 'L', or null for each step
-  const [snareHit, setSnareHit] = useState(false);
-  const [stickAnim, setStickAnim] = useState({ left: false, right: false });
+  
+  // Exercise and step management
+  const [exerciseIdx, setExerciseIdx] = useState(0); // Current exercise index
+  const [stepIdx, setStepIdx] = useState(0); // Current step within the pattern
+  const [userHits, setUserHits] = useState([]); // Array of user inputs: 'R', 'L', or null for each step
+  
+  // Visual feedback states
+  const [snareHit, setSnareHit] = useState(false); // Drum hit animation
+  const [stickAnim, setStickAnim] = useState({ left: false, right: false }); // Stick animation states
   const [feedback, setFeedback] = useState(null); // 'correct' | 'incorrect' | null
-  const [isPlaying, setIsPlaying] = useState(false); 
-  const [bpm] = useState(65); 
-  const [currentBeat, setCurrentBeat] = useState(-1); 
-  const [canHit, setCanHit] = useState(false); 
-  const pattern = exercises[exerciseIdx].pattern;
-  const audioCtx = useRef(null);
-  const snareBuffer = useRef(null);
+  
+  // Metronome and timing states
+  const [isPlaying, setIsPlaying] = useState(false); // Metronome play/pause state
+  const [bpm] = useState(65); // Fixed BPM for this exercise
+  const [currentBeat, setCurrentBeat] = useState(-1); // Current beat in the pattern (-1 = stopped)
+  const [canHit, setCanHit] = useState(false); // Whether user can input at current time
+  
+  // Current pattern and audio references
+  const pattern = exercises[exerciseIdx].pattern; // Current exercise pattern
+  const audioCtx = useRef(null); // Web Audio API context
+  const snareBuffer = useRef(null); // Cached snare sound buffer
 
-  // Add this function to update chapter progress, only once per user (per session)
+  /**
+   * Updates the user's Chapter 1 page progress to unlock the next page
+   * Called when user completes all exercises and moves to the next page
+   * Sets progress to page 3 to allow access to Chapter1pg3
+   */
   const updatePageProgress = async () => {
     console.log('Calling updatePageProgress (chapter1_page_progress=3)');
     try {
@@ -90,7 +123,10 @@ export default function Chapter1pg2() {
     } catch (err) { console.error('Progress update failed:', err); }
   };
 
-  // Load snare sound
+  /**
+   * Initializes the Web Audio API and loads the snare drum sound
+   * Creates audio context and decodes the snare MP3 file for playback
+   */
   useEffect(() => {
     if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
     fetch('/sounds/Snare.mp3')

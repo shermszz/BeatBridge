@@ -1,3 +1,10 @@
+/**
+ * Chapter1pg5 - Chapter 1 Quiz
+ * 
+ * This component provides a comprehensive quiz to test users' understanding
+ * of the concepts learned in Chapter 1, including stick control, rest notes,
+ * metronome usage, and rhythmic fundamentals.
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg5.css';

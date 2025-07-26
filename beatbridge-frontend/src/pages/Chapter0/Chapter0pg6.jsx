@@ -1,3 +1,6 @@
+/**
+ * Chapter0pg6 - Chapter 0 Completion Celebration
+ */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter0/Chapter0pg5.css';

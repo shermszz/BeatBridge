@@ -93,11 +93,20 @@ const Home = () => {
     fetchFavorites();
   }, []);
 
+  /**
+   * Handles the "Resume Training" button click
+   * Intelligently navigates users to the page they left off at based on their progress
+   * 
+   * Logic:
+   * 1. If user has started Chapter 1 (progress > 1), take them to their current Chapter 1 page
+   * 2. If user has started Chapter 0 (progress > 1), take them to their current Chapter 0 page
+   * 3. If user hasn't started any chapters, take them to the Rhythm Trainer overview
+   */
   const handleContinue = () => {
-    // Determine where the user left off based on their progress
+    // Extract progress data from state
     const { chapter0_page_progress, chapter1_page_progress } = chapterProgress;
     
-    // Check if user has started Chapter 1
+    // Priority: Chapter 1 (more advanced) takes precedence over Chapter 0
     if (chapter1_page_progress > 1) {
       // User has started Chapter 1, navigate to their current page
       navigate(`/chapter1pg${chapter1_page_progress}`);
@@ -105,7 +114,7 @@ const Home = () => {
       // User has started Chapter 0, navigate to their current page
       navigate(`/chapter0pg${chapter0_page_progress}`);
     } else {
-      // User hasn't started any chapters, go to rhythm trainer chapters overview
+      // User hasn't started any chapters, go to rhythm trainer overview
       navigate('/rhythm-trainer');
     }
   };
