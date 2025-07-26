@@ -190,20 +190,26 @@ class TestAuthentication:
                             'confirmation': 'TestPass123!'
                         })
         
-        test_client.post('/api/forgot-password',
-                        json={'email': 'test@example.com'})
+        # Request password reset to generate OTP
+        forgot_response = test_client.post('/api/forgot-password',
+                                         json={'email': 'test@example.com'})
+        assert forgot_response.status_code == 200
 
-        # Verify OTP (we need to mock the OTP storage for testing)
-        with patch('app_factory.user_otps', {'test@example.com': '123456'}):
-            response = test_client.post('/api/verify-otp',
-                                      json={
-                                          'email': 'test@example.com',
-                                          'otp': '123456'
-                                      })
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert 'message' in data
-            assert data['message'] == 'OTP verified successfully'
+        # Get the OTP from the in-memory storage (we need to access it directly)
+        from app_factory import user_otps
+        otp = user_otps.get('test@example.com')
+        assert otp is not None
+
+        # Verify OTP
+        response = test_client.post('/api/verify-otp',
+                                  json={
+                                      'email': 'test@example.com',
+                                      'otp': otp
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert 'message' in data
+        assert data['message'] == 'OTP verified successfully'
 
     def test_verify_otp_invalid(self, test_client):
         """Test OTP verification failure with invalid OTP"""
@@ -257,8 +263,7 @@ class TestAuthentication:
         assert response.status_code == 302  # Redirect status
         assert 'accounts.google.com' in response.location
 
-    @patch('app_factory.requests.get')
-    def test_google_login_callback_new_user(self, test_client, mock_requests):
+    def test_google_login_callback_new_user(self, test_client):
         """Test Google OAuth callback creates new user when user doesn't exist"""
         # Mock the Google OAuth callback with authorization code
         response = test_client.get('/api/google-login/callback?code=test_code')
@@ -266,8 +271,7 @@ class TestAuthentication:
         assert 'google-auth-success' in response.location
         assert 'token=' in response.location
 
-    @patch('app_factory.requests.get')
-    def test_google_login_callback_existing_user(self, test_client, mock_requests):
+    def test_google_login_callback_existing_user(self, test_client):
         """Test Google OAuth callback links existing user with Google ID"""
         # First create a user with the same email
         test_client.post('/api/register',
@@ -308,26 +312,28 @@ class TestAuthentication:
 
     def test_google_user_login_with_set_password(self, test_client):
         """Test that Google users can login with traditional credentials after setting a password"""
-        # First create a Google user
-        test_client.get('/api/google-login/callback?code=test_code')
-
-        # Get the user's token to set a password
+        # First create a Google user and get the token
         response = test_client.get('/api/google-login/callback?code=test_code')
+        assert response.status_code == 302
+        assert 'token=' in response.location
+        
+        # Extract token from redirect URL
         token = response.location.split('token=')[1]
 
         # Set a new password
-        test_client.post('/api/set-password',
-                        json={'new_password': 'MyNewPassword123!'},
-                        headers={'Authorization': f'Bearer {token}'})
+        set_password_response = test_client.post('/api/set-password',
+                                               json={'new_password': 'MyNewPassword123!'},
+                                               headers={'Authorization': f'Bearer {token}'})
+        assert set_password_response.status_code == 200
 
         # Now try to login with traditional credentials (should succeed)
-        response = test_client.post('/api/login',
-                                  json={
-                                      'username': 'testuser',
-                                      'password': 'MyNewPassword123!'
-                                  })
-        assert response.status_code == 200
-        data = json.loads(response.data)
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'testuser',
+                                            'password': 'MyNewPassword123!'
+                                        })
+        assert login_response.status_code == 200
+        data = json.loads(login_response.data)
         assert 'access_token' in data
 
     def test_set_password_success(self, test_client):
