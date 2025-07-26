@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg2.css';
+import config from '../../config';
 
 // SVG components copied from Chapter1pg1
 const SnareSVG = ({ snareHit }) => (
@@ -72,6 +73,22 @@ export default function Chapter1pg2() {
   const pattern = exercises[exerciseIdx].pattern;
   const audioCtx = useRef(null);
   const snareBuffer = useRef(null);
+
+  // Add this function to update chapter progress, only once per user (per session)
+  const updatePageProgress = async () => {
+    console.log('Calling updatePageProgress (chapter1_page_progress=3)');
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter1_page_progress: 3 })
+      });
+    } catch (err) { console.error('Progress update failed:', err); }
+  };
 
   // Load snare sound
   useEffect(() => {
@@ -258,7 +275,12 @@ export default function Chapter1pg2() {
       </div>
       <div className="chapter1-bottom-nav-buttons" style={{ textAlign: 'center', marginTop: '2.5rem'}}>
         <button className="chapter1-back-link" onClick={() => navigate('/chapter1pg1')}>← Back</button>
-        <button className="chapter1-back-link" onClick={() => navigate('/chapter1pg3')}>Next →</button>
+        {stepIdx >= pattern.length && exerciseIdx === exercises.length - 1 && (
+          <button className="chapter1-back-link" onClick={async () => {
+            await updatePageProgress();
+            navigate('/chapter1pg3');
+          }}>Next →</button>
+        )}
       </div>
       <div style={{ textAlign: 'center', marginTop: '0rem', display: 'flex', justifyContent: 'center' }}>
         <button className="chapter1-back-link" onClick={() => navigate('/chapter1-dashboard')}>Back to Dashboard</button>

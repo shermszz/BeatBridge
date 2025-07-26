@@ -18,7 +18,7 @@ export default function Chapter1Dashboard() {
         if (response.ok) {
           const data = await response.json();
           setProgress(data.chapter_progress || 1);
-          setPageProgress(data.chapter0_page_progress || 1);
+          setPageProgress(data.chapter1_page_progress || 1);
         }
       } catch (err) {}
       setLoading(false);

@@ -22,12 +22,14 @@ import Chapter0pg6 from './pages/Chapter0/Chapter0pg6';
 import Chapter0Dashboard from './pages/Chapter0/Chapter0Dashboard';
 import JamSession from './pages/JamSession';
 import ProgressProtectedRoute from './components/ProgressProtectedRoute';
+import Chapter1ProgressProtectedRoute from './components/Chapter1ProgressProtectedRoute';
 import Chapter1pg1 from './pages/Chapter1/Chapter1pg1';
 import Chapter1pg2 from './pages/Chapter1/Chapter1pg2';
 import Chapter1pg3 from './pages/Chapter1/Chapter1pg3';
 import Chapter1pg4 from './pages/Chapter1/Chapter1pg4';
 import Chapter1pg5 from './pages/Chapter1/Chapter1pg5';
 import Chapter1pg6 from './pages/Chapter1/Chapter1pg6';
+import Chapter3pg1 from './pages/Chapter3/Chapter3pg1';
 import Chapter1Dashboard from './pages/Chapter1/Chapter1Dashboard';
 import './styles/App.css';
 
@@ -133,28 +135,33 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/chapter1pg2" element={
-            <ProgressProtectedRoute requiredProgress={2}>
+            <Chapter1ProgressProtectedRoute requiredProgress={2}>
               <Chapter1pg2 />
-            </ProgressProtectedRoute>
+            </Chapter1ProgressProtectedRoute>
           } />
           <Route path="/chapter1pg3" element={
-            <ProgressProtectedRoute requiredProgress={3}>
+            <Chapter1ProgressProtectedRoute requiredProgress={3}>
               <Chapter1pg3 />
-            </ProgressProtectedRoute>
+            </Chapter1ProgressProtectedRoute>
           } />
           <Route path="/chapter1pg4" element={
-            <ProgressProtectedRoute requiredProgress={4}>
+            <Chapter1ProgressProtectedRoute requiredProgress={4}>
               <Chapter1pg4 />
-            </ProgressProtectedRoute>
+            </Chapter1ProgressProtectedRoute>
           } />
           <Route path="/chapter1pg5" element={
-            <ProgressProtectedRoute requiredProgress={5}>
+            <Chapter1ProgressProtectedRoute requiredProgress={5}>
               <Chapter1pg5 />
-            </ProgressProtectedRoute>
+            </Chapter1ProgressProtectedRoute>
           } />
           <Route path="/chapter1pg6" element={
             <ProtectedRoute requireVerification={true}>
               <Chapter1pg6 />
+            </ProtectedRoute>
+          } />
+          <Route path="/chapter3pg1" element={
+            <ProtectedRoute requireVerification={true}>
+              <Chapter3pg1 />
             </ProtectedRoute>
           } />
           

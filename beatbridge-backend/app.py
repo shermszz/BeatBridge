@@ -215,6 +215,7 @@ class UserCustomization(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     chapter_progress = db.Column(db.Integer, default=1) # New field for chapter progress
     chapter0_page_progress = db.Column(db.Integer, default=1) # New field for chapter 0 page progress
+    chapter1_page_progress = db.Column(db.Integer, default=1) # New field for chapter 1 page progress
 
 # Create tables
 def init_db():
@@ -1216,7 +1217,8 @@ def get_chapter_progress():
     customization = UserCustomization.query.filter_by(user_id=user_id).first()
     progress = customization.chapter_progress if customization and customization.chapter_progress else 1
     chapter0_page = customization.chapter0_page_progress if customization and customization.chapter0_page_progress else 1
-    return jsonify({'chapter_progress': progress, 'chapter0_page_progress': chapter0_page}), 200
+    chapter1_page = customization.chapter1_page_progress if customization and customization.chapter1_page_progress else 1
+    return jsonify({'chapter_progress': progress, 'chapter0_page_progress': chapter0_page, 'chapter1_page_progress': chapter1_page}), 200
 
 @app.route('/api/chapter-progress', methods=['POST'])
 @jwt_verified_required
@@ -1225,17 +1227,21 @@ def update_chapter_progress():
     data = request.get_json()
     new_progress = int(data.get('chapter_progress', 1))
     new_ch0_page = int(data.get('chapter0_page_progress', 1))
+    new_ch1_page = int(data.get('chapter1_page_progress', 1))
     customization = UserCustomization.query.filter_by(user_id=user_id).first()
     if customization:
         if not customization.chapter_progress or new_progress > customization.chapter_progress:
             customization.chapter_progress = new_progress
         if not customization.chapter0_page_progress or new_ch0_page > customization.chapter0_page_progress:
             customization.chapter0_page_progress = new_ch0_page
+        if not customization.chapter1_page_progress or new_ch1_page > customization.chapter1_page_progress:
+            customization.chapter1_page_progress = new_ch1_page
         db.session.commit()
     return jsonify({
         'success': True,
         'chapter_progress': customization.chapter_progress,
-        'chapter0_page_progress': customization.chapter0_page_progress
+        'chapter0_page_progress': customization.chapter0_page_progress,
+        'chapter1_page_progress': customization.chapter1_page_progress
     }), 200
 
 if __name__ == "__main__":

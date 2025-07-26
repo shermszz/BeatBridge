@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Chapter1/Chapter1pg1.css';
+import config from '../../config';
 
 export default function Chapter1pg1() {
   const navigate = useNavigate();
@@ -96,6 +97,22 @@ export default function Chapter1pg1() {
     const num = parseInt(bpmInput, 10);
     if (!isNaN(num)) setBpm(clampBpm(num));
     else setBpmInput(String(bpm));
+  };
+
+  // Add this function to update chapter progress, only once per user (per session)
+  const updatePageProgress = async () => {
+    console.log('Calling updatePageProgress (chapter1_page_progress=2)');
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${config.API_BASE_URL}/api/chapter-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ chapter1_page_progress: 2 })
+      });
+    } catch (err) { console.error('Progress update failed:', err); }
   };
 
   // Stick SVGs for visual demo
@@ -251,7 +268,10 @@ export default function Chapter1pg1() {
       </div>
       {/* Navigation Buttons always at the bottom */}
       <div className="chapter1-bottom-nav" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2.5rem', marginTop: '2.5rem' }}>
-        <button className="chapter1-back-link" onClick={() => navigate('/chapter1pg2')}>
+        <button className="chapter1-back-link" onClick={async () => {
+          await updatePageProgress();
+          navigate('/chapter1pg2');
+        }}>
           Next →
         </button>
         <button className="chapter1-back-link" onClick={() => navigate('/chapter1-dashboard')}>

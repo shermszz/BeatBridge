@@ -191,7 +191,9 @@
   background: linear-gradient(90deg, #ff6b6b 0%, #ff4646 100%);
   height: 100%;
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 1.5s ease-out;
+  width: 0%;
+  min-width: 0%;
 }
 
 .progress-markers {
