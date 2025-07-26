@@ -302,12 +302,60 @@ Unit testing is the part of the automated testing process that contains small un
 
 Test cases for unit testing include:
 
-- AuthController tests:
-  - User registration validation
-  - Login authentication
-  - Password hashing verification
-  - Token generation and validation
-  - Email verification process
+- **Authentication Feature (test_auth.py)**
+  - **User Registration Validation**: Ensures users cannot register with duplicate usernames or emails, and validates password confirmation matching
+  - **Login Authentication**: Verifies correct and incorrect login attempts, including support for both username and email login
+  - **Password Hashing Verification**: Confirms that passwords are securely hashed using Werkzeug's security functions and properly validated
+  - **Token Generation and Validation**: Tests JWT creation, decoding, and validation for user sessions and protected route access
+  - **Email Verification Process**: Tests the sending and validation of email verification tokens for new user accounts
+  - **Password Reset Flow**: Comprehensive testing of the complete password reset process including OTP generation, verification, and password reset
+  - **Google OAuth Integration**: Tests Google authentication flow including user creation, account linking, and dual login support
+  - **Protected Route Access**: Validates that protected endpoints require proper authentication tokens
+  - **Password Setting for Google Users**: Tests the ability for Google users to set traditional passwords for dual login capability
+
+### Authentication Test Cases (test_auth.py)
+
+The authentication system includes **23 comprehensive test cases** covering all aspects of user authentication and security:
+
+#### **Traditional Authentication Tests (7 tests)**
+1. **`test_registration_success`**: Validates successful user registration with proper credentials and email verification token generation
+2. **`test_registration_password_mismatch`**: Ensures registration fails when password and confirmation do not match
+3. **`test_login_success`**: Tests successful login with valid username and password, returning JWT access token
+4. **`test_login_with_email`**: Verifies users can login using email address instead of username
+5. **`test_login_invalid_credentials`**: Confirms login failure with invalid username/password combinations
+6. **`test_protected_route_access`**: Tests access control to protected routes with and without authentication tokens
+7. **`test_email_verification`**: Validates the email verification process using JWT tokens
+
+#### **Password Reset Flow Tests (7 tests)**
+8. **`test_forgot_password_success`**: Tests successful password reset request for existing email addresses
+9. **`test_forgot_password_email_not_found`**: Validates proper error handling for non-existent email addresses
+10. **`test_forgot_password_missing_email`**: Ensures proper validation when email is not provided
+11. **`test_verify_otp_success`**: Tests successful OTP verification using in-memory storage
+12. **`test_verify_otp_invalid`**: Validates OTP verification failure with incorrect codes
+13. **`test_reset_password_success`**: Tests successful password reset after OTP verification
+14. **`test_reset_password_user_not_found`**: Ensures proper error handling for non-existent users during password reset
+
+#### **Google OAuth Integration Tests (5 tests)**
+15. **`test_google_login_redirect`**: Validates Google OAuth redirect to Google's authentication page
+16. **`test_google_login_callback_new_user`**: Tests Google OAuth callback creating new users when they don't exist
+17. **`test_google_login_callback_existing_user`**: Verifies Google OAuth callback linking existing users with Google IDs
+18. **`test_google_login_callback_no_code`**: Tests proper error handling when no authorization code is provided
+19. **`test_google_user_login_with_placeholder_password`**: Ensures Google users cannot login with placeholder passwords using traditional login
+
+#### **Dual Login Support Tests (4 tests)**
+20. **`test_google_user_login_with_set_password`**: Tests that Google users can login with traditional credentials after setting a real password
+21. **`test_set_password_success`**: Validates successful password setting for authenticated users
+22. **`test_set_password_unauthorized`**: Ensures password setting fails when users are not authenticated
+23. **`test_set_password_missing_password`**: Validates proper error handling when new password is not provided
+
+### Authentication Security Features
+
+- **Secure Password Hashing**: Uses Werkzeug's `generate_password_hash` and `check_password_hash` for secure password storage
+- **JWT Token Management**: Implements secure JWT tokens with expiration for stateless session management
+- **OTP-Based Password Reset**: Secure one-time password system for password recovery
+- **Google OAuth Integration**: Seamless Google authentication with account linking and dual login support
+- **Protected Route Security**: All sensitive endpoints require valid JWT authentication
+- **Input Validation**: Comprehensive validation for all user inputs to prevent security vulnerabilities
 
 - LastFMController tests:
   - API integration verification
