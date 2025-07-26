@@ -369,6 +369,11 @@ def create_app():
 
     @app.route('/api/recommend-song', methods=['POST'])
     def recommend_song():
+        # Check authentication first
+        user, err_resp, err_code = get_current_user()
+        if not user:
+            return err_resp, err_code
+            
         data = request.get_json()
         
         if not isinstance(data.get('genres'), list):
