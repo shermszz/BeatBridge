@@ -13,6 +13,7 @@ BeatBridge is a full-stack music learning and recommendation platform. It helps 
 6. [Deployment](#deployment)
 7. [Contributing](#contributing)
 8. [License](#license)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -302,3 +303,59 @@ See the backend README for detailed setup and environment configuration.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Troubleshooting
+
+### Backend Issues
+- **App won't start or crashes:**
+  - Check your Python version (should be 3.10+).
+  - Ensure all dependencies are installed: `pip install -r requirements.txt` in `beatbridge-backend/`.
+  - Review error messages in the terminal for missing packages or syntax errors.
+- **Environment variables not loading:**
+  - Make sure you have a `.env` file in `beatbridge-backend/` and it is properly formatted (see `.env.example`).
+  - Restart your terminal or IDE after editing environment variables.
+- **Port 5000 already in use:**
+  - On macOS, AirPlay Receiver can block port 5000. Disable it in System Settings > General > AirDrop & Handoff.
+  - Or, kill the process using the port: `lsof -i :5000` then `kill <PID>`.
+- **API not responding:**
+  - Ensure the backend server is running (`python app.py` or `gunicorn ...`).
+  - Check for CORS errors in the browser console and verify allowed origins in backend config.
+- **More help:**
+  - See [`beatbridge-backend/README.md`](./beatbridge-backend/README.md) for deep troubleshooting, environment setup, and API issues.
+
+### Frontend Issues
+- **App won't start:**
+  - Ensure Node.js is installed (`node -v`), and run `npm install` in `beatbridge-frontend/`.
+  - If you see "port 3000 in use", either stop the other process or run on a different port: `PORT=3001 npm start`.
+- **API calls fail (404, 500, or CORS errors):**
+  - Make sure the backend is running and accessible at the expected URL (default: http://localhost:5000).
+  - Check `src/config.js` for the correct API base URL.
+  - Open the browser console (F12) for error details.
+- **Static assets not loading:**
+  - Check the `public/` directory for missing files or typos in file names.
+
+### Database Issues
+- **Cannot connect to PostgreSQL:**
+  - Ensure PostgreSQL is installed and running (`pg_ctl status` or use pgAdmin).
+  - Double-check your database credentials and host/port in the `.env` file.
+- **Migrations not applied or schema errors:**
+  - Run the migration SQL files in `beatbridge-backend/migrations/` using `psql`.
+  - Check for errors about existing tables/columns and adjust SQL as needed.
+- **Role does not exist:**
+  - Create the user in psql: `CREATE USER postgres WITH PASSWORD 'your_password';`
+
+### API Key & OAuth Issues
+- **Last.fm API errors:**
+  - Make sure your `LASTFM_API_KEY` is set in the `.env` file and is valid.
+  - Check for typos or extra spaces in the key.
+- **Google OAuth not working:**
+  - Double-check your Google Cloud credentials and redirect URIs.
+  - Make sure the OAuth consent screen is configured and the app is published (if needed).
+  - Callback URLs must match exactly (including protocol and port).
+
+### General Tips
+- Restart your development servers after changing environment variables or dependencies.
+- Clear your browser cache if you see unexpected frontend behavior.
+- For additional help, open an issue on GitHub or consult the backend README for more details.
