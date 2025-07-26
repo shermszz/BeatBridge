@@ -2,8 +2,34 @@
 
 BeatBridge is a music recommendation platform that helps users discover new music based on their preferences.
 
+## Table of Contents
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
+  - [Google OAuth Setup](#google-oauth-setup)
+  - [Running the Application](#running-the-application)
+- [Deployment](#deployment)
+  - [Local Production Testing](#local-production-testing)
+  - [Railway Deployment](#railway-deployment)
+  - [Heroku Deployment](#heroku-deployment)
+  - [Environment Configuration for Production](#environment-configuration-for-production)
+  - [Healthcheck Endpoint](#healthcheck-endpoint)
+- [API Documentation](#api-documentation)
+- [Testing & Quality Assurance](#testing--quality-assurance)
+  - [Automated Testing](#automated-testing)
+  - [User Testing & Feedback](#user-testing--feedback)
+  - [Best Practices](#best-practices)
+  - [Future Improvements](#future-improvements)
+  - [Maintenance](#maintenance)
+- [Troubleshooting](#troubleshooting)
+- [Database Migrations](#database-migrations)
+- [License](#license)
+
 ## Features
-- User authentication and authorization
+- User authentication and authorization (Email & Google OAuth)
 - Email verification
 - Music genre management
 - Song recommendations using Last.fm API
@@ -16,13 +42,15 @@ BeatBridge is a music recommendation platform that helps users discover new musi
 - Last.fm API - Music data and recommendations
 - JWT/Flask-Login - Authentication
 - Flask-Mail - Email services
+- Google OAuth - Social login
 
 ## Getting Started
 
 ### Prerequisites
-- Python 3.13+
+- Python 3.11.0
 - PostgreSQL
 - Last.fm API key
+- Google Cloud Project (for OAuth)
 
 ### Installation
 1. Clone the repository:
@@ -31,7 +59,7 @@ git clone https://github.com/yourusername/beatbridge.git
 cd beatbridge/beatbridge-backend
 ```
 
-2. Create and activate a virtual environment:
+2. Create and activate a virtual environment (Python 3.11.0 recommended):
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -41,12 +69,68 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+*If you update requirements.txt, run `pip freeze > requirements.txt` to save new dependencies.*
 
 4. Set up environment variables:
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
+# Create .env file from the example below
+# (No .env.example file is provided, so create .env manually)
 ```
+
+### Environment Variables
+Create a `.env` file in `beatbridge-backend/` with the following variables:
+
+```
+# Email Configuration
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your-email@gmail.com
+
+# Security Configuration
+JWT_SECRET_KEY=your-jwt-secret-key
+SECRET_KEY=your-flask-secret-key
+
+# Database Configuration
+DB_USER=postgres
+DB_PASSWORD=your-postgres-password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=flask_db
+# Alternatively, you can use a full database URL (overrides above):
+DATABASE_URL=postgresql://postgres:your-postgres-password@localhost:5432/flask_db
+
+# Google OAuth Configuration (Required for Google Sign-in)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Lastfm Api Key
+LASTFM_API_KEY=your-lastfm-api-key
+
+# Frontend URL (for CORS and redirects)
+FRONTEND_BASE_URL=http://localhost:3000
+
+# Flask Environment (optional)
+FLASK_ENV=development
+LOCAL_DEV=1
+
+# Port (for deployment platforms like Heroku/Railway)
+PORT=5000
+```
+
+### Google OAuth Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google+ API** (or Google Identity API)
+4. Go to **APIs & Services > Credentials**
+5. Click **Create Credentials > OAuth client ID**
+6. Configure the consent screen (if prompted)
+7. Set the following **Authorized redirect URIs**:
+   - For local dev: `http://localhost:5000/api/google-login/callback`
+   - For production: `https://your-domain.com/api/google-login/callback`
+8. Copy the **Client ID** and **Client Secret** into your `.env`
 
 ### Running the Application
 ```bash
@@ -55,29 +139,85 @@ python app.py
 
 The server will start at `http://localhost:5000`.
 
-## Testing Documentation
+## Deployment
 
-### Overview
-The test suite covers authentication, Last.fm integration, and core functionality using pytest as the testing framework.
+### Local Production Testing
+To test the application with Gunicorn (production WSGI server):
+```bash
+gunicorn app:app
+```
 
-### Test Environment Setup
+### Railway Deployment
+The application is configured for Railway deployment with:
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `gunicorn app:app`
+- **Healthcheck:** `GET /` (ensure your app responds to root path)
 
-#### Prerequisites
-- Python 3.13+
-- pytest
-- pytest-cov (for coverage reporting)
-- SQLite (for test database)
+### Heroku Deployment
+The `Procfile` is configured for Heroku:
+```
+web: gunicorn app:app
+```
 
-#### Configuration
-Tests are configured using fixtures in `tests/conftest.py`. The test environment uses:
-- SQLite in-memory database
-- Mock SMTP server configuration
-- Test Last.fm API key
-- JWT secret key for authentication
+### Environment Configuration for Production
+- **Session Storage:** The app uses filesystem sessions by default. For production, consider using Redis or database sessions.
+- **CORS Origins:** Update the `ALLOWED_ORIGINS` list in `app.py` to include your production frontend URL.
+- **Database:** Use `DATABASE_URL` environment variable for production databases.
+- **Security:** Ensure all secret keys are properly set and not using default values.
 
-### Test Structure
+### Healthcheck Endpoint
+The application responds to `GET /` for health checks. Ensure this endpoint returns a valid response for deployment platforms.
 
-#### Directory Structure
+## API Documentation
+
+### Authentication Endpoints
+- `POST /api/register` - Register a new user
+- `POST /api/login` - User login
+- `GET /api/verify-email/<token>` - Verify email address
+- `GET /api/user` - Get user profile (protected)
+
+### Music Endpoints
+- `GET /api/genres` - Get list of music genres
+- `POST /api/recommend-song` - Get song recommendations
+
+## Testing & Quality Assurance
+
+### Automated Testing
+
+Automated tests are essential to test features and fix bugs to ensure the app performs as expected. For BeatBridge, we used three main categories of automated testing:
+
+1. Unit test: tests a single function, method or class
+2. Widget test: tests a single component and how it interacts with other components in the UI framework
+3. Integration test: tests a complete app or a certain navigation path of an app
+
+#### Unit Test
+
+Unit testing is the part of the automated testing process that contains small units of code that test specific parts of the program for their reliability. For BeatBridge, unit tests were written and conducted to focus on testing the logic behind selected functions within each of the controllers.
+
+Test cases for unit testing include:
+
+- AuthController tests:
+  - User registration validation
+  - Login authentication
+  - Password hashing verification
+  - Token generation and validation
+  - Email verification process
+
+- LastFMController tests:
+  - API integration verification
+  - Genre data retrieval
+  - Song recommendation logic
+  - Error handling for API responses
+  - Data transformation accuracy
+
+- UserPreferencesController tests:
+  - Genre preference storage
+  - User customization settings
+  - Profile data management
+  - Settings validation
+
+#### Test Structure
+
 ```
 beatbridge-backend/
 ├── tests/
@@ -113,9 +253,9 @@ Tests core Last.fm functionality:
 - API response parsing
 - Data transformation
 
-### Test Cases
+#### Test Cases
 
-#### Authentication Test Cases
+##### Authentication Test Cases
 1. `test_registration_success`
    - Verifies successful user registration
    - Checks response status code and message
@@ -145,7 +285,7 @@ Tests core Last.fm functionality:
    - Verifies token generation and validation
    - Checks user verification status update
 
-#### Last.fm Integration Test Cases
+##### Last.fm Integration Test Cases
 1. `test_genre_endpoint_success`
    - Tests genre list retrieval
    - Verifies response format
@@ -169,32 +309,32 @@ Tests core Last.fm functionality:
    - Tests input validation
    - Verifies error handling for invalid formats
 
-### Running Tests
+#### Running Tests
 
-#### Basic Test Execution
+##### Basic Test Execution
 ```bash
 python -m pytest
 ```
 
-#### Verbose Output
+##### Verbose Output
 ```bash
 python -m pytest -v
 ```
 
-#### With Coverage Report
+##### With Coverage Report
 ```bash
 python -m pytest --cov=.
 ```
 
-### Test Results
+#### Test Results
 
-#### Current Status
+##### Current Status
 - Total Tests: 12
 - Passing: 12
 - Failing: 0
 - Coverage: ~85%
 
-#### Known Issues and Warnings
+##### Known Issues and Warnings
 1. SQLAlchemy 2.0 Compatibility Warnings
    - Related to query API changes
    - Will be addressed in future updates
@@ -207,7 +347,7 @@ python -m pytest --cov=.
    - Updated to use timezone-aware objects
    - Some remaining warnings from third-party libraries
 
-### Best Practices Implemented
+#### Best Practices Implemented
 
 1. **Factory Pattern**
    - Uses Flask application factory
@@ -229,102 +369,9 @@ python -m pytest --cov=.
    - Email service mocking
    - Third-party service isolation
 
-### Future Improvements
+### User Testing & Feedback
 
-1. **Coverage Enhancement**
-   - Add edge case testing
-   - Increase async operation coverage
-   - Add integration tests for frontend interaction
-
-2. **Performance Testing**
-   - Add load testing
-   - Implement stress testing
-   - Add performance benchmarks
-
-3. **Security Testing**
-   - Add penetration testing
-   - Implement security scanning
-   - Add CSRF protection tests
-
-4. **Automation**
-   - Implement CI/CD pipeline
-   - Add automated regression testing
-   - Implement automated deployment testing
-
-### Test Maintenance
-
-#### Regular Tasks
-1. Update test dependencies
-2. Review and update mock data
-3. Monitor test performance
-4. Update documentation
-
-#### Version Control
-- Tests are version controlled with the main codebase
-- Test files follow the same naming convention
-- Documentation is maintained in markdown format
-
-## API Documentation
-
-### Authentication Endpoints
-- `POST /api/register` - Register a new user
-- `POST /api/login` - User login
-- `GET /api/verify-email/<token>` - Verify email address
-- `GET /api/user` - Get user profile (protected)
-
-### Music Endpoints
-- `GET /api/genres` - Get list of music genres
-- `POST /api/recommend-song` - Get song recommendations
-
-## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-# Quality Control
-
-## Automated Testing
-
-Automated tests are essential to test features and fix bugs to ensure the app performs as expected. For BeatBridge, we used three main categories of automated testing:
-
-1. Unit test: tests a single function, method or class
-2. Widget test: tests a single component and how it interacts with other components in the UI framework
-3. Integration test: tests a complete app or a certain navigation path of an app
-
-### Unit Test
-
-Unit testing is the part of the automated testing process that contains small units of code that test specific parts of the program for their reliability. For BeatBridge, unit tests were written and conducted to focus on testing the logic behind selected functions within each of the controllers.
-
-Test cases for unit testing include:
-
-- AuthController tests:
-  - User registration validation
-  - Login authentication
-  - Password hashing verification
-  - Token generation and validation
-  - Email verification process
-
-- LastFMController tests:
-  - API integration verification
-  - Genre data retrieval
-  - Song recommendation logic
-  - Error handling for API responses
-  - Data transformation accuracy
-
-- UserPreferencesController tests:
-  - Genre preference storage
-  - User customization settings
-  - Profile data management
-  - Settings validation
-
-## User Testing
-
-Apart from automated testing, user testing was conducted with participants whose criteria meets the target audience. User testing is the process of having end users test and evaluate the product or feature.
+User testing was conducted with participants whose criteria meets the target audience. User testing is the process of having end users test and evaluate the product or feature.
 
 We utilized Donald A. Norman's seven fundamental design principles to help us test and understand how users interact with the app. In short, the principles we used are:
 
@@ -490,3 +537,53 @@ Areas identified for future improvement:
    - Advanced search capabilities
    - Multiple streaming service integration
    - Enhanced mobile app features 
+
+### Maintenance
+
+#### Regular Tasks
+1. Update test dependencies
+2. Review and update mock data
+3. Monitor test performance
+4. Update documentation
+
+#### Version Control
+- Tests are version controlled with the main codebase
+- Test files follow the same naming convention
+- Documentation is maintained in markdown format
+
+## Troubleshooting
+
+- **Missing Environment Variables:** Ensure all variables listed above are set in your `.env` file. The app will fail to start or behave unexpectedly if any are missing.
+- **Database Connection Issues:** Double-check your `DATABASE_URL` or individual DB settings. For local dev, ensure PostgreSQL is running and accessible.
+- **OAuth Errors:** Make sure your Google OAuth credentials and redirect URIs are correct in the Google Cloud Console and `.env`.
+- **Port Conflicts:** If running locally, ensure port 5000 is free or set the `PORT` variable to another value.
+- **Python Version:** Use Python 3.11.0 for best compatibility.
+- **CORS Issues:** If you're getting CORS errors, ensure your frontend URL is in the `ALLOWED_ORIGINS` list in `app.py`.
+- **Session Issues:** The app uses filesystem sessions. For production, consider using Redis or database sessions.
+
+## Database Migrations
+
+Database schema migrations are managed in the `migrations/` directory. To apply or create migrations:
+
+- **Manual SQL:**
+  - Migration files are provided as SQL scripts in `beatbridge-backend/migrations/`.
+  - To apply a migration, run (from the backend directory):
+    ```bash
+    psql -U <db_user> -d flask_db -f migrations/<migration_file>.sql
+    ```
+    Replace `<db_user>` with your database user and `<migration_file>.sql` with the migration script name. The default database name is `flask_db` (as set in your environment variables).
+
+- **With Flask-Migrate (if enabled):**
+  - If you add Flask-Migrate, you can use:
+    ```bash
+    flask db migrate -m "Migration message"
+    flask db upgrade
+    ```
+  - (Currently, migrations are managed via SQL scripts.)
+
+- **Best Practice:**
+  - Always back up your database before applying new migrations.
+  - Review each migration script before running it in production.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
