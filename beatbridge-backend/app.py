@@ -1385,7 +1385,7 @@ def accept_shared_loops(share_id):
         # Check if user has already accepted this share
         existing = db.session.execute(text("""
             SELECT id FROM shared_loop_notifications 
-            WHERE recipient_id = :user_id AND share_id = :share_id
+            WHERE recipient_id = :recipient_id AND share_id = :share_id
         """), {
             'recipient_id': user_id,
             'share_id': share_id
