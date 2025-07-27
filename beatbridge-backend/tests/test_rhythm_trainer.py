@@ -323,7 +323,7 @@ class TestRhythmTrainer:
         data = json.loads(response.data)
         assert data['skill_level'] == 'Advanced'
         assert data['practice_frequency'] == 'Daily'
-        assert data['favorite_genres'] == 'rock,metal,jazz'
+        assert data['favorite_genres'] == ['rock', 'metal', 'jazz']
 
     def test_chapter_progress_without_customization(self, test_client):
         """Test chapter progress when user has no customization record"""
@@ -707,3 +707,249 @@ class TestRhythmTrainer:
                                                    headers={'Authorization': f'Bearer {token}'})
             customization_data = json.loads(customization_response.data)
             assert customization_data['skill_level'] == skill_level 
+
+    def test_chapter_progress_verification_requirements(self, test_client):
+        """Tests that chapter progress updates require email verification"""
+        # Setup unverified user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'unverifieduser',
+                            'email': 'unverified@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'unverifieduser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Create user customization (this should work for unverified users)
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Beginner',
+                            'practice_frequency': 'Daily',
+                            'favorite_genres': 'rock,pop'
+                        })
+
+        # Try to get chapter progress without verification - should fail
+        response = test_client.get('/api/chapter-progress',
+                                 headers={'Authorization': f'Bearer {token}'})
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+
+        # Try to update chapter progress without verification - should fail
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'chapter_progress': 2})
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
+
+        # Now verify the user
+        verify_user_in_db(user_id)
+
+        # After verification, chapter progress operations should work
+        response = test_client.get('/api/chapter-progress',
+                                 headers={'Authorization': f'Bearer {token}'})
+        assert response.status_code == 200
+
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'chapter_progress': 2})
+        assert response.status_code == 200
+
+        # Test that verification status is properly checked on each request
+        # Create another unverified user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'unverifieduser2',
+                            'email': 'unverified2@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response2 = test_client.post('/api/login',
+                                         json={
+                                             'username': 'unverifieduser2',
+                                             'password': 'TestPass123!'
+                                         })
+        token2 = json.loads(login_response2.data)['access_token']
+
+        # Even with a valid token, unverified users cannot access chapter progress
+        response = test_client.get('/api/chapter-progress',
+                                 headers={'Authorization': f'Bearer {token2}'})
+        assert response.status_code == 401
+
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token2}'},
+                                  json={'chapter_progress': 1})
+        assert response.status_code == 401
+
+    def test_chapter_progress_data_validation(self, test_client):
+        """Tests comprehensive data validation for progress updates"""
+        # Setup verified user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'validationuser',
+                            'email': 'validation@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+        
+        login_response = test_client.post('/api/login',
+                                        json={
+                                            'username': 'validationuser',
+                                            'password': 'TestPass123!'
+                                        })
+        token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
+
+        # Create user customization
+        test_client.post('/api/save-customization',
+                        headers={'Authorization': f'Bearer {token}'},
+                        json={
+                            'skill_level': 'Beginner',
+                            'practice_frequency': 'Daily',
+                            'favorite_genres': 'rock,pop'
+                        })
+
+        # Test 1: Valid integer values
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': 5,
+                                      'chapter0_page_progress': 3,
+                                      'chapter1_page_progress': 2
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 5
+        assert data['chapter0_page_progress'] == 3
+        assert data['chapter1_page_progress'] == 2
+
+        # Test 2: String values (should be handled gracefully)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': 'invalid',
+                                      'chapter0_page_progress': 'not_a_number',
+                                      'chapter1_page_progress': 'string_value'
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        # Should default to 1 for invalid values
+        assert data['chapter_progress'] == 1
+        assert data['chapter0_page_progress'] == 1
+        assert data['chapter1_page_progress'] == 1
+
+        # Test 3: Float values (should be converted to integers)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': 3.7,
+                                      'chapter0_page_progress': 2.3,
+                                      'chapter1_page_progress': 1.8
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 3
+        assert data['chapter0_page_progress'] == 2
+        assert data['chapter1_page_progress'] == 1
+
+        # Test 4: Negative values (should default to 1)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': -5,
+                                      'chapter0_page_progress': -3,
+                                      'chapter1_page_progress': -1
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 1
+        assert data['chapter0_page_progress'] == 1
+        assert data['chapter1_page_progress'] == 1
+
+        # Test 5: Zero values (should default to 1)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': 0,
+                                      'chapter0_page_progress': 0,
+                                      'chapter1_page_progress': 0
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 1
+        assert data['chapter0_page_progress'] == 1
+        assert data['chapter1_page_progress'] == 1
+
+        # Test 6: Very large values (should be accepted)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': 999999,
+                                      'chapter0_page_progress': 1000000,
+                                      'chapter1_page_progress': 500000
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 999999
+        assert data['chapter0_page_progress'] == 1000000
+        assert data['chapter1_page_progress'] == 500000
+
+        # Test 7: Missing fields (should use existing values or defaults)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={})  # Empty request
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        # Should maintain previous values
+        assert data['chapter_progress'] == 999999
+        assert data['chapter0_page_progress'] == 1000000
+        assert data['chapter1_page_progress'] == 500000
+
+        # Test 8: Partial updates (should only update provided fields)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={'chapter_progress': 10})  # Only update one field
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 10
+        # Other fields should remain unchanged
+        assert data['chapter0_page_progress'] == 1000000
+        assert data['chapter1_page_progress'] == 500000
+
+        # Test 9: Non-numeric data types (should handle gracefully)
+        response = test_client.post('/api/chapter-progress',
+                                  headers={'Authorization': f'Bearer {token}'},
+                                  json={
+                                      'chapter_progress': None,
+                                      'chapter0_page_progress': [],
+                                      'chapter1_page_progress': {}
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        # Should default to 1 for invalid types
+        assert data['chapter_progress'] == 1
+        assert data['chapter0_page_progress'] == 1
+        assert data['chapter1_page_progress'] == 1
+
+        # Test 10: Data consistency across operations
+        # Verify that the final state is consistent
+        response = test_client.get('/api/chapter-progress',
+                                 headers={'Authorization': f'Bearer {token}'})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['chapter_progress'] == 1
+        assert data['chapter0_page_progress'] == 1
+        assert data['chapter1_page_progress'] == 1 
