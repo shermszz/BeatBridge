@@ -375,12 +375,15 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0; /* Allow flex items to shrink below content size */
+  overflow: hidden; /* Prevent content from overflowing */
 }
 
 .jam-instrument-volume label {
   color: #aaa;
   font-size: 0.9rem;
   min-width: 50px;
+  flex-shrink: 0; /* Prevent label from shrinking */
 }
 
 .jam-volume-slider {
@@ -391,12 +394,16 @@
   background: #333;
   outline: none;
   accent-color: #ff4f4f;
+  min-width: 0; /* Allow slider to shrink */
 }
 
 .jam-volume-value {
   flex: 0 0 auto;        /* never stretch or shrink */
-  white-space: nowrap;   /* keep “100%” on one line */
+  white-space: nowrap;   /* keep "100%" on one line */
   margin: 0;             /* reset any default margins */
+  color: #fff;
+  font-size: 0.9rem;
+  min-width: 0; /* Allow text to shrink if needed */
 }
 
 /* Available Instruments Preview */
