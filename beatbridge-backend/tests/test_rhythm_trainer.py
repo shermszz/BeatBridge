@@ -49,7 +49,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Get chapter progress
@@ -120,7 +120,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Update chapter progress
@@ -167,7 +167,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Update only chapter progress
@@ -209,7 +209,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # First update to higher progress
@@ -271,7 +271,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Test with string instead of integer
@@ -312,7 +312,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Advanced',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,metal,jazz'
+                            'favorite_genres': ['rock', 'metal', 'jazz']
                         })
 
         # Get customization (used by rhythm trainer to show advanced user modal)
@@ -404,7 +404,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Test with zero values
@@ -466,7 +466,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Simulate concurrent updates
@@ -512,7 +512,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Test with malformed JSON
@@ -552,7 +552,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Test with empty request body
@@ -595,7 +595,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Test with negative values
@@ -642,7 +642,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Update progress multiple times
@@ -690,7 +690,7 @@ class TestRhythmTrainer:
                             json={
                                 'skill_level': skill_level,
                                 'practice_frequency': 'Daily',
-                                'favorite_genres': 'rock,pop'
+                                'favorite_genres': ['rock', 'pop']
                             })
 
             # Test chapter progress update
@@ -733,7 +733,7 @@ class TestRhythmTrainer:
                         json={
                             'skill_level': 'Beginner',
                             'practice_frequency': 'Daily',
-                            'favorite_genres': 'rock,pop'
+                            'favorite_genres': ['rock', 'pop']
                         })
 
         # Try to get chapter progress without verification - should fail

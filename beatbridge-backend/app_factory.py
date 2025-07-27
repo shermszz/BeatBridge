@@ -346,15 +346,14 @@ def create_app():
             errors['practice'] = 'Please select your practice frequency'
         if not data.get('favorite_genres'):
             errors['genres'] = 'Please select at least one genre'
+        elif not isinstance(data.get('favorite_genres'), list):
+            errors['genres'] = 'Favorite genres must be provided as an array'
         if errors:
             return jsonify({'errors': errors}), 400
         
-        # Handle favorite_genres as either list or string
+        # Handle favorite_genres as list (now validated above)
         favorite_genres = data.get('favorite_genres')
-        if isinstance(favorite_genres, list):
-            favorite_genres_str = ','.join(favorite_genres)
-        else:
-            favorite_genres_str = str(favorite_genres)
+        favorite_genres_str = ','.join(favorite_genres)
         
         # Update or create customization
         customization = UserCustomization.query.filter_by(user_id=user.id).first()
