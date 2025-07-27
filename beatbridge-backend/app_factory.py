@@ -79,6 +79,9 @@ class UserCustomization(db.Model):
     skill_level = db.Column(db.String(50), nullable=False)
     practice_frequency = db.Column(db.String(50), nullable=False)
     favorite_genres = db.Column(db.String(500), nullable=False)  # Comma-separated
+    chapter_progress = db.Column(db.Integer, default=1)  # New field for chapter progress
+    chapter0_page_progress = db.Column(db.Integer, default=1)  # New field for chapter 0 page progress
+    chapter1_page_progress = db.Column(db.Integer, default=1)  # New field for chapter 1 page progress
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -134,6 +137,31 @@ def create_app():
             return None, jsonify({'error': 'Token has expired'}), 401
         except jwt.InvalidTokenError:
             return None, jsonify({'error': 'Invalid token'}), 401
+
+    # JWT decorators
+    def jwt_required(f):
+        def decorated_function(*args, **kwargs):
+            user, err_resp, err_code = get_current_user()
+            if not user:
+                return err_resp, err_code
+            request.user = user
+            request.user_id = user.id
+            return f(*args, **kwargs)
+        decorated_function.__name__ = f.__name__
+        return decorated_function
+
+    def jwt_verified_required(f):
+        def decorated_function(*args, **kwargs):
+            user, err_resp, err_code = get_current_user()
+            if not user:
+                return err_resp, err_code
+            if not user.is_verified:
+                return jsonify({'error': 'Email verification required'}), 401
+            request.user = user
+            request.user_id = user.id
+            return f(*args, **kwargs)
+        decorated_function.__name__ = f.__name__
+        return decorated_function
 
     @app.route('/api/register', methods=['POST'])
     def register():
@@ -191,7 +219,7 @@ def create_app():
                 algorithm='HS256'
             )
             
-            return jsonify({'access_token': token}), 200
+            return jsonify({'access_token': token, 'user_id': user.id}), 200
             
         return jsonify({'error': 'Invalid username or password'}), 401
 
@@ -316,22 +344,30 @@ def create_app():
             errors['skill'] = 'Please select your skill level'
         if not data.get('practice_frequency'):
             errors['practice'] = 'Please select your practice frequency'
-        if not data.get('favorite_genres') or not isinstance(data.get('favorite_genres'), list) or len(data.get('favorite_genres')) == 0:
+        if not data.get('favorite_genres'):
             errors['genres'] = 'Please select at least one genre'
         if errors:
             return jsonify({'errors': errors}), 400
+        
+        # Handle favorite_genres as either list or string
+        favorite_genres = data.get('favorite_genres')
+        if isinstance(favorite_genres, list):
+            favorite_genres_str = ','.join(favorite_genres)
+        else:
+            favorite_genres_str = str(favorite_genres)
+        
         # Update or create customization
         customization = UserCustomization.query.filter_by(user_id=user.id).first()
         if customization:
             customization.skill_level = data['skill_level']
             customization.practice_frequency = data['practice_frequency']
-            customization.favorite_genres = ','.join(data['favorite_genres'])
+            customization.favorite_genres = favorite_genres_str
         else:
             customization = UserCustomization(
                 user_id=user.id,
                 skill_level=data['skill_level'],
                 practice_frequency=data['practice_frequency'],
-                favorite_genres=','.join(data['favorite_genres'])
+                favorite_genres=favorite_genres_str
             )
             db.session.add(customization)
         db.session.commit()
@@ -348,7 +384,7 @@ def create_app():
         return jsonify({
             'skill_level': customization.skill_level,
             'practice_frequency': customization.practice_frequency,
-            'favorite_genres': customization.favorite_genres.split(',')
+            'favorite_genres': customization.favorite_genres.split(',') if customization.favorite_genres else []
         }), 200
 
     @app.route('/api/genres')
@@ -700,5 +736,69 @@ def create_app():
         user.set_password(new_password)
         db.session.commit()
         return jsonify({'message': 'Password set successfully'}), 200
+
+    # Chapter Progress Endpoints
+    @app.route('/api/chapter-progress', methods=['GET'])
+    @jwt_verified_required
+    def get_chapter_progress():
+        user_id = request.user_id
+        customization = UserCustomization.query.filter_by(user_id=user_id).first()
+        if not customization:
+            return jsonify({'error': 'No customization found'}), 404
+        progress = customization.chapter_progress if customization.chapter_progress else 1
+        chapter0_page = customization.chapter0_page_progress if customization.chapter0_page_progress else 1
+        chapter1_page = customization.chapter1_page_progress if customization.chapter1_page_progress else 1
+        return jsonify({'chapter_progress': progress, 'chapter0_page_progress': chapter0_page, 'chapter1_page_progress': chapter1_page}), 200
+
+    @app.route('/api/chapter-progress', methods=['POST'])
+    @jwt_verified_required
+    def update_chapter_progress():
+        user_id = request.user_id
+        data = request.get_json()
+        
+        # Handle invalid data gracefully
+        try:
+            new_progress = int(data.get('chapter_progress', 1))
+            new_ch0_page = int(data.get('chapter0_page_progress', 1))
+            new_ch1_page = int(data.get('chapter1_page_progress', 1))
+        except (ValueError, TypeError):
+            # Use default values if conversion fails
+            new_progress = 1
+            new_ch0_page = 1
+            new_ch1_page = 1
+        customization = UserCustomization.query.filter_by(user_id=user_id).first()
+        if customization:
+            if not customization.chapter_progress or new_progress > customization.chapter_progress:
+                customization.chapter_progress = new_progress
+            if not customization.chapter0_page_progress or new_ch0_page > customization.chapter0_page_progress:
+                customization.chapter0_page_progress = new_ch0_page
+            if not customization.chapter1_page_progress or new_ch1_page > customization.chapter1_page_progress:
+                customization.chapter1_page_progress = new_ch1_page
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'chapter_progress': customization.chapter_progress,
+                'chapter0_page_progress': customization.chapter0_page_progress,
+                'chapter1_page_progress': customization.chapter1_page_progress
+            }), 200
+        else:
+            # Create a basic customization if none exists
+            customization = UserCustomization(
+                user_id=user_id,
+                skill_level='Beginner',
+                practice_frequency='Daily',
+                favorite_genres='rock',
+                chapter_progress=new_progress,
+                chapter0_page_progress=new_ch0_page,
+                chapter1_page_progress=new_ch1_page
+            )
+            db.session.add(customization)
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'chapter_progress': customization.chapter_progress,
+                'chapter0_page_progress': customization.chapter0_page_progress,
+                'chapter1_page_progress': customization.chapter1_page_progress
+            }), 200
 
     return app 

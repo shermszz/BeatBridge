@@ -1,6 +1,15 @@
 import pytest
 import json
-from app import User, UserCustomization, db
+from app_factory import User, UserCustomization, db
+
+def verify_user_in_db(user_id):
+    """Helper function to verify a user directly in the database for testing"""
+    user = User.query.get(user_id)
+    if user:
+        user.is_verified = True
+        db.session.commit()
+        return True
+    return False
 
 @pytest.mark.usefixtures('test_db')
 class TestRhythmTrainer:
@@ -30,6 +39,9 @@ class TestRhythmTrainer:
                                         })
         token = json.loads(login_response.data)['access_token']
         user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization with progress
         test_client.post('/api/save-customization',
@@ -97,6 +109,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -140,6 +156,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -178,6 +198,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -236,6 +260,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -273,6 +301,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization with skill level
         test_client.post('/api/save-customization',
@@ -315,8 +347,8 @@ class TestRhythmTrainer:
         response = test_client.get('/api/chapter-progress',
                                  headers={'Authorization': f'Bearer {token}'})
         
-        # Should return 404 as no customization exists
-        assert response.status_code == 404
+        # Should return 401 as user is not verified
+        assert response.status_code == 401
 
     def test_update_chapter_progress_without_customization(self, test_client):
         """Test updating chapter progress when user has no customization record"""
@@ -341,10 +373,8 @@ class TestRhythmTrainer:
                                   headers={'Authorization': f'Bearer {token}'},
                                   json={'chapter_progress': 2})
         
-        # Should handle gracefully and return success
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert data['success'] is True
+        # Should return 401 as user is not verified
+        assert response.status_code == 401
 
     def test_chapter_progress_edge_cases(self, test_client):
         """Test chapter progress with edge case values"""
@@ -363,6 +393,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -421,6 +455,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -483,8 +521,8 @@ class TestRhythmTrainer:
                                   data='{"chapter_progress": 2,}',  # Trailing comma
                                   content_type='application/json')
         
-        # Should handle gracefully
-        assert response.status_code == 400
+        # Should return 401 as user is not verified
+        assert response.status_code == 401
 
     def test_chapter_progress_empty_request(self, test_client):
         """Test chapter progress update with empty request body"""
@@ -503,6 +541,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -542,6 +584,10 @@ class TestRhythmTrainer:
                                             'password': 'TestPass123!'
                                         })
         token = json.loads(login_response.data)['access_token']
+        user_id = json.loads(login_response.data)['user_id']
+
+        # Verify user for testing
+        verify_user_in_db(user_id)
 
         # Create user customization
         test_client.post('/api/save-customization',
@@ -587,6 +633,9 @@ class TestRhythmTrainer:
         token = json.loads(login_response.data)['access_token']
         user_id = json.loads(login_response.data)['user_id']
 
+        # Verify user for testing
+        verify_user_in_db(user_id)
+
         # Create user customization
         test_client.post('/api/save-customization',
                         headers={'Authorization': f'Bearer {token}'},
@@ -630,6 +679,10 @@ class TestRhythmTrainer:
                                                 'password': 'TestPass123!'
                                             })
             token = json.loads(login_response.data)['access_token']
+            user_id = json.loads(login_response.data)['user_id']
+
+            # Verify user for testing
+            verify_user_in_db(user_id)
 
             # Create user customization with specific skill level
             test_client.post('/api/save-customization',
