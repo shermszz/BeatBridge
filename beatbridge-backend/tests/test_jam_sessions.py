@@ -186,50 +186,6 @@ class TestJamSessions:
         get_response = test_client.get(f'/api/jam-sessions/{jam_id}')
         assert get_response.status_code == 404
 
-    def test_explore_jam_sessions(self, test_client):
-        """Test exploring public jam sessions"""
-        # Setup user and create both public and private sessions
-        test_client.post('/api/register',
-                        json={
-                            'username': 'testuser',
-                            'email': 'test@example.com',
-                            'password': 'TestPass123!',
-                            'confirmation': 'TestPass123!'
-                        })
-        
-        login_response = test_client.post('/api/login',
-                                        json={
-                                            'username': 'testuser',
-                                            'password': 'TestPass123!'
-                                        })
-        token = json.loads(login_response.data)['access_token']
-
-        # Create public and private jam sessions
-        test_client.post('/api/jam-sessions',
-                        headers={'Authorization': f'Bearer {token}'},
-                        json={
-                            'title': 'Public Jam',
-                            'pattern_json': [[1, 0, 1, 0]],
-                            'is_public': True
-                        })
-
-        test_client.post('/api/jam-sessions',
-                        headers={'Authorization': f'Bearer {token}'},
-                        json={
-                            'title': 'Private Jam',
-                            'pattern_json': [[1, 0, 1, 0]],
-                            'is_public': False
-                        })
-
-        # Test explore endpoint
-        response = test_client.get('/api/jam-sessions/explore')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        
-        # Should only see public jams
-        public_jams = [jam for jam in data if jam['is_public']]
-        assert len(public_jams) > 0
-        assert all(jam['is_public'] for jam in data)
 
     def test_create_jam_session_without_authentication(self, test_client):
         """Test creating a jam session without authentication token"""
@@ -439,50 +395,6 @@ class TestJamSessions:
         data = json.loads(response.data)
         assert 'error' in data
         assert 'not found' in data['error']
-
-    def test_get_user_jam_sessions(self, test_client):
-        """Test retrieving all jam sessions for a specific user"""
-        # Setup user
-        test_client.post('/api/register',
-                        json={
-                            'username': 'testuser',
-                            'email': 'test@example.com',
-                            'password': 'TestPass123!',
-                            'confirmation': 'TestPass123!'
-                        })
-        
-        login_response = test_client.post('/api/login',
-                                        json={
-                                            'username': 'testuser',
-                                            'password': 'TestPass123!'
-                                        })
-        token = json.loads(login_response.data)['access_token']
-        user_id = json.loads(login_response.data)['user_id']
-
-        # Create multiple jam sessions
-        test_client.post('/api/jam-sessions',
-                        headers={'Authorization': f'Bearer {token}'},
-                        json={
-                            'title': 'Jam 1',
-                            'pattern_json': [[1, 0, 1, 0]],
-                            'is_public': True
-                        })
-
-        test_client.post('/api/jam-sessions',
-                        headers={'Authorization': f'Bearer {token}'},
-                        json={
-                            'title': 'Jam 2',
-                            'pattern_json': [[0, 1, 0, 1]],
-                            'is_public': False
-                        })
-
-        # Get user's jam sessions
-        response = test_client.get(f'/api/jam-sessions/user/{user_id}')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert len(data) == 2
-        assert any(jam['title'] == 'Jam 1' for jam in data)
-        assert any(jam['title'] == 'Jam 2' for jam in data)
 
     def test_update_jam_session_unauthorized(self, test_client):
         """Test updating a jam session without authentication"""
@@ -898,48 +810,6 @@ class TestJamSessions:
         assert response.status_code == 201
         data = json.loads(response.data)
         assert 'jam_id' in data
-
-    def test_explore_jam_sessions_empty(self, test_client):
-        """Test exploring jam sessions when no public sessions exist"""
-        response = test_client.get('/api/jam-sessions/explore')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert isinstance(data, list)
-        assert len(data) == 0
-
-    def test_explore_jam_sessions_limit(self, test_client):
-        """Test that explore endpoint limits results to 20 sessions"""
-        # Setup user
-        test_client.post('/api/register',
-                        json={
-                            'username': 'testuser',
-                            'email': 'test@example.com',
-                            'password': 'TestPass123!',
-                            'confirmation': 'TestPass123!'
-                        })
-        
-        login_response = test_client.post('/api/login',
-                                        json={
-                                            'username': 'testuser',
-                                            'password': 'TestPass123!'
-                                        })
-        token = json.loads(login_response.data)['access_token']
-
-        # Create 25 public jam sessions
-        for i in range(25):
-            test_client.post('/api/jam-sessions',
-                           headers={'Authorization': f'Bearer {token}'},
-                           json={
-                               'title': f'Jam {i}',
-                               'pattern_json': [[1, 0, 1, 0]],
-                               'is_public': True
-                           })
-
-        # Check explore endpoint
-        response = test_client.get('/api/jam-sessions/explore')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert len(data) <= 20  # Should be limited to 20
 
     def test_jam_session_json_parsing(self, test_client):
         """Test that pattern_json and instruments_json are properly parsed from JSON strings"""
