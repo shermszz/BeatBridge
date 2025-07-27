@@ -24,7 +24,11 @@ const DEFAULT_INSTRUMENTS = [
   ALL_INSTRUMENTS.find(i => i.name === 'Hi-Hat'),
   ALL_INSTRUMENTS.find(i => i.name === 'Kick'),
   ALL_INSTRUMENTS.find(i => i.name === 'Snare'),
-].filter(Boolean);
+].filter(Boolean).map(inst => ({
+  ...inst,
+  volume: 100,
+  muted: false
+}));
 
 const TIME_SIGNATURES = [
   { label: '4/4', beats: 4, note: 4 },
@@ -278,7 +282,12 @@ const JamSession = () => {
     if (!Array.isArray(rawInstruments) || rawInstruments.length === 0) {
       return [...DEFAULT_INSTRUMENTS];
     }
-    return rawInstruments;
+    // Ensure all instruments have volume and muted properties
+    return rawInstruments.map(inst => ({
+      ...inst,
+      volume: inst.volume !== undefined ? inst.volume : 100,
+      muted: inst.muted !== undefined ? inst.muted : false
+    }));
   }
 
   // Helper to normalize pattern
@@ -416,17 +425,38 @@ const JamSession = () => {
   // Add instrument
   const handleAddInstrument = () => {
     if (!addInstrumentId) return;
-    const inst = ALL_INSTRUMENTS.find(i => i.id === addInstrumentId);
-    if (!inst || instruments.some(i => i.id === inst.id)) return;
-    setInstruments(prev => [...prev, inst]);
-    setPattern(prev => [...prev, Array(steps).fill(0)]);
-    setAddInstrumentId('');
+    
+    const instrument = ALL_INSTRUMENTS.find(inst => inst.id === addInstrumentId);
+    if (instrument) {
+      const newInstrument = {
+        ...instrument,
+        volume: 100,
+        muted: false
+      };
+      setInstruments(prev => [...prev, newInstrument]);
+      setPattern(prev => [...prev, Array(steps).fill(0)]);
+      setAddInstrumentId('');
+    }
   };
 
   // Remove instrument
   const handleRemoveInstrument = (idx) => {
     setInstruments(prev => prev.filter((_, i) => i !== idx));
     setPattern(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Toggle instrument mute
+  const toggleInstrumentMute = (idx) => {
+    setInstruments(prev => prev.map((inst, i) =>
+      i === idx ? { ...inst, muted: !inst.muted } : inst
+    ));
+  };
+
+  // Handle instrument volume change
+  const handleVolumeChange = (idx, volume) => {
+    setInstruments(prev => prev.map((inst, i) =>
+      i === idx ? { ...inst, volume: volume } : inst
+    ));
   };
 
   // Playback logic using step state
@@ -443,12 +473,19 @@ const JamSession = () => {
         if (!metronomeMuted) playMetronomeClick(audioCtx.current);
         // Play all active notes for this step
         instruments.forEach((inst, rowIdx) => {
-          if (pattern[rowIdx][nextStep]) {
+          if (pattern[rowIdx][nextStep] && !inst.muted) {
             const buffer = audioBuffers.current[inst.id];
             if (buffer && audioCtx.current) {
               const source = audioCtx.current.createBufferSource();
+              const gainNode = audioCtx.current.createGain();
+              
+              // Set volume (0-100 to 0-1)
+              const volume = (inst.volume || 100) / 100;
+              gainNode.gain.value = volume;
+              
               source.buffer = buffer;
-              source.connect(audioCtx.current.destination);
+              source.connect(gainNode);
+              gainNode.connect(audioCtx.current.destination);
               source.start();
             }
           }
@@ -459,12 +496,19 @@ const JamSession = () => {
     // Play first step immediately
     if (!metronomeMuted) playMetronomeClick(audioCtx.current);
     instruments.forEach((inst, rowIdx) => {
-      if (pattern[rowIdx][0]) {
+      if (pattern[rowIdx][0] && !inst.muted) {
         const buffer = audioBuffers.current[inst.id];
         if (buffer && audioCtx.current) {
           const source = audioCtx.current.createBufferSource();
+          const gainNode = audioCtx.current.createGain();
+          
+          // Set volume (0-100 to 0-1)
+          const volume = (inst.volume || 100) / 100;
+          gainNode.gain.value = volume;
+          
           source.buffer = buffer;
-          source.connect(audioCtx.current.destination);
+          source.connect(gainNode);
+          gainNode.connect(audioCtx.current.destination);
           source.start();
         }
       }
@@ -745,8 +789,76 @@ const JamSession = () => {
               </select>
               <button onClick={handleAddInstrument} disabled={!addInstrumentId}>Add</button>
             </div>
-            <div className="jam-instruments-placeholder">
-              <p style={{color:'#888'}}>Instrument selection and upload panel coming soon...</p>
+            
+            {/* Active Instruments Management */}
+            <div className="jam-active-instruments">
+              <h4>Active Instruments</h4>
+              {instruments.length === 0 ? (
+                <p className="jam-no-instruments">No instruments added yet. Add some instruments to start creating your beat!</p>
+              ) : (
+                <div className="jam-instruments-list">
+                  {instruments.map((inst, idx) => (
+                    <div key={inst.id} className="jam-instrument-item">
+                      <div className="jam-instrument-info">
+                        <span className="jam-instrument-name">{inst.name}</span>
+                        <div className="jam-instrument-controls">
+                          <button 
+                            className="jam-instrument-mute"
+                            onClick={() => toggleInstrumentMute(idx)}
+                            title={inst.muted ? "Unmute" : "Mute"}
+                          >
+                            {inst.muted ? "🔇" : "🔊"}
+                          </button>
+                          <button 
+                            className="jam-instrument-remove"
+                            onClick={() => handleRemoveInstrument(idx)}
+                            title="Remove"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                      <div className="jam-instrument-volume">
+                        <label>Volume:</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={inst.volume || 100}
+                          onChange={(e) => handleVolumeChange(idx, parseInt(e.target.value))}
+                          className="jam-volume-slider"
+                        />
+                        <span className="jam-volume-value">{inst.volume || 100}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Available Instruments Preview */}
+            <div className="jam-available-instruments">
+              <h4>Available Instruments</h4>
+              <div className="jam-instruments-grid">
+                {ALL_INSTRUMENTS.map(inst => (
+                  <div 
+                    key={inst.id} 
+                    className={`jam-instrument-preview ${instruments.some(i => i.id === inst.id) ? 'added' : ''}`}
+                    onClick={() => {
+                      if (!instruments.some(i => i.id === inst.id)) {
+                        setAddInstrumentId(inst.id);
+                        handleAddInstrument();
+                      }
+                    }}
+                  >
+                    <div className="jam-instrument-icon">🥁</div>
+                    <span className="jam-instrument-preview-name">{inst.name}</span>
+                    {instruments.some(i => i.id === inst.id) && (
+                      <span className="jam-instrument-added">✓ Added</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

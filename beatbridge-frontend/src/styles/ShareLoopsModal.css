@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -12,147 +12,192 @@
 }
 
 .share-modal {
-  background: #1a1a1a;
-  padding: 2rem;
-  border-radius: 8px;
-  width: 90%;
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
   max-width: 500px;
+  width: 90%;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  color: #fff;
-  border: 1px solid #333;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .close-button {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 15px;
+  right: 20px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0.5rem;
-  line-height: 1;
-  color: #fff;
-  transition: color 0.2s ease;
+  color: #666;
+  transition: color 0.3s ease;
 }
 
 .close-button:hover {
-  color: #ff6b6b;
+  color: #333;
 }
 
-h2 {
-  color: #ff6b6b;
-  margin-bottom: 0.5rem;
+.share-modal h2 {
+  color: #333;
   font-size: 1.8rem;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
 }
 
 .description-text {
-  color: #ccc;
-  margin-bottom: 1.5rem;
+  color: #666;
   font-size: 1rem;
-  line-height: 1.4;
+  line-height: 1.5;
+  margin-bottom: 25px;
+  text-align: center;
 }
 
 .loops-list {
-  margin: 1.5rem 0;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 0.5rem;
-  background: #252525;
+  margin-bottom: 25px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .loop-item {
-  padding: 0.75rem;
-  border-bottom: 1px solid #333;
-  transition: background-color 0.2s ease;
-}
-
-.loop-item:hover {
-  background-color: #2a2a2a;
-}
-
-.loop-item:last-child {
-  border-bottom: none;
+  margin-bottom: 10px;
 }
 
 .loop-checkbox {
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.loop-checkbox:hover {
+  background-color: #f8f9fa;
 }
 
 .loop-checkbox input[type="checkbox"] {
-  margin-right: 1rem;
-  accent-color: #ff6b6b;
-  width: 18px;
-  height: 18px;
+  margin-right: 10px;
+  transform: scale(1.2);
 }
 
 .loop-title {
   font-size: 1rem;
-  color: #fff;
-}
-
-.error-message {
-  color: #dc3545;
-  margin: 1rem 0;
-  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
 }
 
 .generate-link-button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #ff6b6b;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 12px 30px;
+  border-radius: 25px;
   font-size: 1rem;
-  margin-top: 1rem;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 15px;
 }
 
-.generate-link-button:hover {
-  background-color: #ff5252;
+.generate-link-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .generate-link-button:disabled {
-  background-color: #444;
+  background: #ccc;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .share-link-container {
-  margin-top: 1rem;
   display: flex;
-  gap: 0.5rem;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .share-link-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #333;
-  border-radius: 4px;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 0.9rem;
-  background: #252525;
-  color: #fff;
+  background-color: #f8f9fa;
+  color: #333;
 }
 
 .copy-link-button {
-  padding: 0.75rem 1rem;
-  background-color: #4CAF50;
+  background: #28a745;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
   white-space: nowrap;
-  transition: background-color 0.2s ease;
 }
 
 .copy-link-button:hover {
-  background-color: #43A047;
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+}
+
+.share-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.new-share-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.new-share-button:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .share-modal {
+    width: 95%;
+    padding: 20px;
+  }
+  
+  .share-link-container {
+    flex-direction: column;
+  }
+  
+  .copy-link-button {
+    width: 100%;
+  }
 } 

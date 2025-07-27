@@ -1,17 +1,11 @@
-import unittest
-from unittest.mock import patch, MagicMock
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app import app, db, User
-import json
 import pytest
+import json
 from app_factory import User
 
 @pytest.mark.usefixtures('test_db')
-class TestAuthentication:
+class TestTraditionalAuthentication:
     def test_registration_success(self, test_client):
-        """Test successful user registration"""
+        """Test successful user registration with valid credentials"""
         response = test_client.post('/api/register',
                                   json={
                                       'username': 'testuser',
@@ -25,7 +19,7 @@ class TestAuthentication:
         assert data['message'] == 'User registered successfully'
 
     def test_registration_password_mismatch(self, test_client):
-        """Test registration with mismatched passwords"""
+        """Test registration failure when password and confirmation do not match"""
         response = test_client.post('/api/register',
                                   json={
                                       'username': 'testuser',
@@ -39,7 +33,7 @@ class TestAuthentication:
         assert data['error'] == 'Passwords do not match'
 
     def test_login_success(self, test_client):
-        """Test successful login"""
+        """Test successful login with valid username and password"""
         # First register a user
         test_client.post('/api/register',
                         json={
@@ -59,8 +53,29 @@ class TestAuthentication:
         data = json.loads(response.data)
         assert 'access_token' in data
 
+    def test_login_with_email(self, test_client):
+        """Test successful login using email address instead of username"""
+        # First register a user
+        test_client.post('/api/register',
+                        json={
+                            'username': 'testuser',
+                            'email': 'test@example.com',
+                            'password': 'TestPass123!',
+                            'confirmation': 'TestPass123!'
+                        })
+
+        # Then try to login with email
+        response = test_client.post('/api/login',
+                                  json={
+                                      'username': 'test@example.com',
+                                      'password': 'TestPass123!'
+                                  })
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert 'access_token' in data
+
     def test_login_invalid_credentials(self, test_client):
-        """Test login with invalid credentials"""
+        """Test login failure with invalid username and password"""
         response = test_client.post('/api/login',
                                   json={
                                       'username': 'nonexistent',
@@ -72,7 +87,7 @@ class TestAuthentication:
         assert data['error'] == 'Invalid username or password'
 
     def test_protected_route_access(self, test_client):
-        """Test access to protected routes"""
+        """Test access to protected routes with and without authentication token"""
         # First create and login user
         test_client.post('/api/register',
                         json={
@@ -99,7 +114,7 @@ class TestAuthentication:
         assert response.status_code == 200
 
     def test_email_verification(self, test_client, test_app):
-        """Test email verification process"""
+        """Test email verification process with valid verification token"""
         # Register a user
         test_client.post('/api/register',
                         json={
@@ -119,7 +134,4 @@ class TestAuthentication:
         assert response.status_code == 200
         data = json.loads(response.data)
         assert 'message' in data
-        assert data['message'] == 'Email verified successfully'
-
-if __name__ == '__main__':
-    unittest.main() 
+        assert data['message'] == 'Email verified successfully' 
