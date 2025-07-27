@@ -8,6 +8,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [savedLoops, setSavedLoops] = useState([]);
+  const [loopsLoading, setLoopsLoading] = useState(true);
   const [chapterProgress, setChapterProgress] = useState({
     chapter_progress: 1,
     chapter0_page_progress: 1,
@@ -91,6 +93,33 @@ const Home = () => {
       }
     };
     fetchFavorites();
+  }, []);
+
+  useEffect(() => {
+    const fetchSavedLoops = async () => {
+      setLoopsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('user_id');
+        const response = await fetch(`${config.API_BASE_URL}/api/jam-sessions/user/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSavedLoops(data);
+        } else {
+          setSavedLoops([]);
+        }
+      } catch (error) {
+        console.error('Error fetching saved loops:', error);
+        setSavedLoops([]);
+      } finally {
+        setLoopsLoading(false);
+      }
+    };
+    fetchSavedLoops();
   }, []);
 
   /**
@@ -274,9 +303,48 @@ const Home = () => {
 
         {/* Jam Session Card */}
         <div className="dashboard-card">
-          <h2>Jam Session</h2>
-          <div style={{ color: '#ffb3b3', fontWeight: 600, fontSize: '1.5rem', marginTop: '3rem', fontStyle: 'italic', textAlign: 'center'}}>
-            🎸 Coming soon!
+          <div className="card-header">
+            <h2>Jam Session</h2>
+            <button className="continue-session-btn" onClick={() => navigate('/jam-session')}>
+              <span className="btn-icon">🎸</span>
+              <span>Start Jamming</span>
+            </button>
+          </div>
+          <div className="saved-loops-dashboard-section">
+            <h3 className="saved-loops-section-title">Your Saved Loops</h3>
+            {loopsLoading ? (
+              <div className="saved-loops-loading">Loading...</div>
+            ) : savedLoops.length === 0 ? (
+              <div className="saved-loops-empty">No saved loops yet! Create your first loop in Jam Session.</div>
+            ) : (
+              <div className="saved-loops-list-scroll">
+                {savedLoops.slice(0, 3).map(loop => (
+                  <div
+                    key={loop.id}
+                    className="saved-loop-item"
+                    onClick={() => navigate('/jam-session', { state: { loadJamId: loop.id } })}
+                    onMouseOver={e => e.currentTarget.classList.add('hovered')}
+                    onMouseOut={e => e.currentTarget.classList.remove('hovered')}
+                  >
+                    <span className="saved-loop-icon">🥁</span>
+                    <div className="saved-loop-info">
+                      <span className="saved-loop-title">{loop.title}</span>
+                      <span className="saved-loop-details">
+                        {loop.time_signature} • {loop.bpm} BPM • {new Date(loop.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <span className="saved-loop-badge">
+                      {loop.is_public ? 'Public' : 'Private'}
+                    </span>
+                  </div>
+                ))}
+                {savedLoops.length > 3 && (
+                  <div className="saved-loops-more">
+                    <span>+{savedLoops.length - 3} more loops</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
