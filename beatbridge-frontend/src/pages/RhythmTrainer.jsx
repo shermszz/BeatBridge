@@ -209,7 +209,7 @@ export default function RhythmTrainer() {
         <div className="description-section">
           <h2 className="section-title">About Rhythm Trainer</h2>
           <div className="description-content">
-            <p className="description-text">
+            <p className="description-text" style={{ color: '#fff' }}>
               Rhythm Trainer is designed to teach beginners the fundamentals of drumming. 
               Our interactive learning system combines virtual drum practice with structured 
               lessons to help you develop essential drumming skills.
