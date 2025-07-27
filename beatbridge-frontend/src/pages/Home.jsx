@@ -333,9 +333,6 @@ const Home = () => {
                         {loop.time_signature} • {loop.bpm} BPM • {new Date(loop.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <span className="saved-loop-badge">
-                      {loop.is_public ? 'Public' : 'Private'}
-                    </span>
                   </div>
                 ))}
                 {savedLoops.length > 3 && (
