@@ -97,7 +97,10 @@ export default function Chapter0pg5() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ chapter_progress: 2 }) // Set to the correct value as needed
+        body: JSON.stringify({ 
+          chapter_progress: 2,
+          chapter0_page_progress: 6 
+        })
       });
     } catch (err) { console.error('Progress update failed:', err); }
   };

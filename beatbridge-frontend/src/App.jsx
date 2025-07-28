@@ -168,7 +168,7 @@ function App() {
               <Chapter1pg6 />
             </ProtectedRoute>
           } />
-          <Route path="/chapter3pg1" element={
+          <Route path="/chapter2-dashboard" element={
             <ProtectedRoute requireVerification={true}>
               <Chapter3pg1 />
             </ProtectedRoute>

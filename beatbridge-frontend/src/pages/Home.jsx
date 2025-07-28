@@ -158,21 +158,18 @@ const Home = () => {
   const calculateOverallProgress = () => {
     if (progressLoading) return { percentage: 0, status: 'Loading...' };
     
-    // Each chapter has 5 pages (excluding celebration pages)
-    const pagesPerChapter = 5;
+    // Each chapter has 6 pages total (including celebration pages)
+    const pagesPerChapter = 6;
     const totalChapters = 6; // Chapter 0, 1, 2, 3, 4, 5
-    const totalPages = totalChapters * pagesPerChapter; // 30 total pages
+    const totalPages = totalChapters * pagesPerChapter; // 36 total pages
     
     // Calculate completed pages for each chapter
-    // Since each chapter has 6 pages total (including celebration), but we only want to count 5
-    // We subtract 2 from the total to account for the 2 celebration pages (1 from each chapter)
-    const totalRawPages = chapterProgress.chapter0_page_progress + chapterProgress.chapter1_page_progress;
-    const totalCompletedPages = Math.max(0, totalRawPages - 2); // Subtract 2 celebration pages
+    // chapter0_page_progress and chapter1_page_progress already represent the actual pages completed
+    const totalCompletedPages = chapterProgress.chapter0_page_progress + chapterProgress.chapter1_page_progress;
     
     console.log('Chapter 0 Raw Pages:', chapterProgress.chapter0_page_progress);
     console.log('Chapter 1 Raw Pages:', chapterProgress.chapter1_page_progress);
-    console.log('Total Raw Pages:', totalRawPages);
-    console.log('Total Completed Pages (after subtracting celebration):', totalCompletedPages);
+    console.log('Total Raw Pages:', totalCompletedPages);
     
     console.log('Total Completed Pages:', totalCompletedPages);
     console.log('Total Pages:', totalPages);
