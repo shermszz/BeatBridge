@@ -519,23 +519,12 @@ export default function Chapter0pg2() {
             </div>
             <span style={{ fontSize: '1rem', color: '#eebebe', minWidth: 48, textAlign: 'center' }}>{noteCardIdx + 1} / {noteDescriptions.length}</span>
             <div style={{ width: 48, display: 'flex', justifyContent: 'center' }}>
-              {noteCardIdx < noteDescriptions.length - 1 ? (
+              {noteCardIdx < noteDescriptions.length - 1 && (
                 <button
                   className="chapter0-nav-button"
                   onClick={handleNext}
                 >
                   →
-                </button>
-              ) : (
-                <button
-                  className="chapter0-back-link"
-                  onClick={async () => {
-                    console.log('Next button clicked!');
-                    await updatePageProgress();
-                    navigate('/chapter0pg3');
-                  }}
-                >
-                  Next →
                 </button>
               )}
             </div>

@@ -420,23 +420,12 @@ export default function Chapter0pg3() {
             </div>
             <span style={{ fontSize: '1rem', color: '#eebebe', minWidth: 48, textAlign: 'center' }}>{restCardIdx + 1} / {restDescriptions.length}</span>
             <div style={{ width: 48, display: 'flex', justifyContent: 'center' }}>
-              {restCardIdx < restDescriptions.length - 1 ? (
+              {restCardIdx < restDescriptions.length - 1 && (
                 <button
                   className="chapter0-nav-button"
                   onClick={handleNext}
                 >
                   →
-                </button>
-              ) : (
-                <button
-                  className="chapter0-back-link"
-                  onClick={async () => {
-                    console.log('Next button clicked!');
-                    await updatePageProgress();
-                    navigate('/chapter0pg4');
-                  }}
-                >
-                  Next →
                 </button>
               )}
             </div>
