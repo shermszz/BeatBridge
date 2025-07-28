@@ -308,7 +308,7 @@ const Home = () => {
             </button>
           </div>
           <div className="saved-loops-dashboard-section">
-            <h3 className="saved-loops-section-title">Your Saved Loops</h3>
+            <h3 className="saved-loops-section-title">Your Saved Tracks</h3>
             {loopsLoading ? (
               <div className="saved-loops-loading">Loading...</div>
             ) : savedLoops.length === 0 ? (

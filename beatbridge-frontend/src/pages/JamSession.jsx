@@ -646,7 +646,7 @@ const JamSession = () => {
       <div className="jam-studio-main">
         {/* Left: User's Loops */}
         <div className="jam-studio-sidebar">
-          <h3>My Loops</h3>
+          <h3>My Tracks</h3>
           <button className="jam-current-session-btn" onClick={handleNewTrack}>
             <span className="jam-current-session-label">New Track</span>
           </button>
